@@ -112,3 +112,47 @@ a {
   margin: 0;
   border-radius: 0.5rem;
 }
+
+/* 콜아웃(강조박스) — rehype-callouts (팁·주의·참고 3종) */
+.prose .callout {
+  --callout-color: var(--accent);
+  margin: 1.5rem 0;
+  padding: 0.85rem 1.05rem;
+  border-left: 3px solid var(--callout-color);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--callout-color) 8%, transparent);
+}
+.prose .callout[data-callout='warning'] {
+  --callout-color: #eb622e;
+}
+.prose .callout[data-callout='note'] {
+  --callout-color: #7c8798;
+}
+.prose .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--callout-color);
+}
+.prose .callout-title::before {
+  content: '💡';
+  font-size: 0.95em;
+}
+.prose .callout[data-callout='warning'] .callout-title::before {
+  content: '⚠️';
+}
+.prose .callout[data-callout='note'] .callout-title::before {
+  content: '📝';
+}
+.prose .callout-body {
+  margin-top: 0.4rem;
+}
+.prose .callout-body > :first-child {
+  margin-top: 0;
+}
+.prose .callout-body > :last-child {
+  margin-bottom: 0;
+}

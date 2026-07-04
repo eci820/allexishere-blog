@@ -7,6 +7,7 @@ import sitemap from '@astrojs/sitemap';
 import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeImageGrid from './src/lib/rehype-image-grid.mjs';
+import rehypeCallouts from './src/lib/rehype-callouts.mjs';
 
 // 로컬 개발 전용 편집기(Sveltia CMS) 서빙 통합.
 // astro:server:setup 훅은 `astro dev` 에서만 실행되므로, /admin 은 개발 서버에만 존재하고
@@ -59,8 +60,8 @@ export default defineConfig({
     // remark-cjk-friendly: **볼드**가 한글·문장부호에 붙어 있어도(예: **‘중독’**입니다)
     // 제대로 볼드 처리되도록 CommonMark 강조 규칙을 한중일 친화적으로 보정합니다.
     remarkPlugins: [[remarkGfm, { singleTilde: false }], remarkCjkFriendly],
-    // 연속 이미지 문단을 그리드로 묶기
-    rehypePlugins: [rehypeImageGrid],
+    // 콜아웃(강조박스) → 연속 이미지 그리드 순서로 처리
+    rehypePlugins: [rehypeCallouts, rehypeImageGrid],
   },
 
   vite: {

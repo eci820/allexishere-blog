@@ -28,3 +28,8 @@ scratch/
 
 # jetbrains setting folder
 .idea/
+
+# Obsidian 보관함 설정·임시파일 (로컬 전용 — 저장소엔 넣지 않음)
+.obsidian/
+.trash/
+.obsidian/workspace*.json

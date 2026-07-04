@@ -11,7 +11,10 @@ import { makeExcerpt } from '../../utils/excerpt';
 import { formatDate } from '../../utils/date';
 
 export const getStaticPaths = (async () => {
-  const posts = await getCollection('blog', ({ data }) => data.draft !== true);
+  // 초안은 운영 빌드에서만 제외(개발에서는 미리보기 위해 포함)
+  const posts = await getCollection('blog', ({ data }) =>
+    import.meta.env.PROD ? data.draft !== true : true
+  );
   return posts
     .map((post) => ({ post, url: getPostUrl(post) }))
     // 이 파일은 /entry/... 주소만 담당합니다.

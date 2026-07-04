@@ -10,7 +10,12 @@ const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
 
 // blog 컬렉션: src/content/blog/ 안의 마크다운 파일들을 모읍니다.
 const blog = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
+  // 글 파일만 모읍니다. Obsidian 보관함 설정(.obsidian)과 새 글 템플릿(_templates)은
+  // 콘텐츠로 오인하지 않도록 제외합니다.
+  loader: glob({
+    pattern: ['**/*.{md,mdx}', '!_templates/**', '!.obsidian/**'],
+    base: './src/content/blog',
+  }),
   schema: ({ image }) =>
     z.object({
       // 필수 항목 ---------------------------------------------------------
