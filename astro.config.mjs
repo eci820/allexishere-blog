@@ -3,6 +3,9 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
+import remarkGfm from 'remark-gfm';
+import remarkCjkFriendly from 'remark-cjk-friendly';
+import rehypeImageGrid from './src/lib/rehype-image-grid.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -16,6 +19,18 @@ export default defineConfig({
   trailingSlash: 'never',
   build: {
     format: 'file',
+  },
+
+  markdown: {
+    // Astro 기본 GFM 을 끄고 직접 remark-gfm 을 넣습니다.
+    // singleTilde:false → 물결표 1개(예: "16~31일")를 취소선으로 오해하지 않게 함
+    // (취소선은 ~~두 개~~ 일 때만). GFM 표·자동링크 등은 그대로 유지됩니다.
+    gfm: false,
+    // remark-cjk-friendly: **볼드**가 한글·문장부호에 붙어 있어도(예: **‘중독’**입니다)
+    // 제대로 볼드 처리되도록 CommonMark 강조 규칙을 한중일 친화적으로 보정합니다.
+    remarkPlugins: [[remarkGfm, { singleTilde: false }], remarkCjkFriendly],
+    // 연속 이미지 문단을 그리드로 묶기
+    rehypePlugins: [rehypeImageGrid],
   },
 
   vite: {

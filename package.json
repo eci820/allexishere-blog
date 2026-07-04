@@ -12,13 +12,16 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@tailwindcss/vite": "^4.3.2",
     "astro": "^7.0.6",
+    "remark-cjk-friendly": "^2.3.1",
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.20"
+    "@tailwindcss/typography": "^0.5.20",
+    "remark-gfm": "^4.0.1"
   }
 }

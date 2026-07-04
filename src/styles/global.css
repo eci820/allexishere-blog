@@ -87,3 +87,28 @@ a {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* 본문 연속 이미지 그리드 (rehype-image-grid 가 <div class="img-grid"> 로 묶음)
+   모바일 2열 · 데스크톱(≥768px) 3열. 단독 이미지 1장은 묶이지 않아 크게 유지됨. */
+.prose .img-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+@media (min-width: 768px) {
+  .prose .img-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.prose .img-grid p {
+  margin: 0;
+  aspect-ratio: 1 / 1;
+}
+.prose .img-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+  border-radius: 0.5rem;
+}
