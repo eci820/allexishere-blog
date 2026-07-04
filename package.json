@@ -10,6 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "write": "bash scripts/write.sh",
     "publish": "bash scripts/publish.sh"
   },
   "dependencies": {

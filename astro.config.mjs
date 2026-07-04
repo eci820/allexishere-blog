@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeImageGrid from './src/lib/rehype-image-grid.mjs';
 import rehypeCallouts from './src/lib/rehype-callouts.mjs';
+import { writeDevEditor } from './src/lib/write-editor.mjs';
 
 // 로컬 개발 전용 편집기(Sveltia CMS) 서빙 통합.
 // astro:server:setup 훅은 `astro dev` 에서만 실행되므로, /admin 은 개발 서버에만 존재하고
@@ -68,5 +69,5 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  integrations: [sitemap(), sveltiaDevAdmin()],
+  integrations: [sitemap(), sveltiaDevAdmin(), writeDevEditor()],
 });
