@@ -138,6 +138,9 @@ const jsonLd = {
         holder.setAttribute('aria-hidden', 'true');
 
         var showReal = isProd && slot.length > 0;
+        // 운영인데 슬롯이 비어 있으면 아무것도 삽입하지 않음(회색 '광고 자리' 노출 방지).
+        // 개발 중(!isProd)에는 위치 확인용 회색 박스를 보여줍니다.
+        if (!showReal && isProd) return;
         if (showReal) {
           var ins = document.createElement('ins');
           ins.className = 'adsbygoogle';

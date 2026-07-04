@@ -1,8 +1,9 @@
 ---
 // 수동 광고 한 칸.
-// - CLS(광고 뜰 때 화면 밀림) 방지를 위해 자리 높이를 미리 확보합니다.
 // - 실제 광고(<ins>)는 배포(운영)에서, 슬롯 ID 가 채워졌을 때만 로드합니다.
-//   개발 중이거나 슬롯이 비어 있으면 회색 '광고 자리' 박스만 보여줍니다.
+// - 개발 중에는 위치 확인용 회색 '광고 자리' 박스를 보여줍니다.
+// - 운영인데 슬롯 ID 가 비어 있으면 '아무것도' 렌더하지 않습니다
+//   (예전엔 회색 박스가 방문자에게 그대로 노출됐음 → 수정).
 import { ADSENSE } from '../consts';
 
 interface Props {
@@ -17,15 +18,17 @@ interface Props {
 const { slot = '', minHeight = 280, label = '광고 자리' } = Astro.props;
 const client = ADSENSE.publisherId;
 const showReal = import.meta.env.PROD && slot.length > 0;
+// 회색 자리표시는 개발 중에만(디자인 확인용). 운영에서 슬롯이 비면 안 보이게.
+const showPlaceholder = import.meta.env.DEV;
 ---
 
-<div
-  class="ad-slot my-8 flex items-center justify-center"
-  style={`min-height:${minHeight}px`}
-  aria-hidden="true"
->
-  {
-    showReal ? (
+{
+  showReal ? (
+    <div
+      class="ad-slot my-8 flex items-center justify-center"
+      style={`min-height:${minHeight}px`}
+      aria-hidden="true"
+    >
       <ins
         class="adsbygoogle block w-full"
         style={`display:block;min-height:${minHeight}px`}
@@ -34,16 +37,22 @@ const showReal = import.meta.env.PROD && slot.length > 0;
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
-    ) : (
+    </div>
+  ) : showPlaceholder ? (
+    <div
+      class="ad-slot my-8 flex items-center justify-center"
+      style={`min-height:${minHeight}px`}
+      aria-hidden="true"
+    >
       <div
         class="w-full rounded-md border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted)] flex items-center justify-center"
         style={`min-height:${minHeight}px`}
       >
         {label}
       </div>
-    )
-  }
-</div>
+    </div>
+  ) : null
+}
 
 {
   showReal && (
