@@ -4,6 +4,10 @@ import { CATEGORIES } from './consts';
 
 const categorySlugs = CATEGORIES.map((c) => c.slug) as [string, ...string[]];
 
+// 웹 편집기(Sveltia CMS)는 비어 있는 선택 항목을 생략하지 않고 ''(빈 문자열)로 적습니다.
+// 그대로 두면 date/enum/image 스키마가 깨지므로, 빈 문자열을 '없음(undefined)'으로 바꿔줍니다.
+const emptyToUndefined = (v: unknown) => (v === '' ? undefined : v);
+
 // blog 컬렉션: src/content/blog/ 안의 마크다운 파일들을 모읍니다.
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
@@ -16,16 +20,19 @@ const blog = defineCollection({
       description: z.string().default(''),
       /** 최초 발행일 */
       pubDate: z.coerce.date(),
-      /** 카테고리 (parking | tax | health 중 하나) */
-      category: z.enum(categorySlugs),
+      /** 카테고리. 편집기가 빈 값을 보내면 기본 카테고리로 채웁니다. */
+      category: z.preprocess(
+        (v) => (v === '' || v == null ? categorySlugs[0] : v),
+        z.enum(categorySlugs)
+      ),
 
       // 선택 항목 ---------------------------------------------------------
-      /** 수정일 (있으면 표시) */
-      updatedDate: z.coerce.date().optional(),
+      /** 수정일 (있으면 표시). 편집기의 빈 문자열은 '없음'으로 처리 */
+      updatedDate: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
       /** 태그 목록 */
       tags: z.array(z.string()).default([]),
-      /** 대표 이미지 */
-      cover: image().optional(),
+      /** 대표 이미지. 편집기의 빈 문자열은 '없음'으로 처리 */
+      cover: z.preprocess(emptyToUndefined, image().optional()),
       /** 대표 이미지 대체 텍스트 */
       coverAlt: z.string().optional(),
       /**
