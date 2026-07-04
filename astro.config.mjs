@@ -1,11 +1,41 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import fs from 'node:fs';
 
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeImageGrid from './src/lib/rehype-image-grid.mjs';
+
+// 로컬 개발 전용 편집기(Sveltia CMS) 서빙 통합.
+// astro:server:setup 훅은 `astro dev` 에서만 실행되므로, /admin 은 개발 서버에만 존재하고
+// 운영 빌드(astro build → dist)에는 admin 관련 파일이 전혀 포함되지 않습니다(순수 static 유지).
+// admin 파일을 public/ 이 아니라 cms/ 에 두는 이유도 dist 복사를 원천 차단하기 위함입니다.
+function sveltiaDevAdmin() {
+  return {
+    name: 'sveltia-dev-admin',
+    hooks: {
+      /** @param {{ server: import('vite').ViteDevServer }} ctx */
+      'astro:server:setup': ({ server }) => {
+        const readCms = (name) =>
+          fs.readFileSync(new URL(`./cms/${name}`, import.meta.url), 'utf-8');
+        server.middlewares.use((req, res, next) => {
+          const url = (req.url || '').split('?')[0];
+          if (url === '/admin' || url === '/admin/' || url === '/admin/index.html') {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.end(readCms('index.html'));
+          } else if (url === '/admin/config.yml') {
+            res.setHeader('Content-Type', 'text/yaml; charset=utf-8');
+            res.end(readCms('config.yml'));
+          } else {
+            next();
+          }
+        });
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -37,5 +67,5 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  integrations: [sitemap()],
+  integrations: [sitemap(), sveltiaDevAdmin()],
 });

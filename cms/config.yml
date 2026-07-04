@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+#
+# Sveltia CMS 설정 (로컬 개발 전용 편집기).
+# 이 파일과 cms/index.html 은 public/ 이 아니라 cms/ 에 있어서 운영 빌드(dist)에 포함되지 않습니다.
+# astro dev 실행 시에만 astro.config.mjs 의 sveltia-dev-admin 통합이 /admin 경로로 서빙합니다.
+
+# 백엔드: 로컬 편집만 할 거라 인증은 필요 없습니다.
+# Sveltia 는 브라우저 File System Access API 로 로컬 파일을 직접 읽고 씁니다(별도 서버 불필요).
+# repo 값은 IndexedDB 구분용이라 실제 저장소 이름을 그대로 적어둡니다.
+backend:
+  name: github
+  repo: eci820/allexishere-blog
+  branch: main
+
+# 미디어(이미지)는 글 폴더 안(index.md 바로 옆)에 저장 — 기존 구조와 동일.
+# 컬렉션에서 media_folder: '' 로 다시 지정하므로 전역값은 형식상 둡니다.
+media_folder: src/content/blog
+public_folder: ''
+
+collections:
+  - name: blog
+    label: 블로그 글
+    label_singular: 글
+    icon: article
+    # 각 글은 src/content/blog/<슬러그>/index.md (기존 구조 그대로)
+    folder: src/content/blog
+    path: '{{slug}}/index'
+    # 이미지 업로드는 글 폴더 안(index.md 옆)에 저장 → 본문에서 ./파일명 으로 참조
+    media_folder: ''
+    public_folder: ''
+    # .md + YAML frontmatter (기본값이지만 명시). 절대 다른 형식으로 바꾸지 않습니다.
+    extension: md
+    format: yaml-frontmatter
+    identifier_field: title
+    summary: '{{title}}'
+    create: true
+    # 목록에서 제목으로 정렬/검색
+    sortable_fields: [title, pubDate]
+    fields:
+      - { name: title, label: 제목, widget: string }
+      - { name: description, label: 설명(요약), widget: text, required: false }
+      # 날짜는 +09:00 타임존이 절대 사라지지 않도록 '문자(string)'로 다룹니다.
+      # (datetime 위젯은 오프셋을 떨어뜨리므로 채택하지 않음)
+      - {
+          name: pubDate,
+          label: 발행일,
+          widget: string,
+          hint: '예) 2026-07-04T09:00:00+09:00  — 타임존(+09:00)까지 그대로 적어주세요',
+        }
+      - {
+          name: updatedDate,
+          label: 수정일(선택),
+          widget: string,
+          required: false,
+          hint: '있을 때만. 예) 2026-07-04T09:00:00+09:00',
+        }
+      - {
+          name: category,
+          label: 카테고리,
+          widget: select,
+          options: [info],
+          default: info,
+          required: false,
+        }
+      - { name: tags, label: 태그, widget: list, required: false }
+      - {
+          name: cover,
+          label: 대표 이미지 경로,
+          widget: string,
+          required: false,
+          hint: '글 폴더 안 파일명. 예) ./img.png',
+        }
+      - { name: coverAlt, label: 대표 이미지 대체텍스트, widget: string, required: false }
+      # 원본 경로는 구글 색인 보존용 — 되도록 수정하지 마세요.
+      - {
+          name: originalPath,
+          label: 원본 경로(수정 주의),
+          widget: string,
+          required: false,
+          hint: '티스토리 원본 /entry/... 경로. 검색 유입 보존용이라 건드리지 마세요',
+        }
+      - { name: draft, label: 초안(비공개), widget: boolean, default: false, required: false }
+      # 본문: 리치 에디터 ↔ 원문 마크다운 토글 가능
+      - { name: body, label: 본문, widget: richtext, required: false }
