@@ -65,10 +65,12 @@ const ogImageURL = new URL(image, SITE.url).href;
     <!-- 검색엔진 소유확인 -->
     <!-- 구글: 'HTML 파일' 방식으로 확인합니다 → public/googlef051622969252cab.html
          (메타태그 방식이 아니라 파일 방식이라 head 에는 넣지 않습니다) -->
-    <meta
-      name="naver-site-verification"
-      content="55d8ea0a61689593b32d263ebbd2708aeeb7e72c"
+    <!-- 네이버: 네이버가 준 태그를 '있는 그대로'( /> 포함) 출력해야 소유확인이 통과됩니다.
+         Astro 는 <meta ...> 를 자동 정규화(슬래시 제거)하므로 set:html 로 원문 그대로 넣습니다. -->
+    <Fragment
+      set:html='<meta name="naver-site-verification" content="55d8ea0a61689593b32d263ebbd2708aeeb7e72c" />'
     />
+
 
     <!-- OpenGraph (카카오톡·페이스북 공유 미리보기) -->
     <meta property="og:type" content={article ? 'article' : 'website'} />
