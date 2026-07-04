@@ -1,0 +1,76 @@
+---
+// 페이지 번호 이동 UI. 참고 블로그처럼 '‹ 1 2 3 … 16 ›' 형태.
+interface Props {
+  currentPage: number;
+  lastPage: number;
+  prevUrl?: string;
+  nextUrl?: string;
+}
+
+const { currentPage, lastPage, prevUrl, nextUrl } = Astro.props;
+
+// 1페이지는 '/', 2페이지부터는 '/page/2' 형식으로 주소를 만듭니다.
+function pageHref(n: number): string {
+  return n <= 1 ? '/' : `/page/${n}`;
+}
+
+// 보여줄 페이지 번호 목록(양끝 + 현재 주변 + … 생략). 페이지가 적으면 전부 표시.
+function buildRange(current: number, last: number): (number | '…')[] {
+  if (last <= 7) return Array.from({ length: last }, (_, i) => i + 1);
+  const set = new Set<number>([1, last, current, current - 1, current + 1]);
+  const sorted = [...set].filter((n) => n >= 1 && n <= last).sort((a, b) => a - b);
+  const out: (number | '…')[] = [];
+  let prev = 0;
+  for (const n of sorted) {
+    if (n - prev > 1) out.push('…');
+    out.push(n);
+    prev = n;
+  }
+  return out;
+}
+
+const range = buildRange(currentPage, lastPage);
+const btn =
+  'flex h-9 min-w-9 items-center justify-center rounded-full border border-[var(--border)] px-3 text-sm transition hover:bg-black/5 dark:hover:bg-white/10';
+---
+
+{
+  lastPage > 1 && (
+    <nav
+      class="mt-12 flex items-center justify-center gap-2"
+      aria-label="페이지 이동"
+    >
+      {prevUrl ? (
+        <a href={prevUrl} class={btn} aria-label="이전 페이지">
+          ‹
+        </a>
+      ) : (
+        <span class={`${btn} opacity-30`}>‹</span>
+      )}
+
+      {range.map((n) =>
+        n === '…' ? (
+          <span class="px-1 text-[var(--muted)]">…</span>
+        ) : n === currentPage ? (
+          <span
+            class={`${btn} border-transparent bg-[var(--fg)] text-[var(--bg)] font-semibold`}
+          >
+            {n}
+          </span>
+        ) : (
+          <a href={pageHref(n)} class={btn}>
+            {n}
+          </a>
+        )
+      )}
+
+      {nextUrl ? (
+        <a href={nextUrl} class={btn} aria-label="다음 페이지">
+          ›
+        </a>
+      ) : (
+        <span class={`${btn} opacity-30`}>›</span>
+      )}
+    </nav>
+  )
+}

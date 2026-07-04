@@ -1,0 +1,89 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/* 다크모드를 'class' 방식으로 사용합니다.
+   <html class="dark"> 가 붙으면 다크모드가 켜집니다. (토글 버튼이 이 class 를 조작) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 사이트 테마 토큰 -------------------------------------------------------- */
+@theme {
+  /* Pretendard 를 기본(본문) 글꼴로. 로딩 실패 시 시스템 폰트로 자연스럽게 대체 */
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', sans-serif;
+
+  /* 명조(세리프) — 사이트 제목처럼 멋을 내는 곳에만 사용 (참고 블로그의 헤더 느낌) */
+  --font-serif:
+    'Nanum Myeongjo', 'Noto Serif KR', 'Apple SD Gothic Neo', serif;
+
+  /* max-w-content : 글 상세 본문 폭 (읽기 편한 한 줄 길이) */
+  --container-content: 720px;
+  /* max-w-wide : 목록/헤더/푸터 전체 폭 (참고 블로그의 넓은 그리드 폭) */
+  --container-wide: 960px;
+}
+
+/* 기본 바탕/글자색 (라이트 → 다크)
+   참고 블로그 색: 강조 청록 #04BEB8, 본문 회색 #555 */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --fg: #333333;
+  --muted: #8a8a8a;
+  --border: #ececec;
+  --accent: #04beb8; /* 청록 강조색 */
+  --accent-2: #eb622e; /* 보조 주황 (hover 등) */
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #16181d;
+  --fg: #dcdcde;
+  --muted: #8b909a;
+  --border: #2a2d34;
+  --accent: #2fd4cd;
+  --accent-2: #ff7a4d;
+}
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--fg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* 다크모드 토글 시 색 전환을 부드럽게 */
+html,
+body {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+a {
+  color: inherit;
+}
+
+/* 명조 유틸 클래스 */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* 여러 줄 말줄임(…) — "본문 3줄만 살짝 보이게" 에 사용 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

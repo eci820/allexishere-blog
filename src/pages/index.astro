@@ -1,0 +1,24 @@
+---
+// 홈(1페이지). 최신 글 목록 + 페이지네이션.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostGrid from '../components/PostGrid.astro';
+import Pagination from '../components/Pagination.astro';
+import { getPublishedPosts } from '../utils/posts';
+import { POSTS_PER_PAGE } from '../consts';
+
+const all = await getPublishedPosts();
+const totalCount = all.length;
+const lastPage = Math.max(1, Math.ceil(totalCount / POSTS_PER_PAGE));
+const posts = all.slice(0, POSTS_PER_PAGE);
+---
+
+<BaseLayout>
+  <main id="top" class="mx-auto max-w-wide px-5 py-10">
+    <PostGrid posts={posts} totalCount={totalCount} />
+    <Pagination
+      currentPage={1}
+      lastPage={lastPage}
+      nextUrl={lastPage > 1 ? '/page/2' : undefined}
+    />
+  </main>
+</BaseLayout>

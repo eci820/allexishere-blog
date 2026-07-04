@@ -1,0 +1,30 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# 원본 티스토리 백업 (로컬 보관용 — 배포에는 불필요, 용량이 큼)
+tistory-backup/
+
+# 이전 작업용 임시 파일(변환 스크립트·사이트맵 등)
+scratch/
+
+# jetbrains setting folder
+.idea/

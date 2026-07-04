@@ -1,0 +1,150 @@
+---
+// 모든 페이지가 공유하는 가장 바깥 껍데기입니다.
+// <head> 안의 SEO 메타 정보, 폰트, 다크모드 처리를 담당하고
+// 화면 위/아래에 공통 헤더·푸터를 붙입니다.
+import '../styles/global.css';
+import { SITE, ADSENSE } from '../consts';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  /** 페이지 제목(<title>·OG). 없으면 사이트 기본값 */
+  title?: string;
+  /** 페이지 설명(meta description·OG). 없으면 사이트 기본값 */
+  description?: string;
+  /** 대표 이미지 절대/상대 경로(OG·Twitter). 없으면 사이트 기본 이미지 */
+  image?: string;
+  /** 글 상세처럼 '기사' 페이지면 true → OG type=article */
+  article?: boolean;
+  /** 기사 발행일(ISO). article=true 일 때 og:article·JSON-LD 에 사용 */
+  publishedTime?: string;
+  /** 기사 수정일(ISO) */
+  modifiedTime?: string;
+  /** 구조화 데이터(JSON-LD) 객체. 있으면 <script type="application/ld+json"> 로 출력 */
+  jsonLd?: Record<string, unknown>;
+}
+
+const {
+  title,
+  description = SITE.description,
+  image = SITE.defaultOgImage,
+  article = false,
+  publishedTime,
+  modifiedTime,
+  jsonLd,
+} = Astro.props;
+
+const pageTitle = title
+  ? `${title} · ${SITE.title}`
+  : `${SITE.title} - ${SITE.tagline}`;
+
+// 현재 페이지의 정식 주소(canonical)와 대표이미지 절대주소를 계산.
+// build.format:'file' 이라 pathname 에 '.html' 이 붙고, 경로 끝 슬래시가 남을 수 있어
+// 티스토리 원본과 동일한 '/entry/제목'(확장자·슬래시 없음) 형태로 정규화합니다.
+const cleanPath =
+  Astro.url.pathname
+    .replace(/\.html$/, '') // build.format:'file' 의 확장자 제거
+    .replace(/\/index$/, '') // '/index' → 홈('')
+    .replace(/\/+$/, '') || '/'; // 끝 슬래시 제거(루트는 '/')
+const canonicalURL = new URL(cleanPath, SITE.url).href;
+const ogImageURL = new URL(image, SITE.url).href;
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- 기본 SEO -->
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- 검색엔진 소유확인 (⑥ 배포 후 각 콘솔에서 발급받은 값으로 교체하세요) -->
+    <!-- <meta name="google-site-verification" content="여기에_구글값" /> -->
+    <!-- <meta name="naver-site-verification" content="여기에_네이버값" /> -->
+
+    <!-- OpenGraph (카카오톡·페이스북 공유 미리보기) -->
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta property="og:title" content={title ?? `${SITE.title} - ${SITE.tagline}`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImageURL} />
+    {article && publishedTime && (
+      <meta property="article:published_time" content={publishedTime} />
+    )}
+    {article && modifiedTime && (
+      <meta property="article:modified_time" content={modifiedTime} />
+    )}
+
+    <!-- Twitter 카드 -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title ?? SITE.title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <!-- RSS 자동 발견 -->
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={SITE.title}
+      href={new URL('/rss.xml', SITE.url).href}
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Google AdSense 자동광고 스크립트. 운영(배포)에서만 로드합니다.
+         (localhost 에서 광고를 띄우면 '부정 클릭'으로 오해받을 수 있어 제외) -->
+    {import.meta.env.PROD && (
+      <script
+        async
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE.publisherId}`}
+        crossorigin="anonymous"
+      />
+    )}
+
+    <!-- 폰트: 본문=Pretendard(동적 서브셋), 제목=Nanum Myeongjo(명조) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap"
+    />
+
+    <!-- 구조화 데이터(JSON-LD): 구글이 글 내용을 정확히 이해하도록 돕습니다 -->
+    {jsonLd && (
+      <script
+        type="application/ld+json"
+        set:html={JSON.stringify(jsonLd)}
+      />
+    )}
+
+    <!-- 다크모드: 화면이 그려지기 전에 실행해 '흰 화면 깜빡임'을 막습니다. -->
+    <script is:inline>
+      (function () {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia(
+          '(prefers-color-scheme: dark)'
+        ).matches;
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen antialiased flex flex-col">
+    <Header />
+    <div class="flex-1">
+      <slot />
+    </div>
+    <Footer />
+  </body>
+</html>

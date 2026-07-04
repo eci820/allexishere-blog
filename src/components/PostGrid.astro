@@ -1,0 +1,23 @@
+---
+// '전체 글 N' 제목 + 글 카드 3칸 그리드.
+import type { CollectionEntry } from 'astro:content';
+import PostCard from './PostCard.astro';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+  /** 전체 글 개수(제목 옆 숫자). 현재 페이지 개수가 아니라 총합 */
+  totalCount: number;
+}
+
+const { posts, totalCount } = Astro.props;
+---
+
+<section>
+  <h2 class="mb-6 text-lg font-bold">
+    전체 글 <span class="text-[var(--accent)]">{totalCount}</span>
+  </h2>
+
+  <div class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+</section>

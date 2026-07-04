@@ -1,0 +1,184 @@
+---
+// 글 상세 페이지. 주소는 티스토리 원본과 동일한 /entry/제목 형식으로 생성합니다.
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdUnit from '../../components/AdUnit.astro';
+import { SITE, ADSENSE } from '../../consts';
+import { getPostUrl } from '../../utils/url';
+import { makeExcerpt } from '../../utils/excerpt';
+import { formatDate } from '../../utils/date';
+
+export const getStaticPaths = (async () => {
+  const posts = await getCollection('blog', ({ data }) => data.draft !== true);
+  return posts
+    .map((post) => ({ post, url: getPostUrl(post) }))
+    // 이 파일은 /entry/... 주소만 담당합니다.
+    .filter(({ url }) => url.startsWith('/entry/'))
+    .map(({ post, url }) => ({
+      params: { slug: url.replace(/^\/entry\//, '') },
+      props: { post },
+    }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const description =
+  post.data.description?.trim() || makeExcerpt(post.body ?? '', 160);
+const canonicalURL = new URL(getPostUrl(post), SITE.url).href;
+const ogImage = post.data.cover?.src ?? SITE.defaultOgImage;
+
+// 구글 검색용 구조화 데이터(Article)
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: post.data.title,
+  description,
+  datePublished: post.data.pubDate.toISOString(),
+  dateModified: (post.data.updatedDate ?? post.data.pubDate).toISOString(),
+  author: { '@type': 'Person', name: SITE.author },
+  publisher: { '@type': 'Organization', name: SITE.title },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalURL },
+  url: canonicalURL,
+};
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={description}
+  image={ogImage}
+  article={true}
+  publishedTime={post.data.pubDate.toISOString()}
+  modifiedTime={(post.data.updatedDate ?? post.data.pubDate).toISOString()}
+  jsonLd={jsonLd}
+>
+  <main id="top" class="mx-auto max-w-content px-5 py-10">
+    <!-- 글 제목 (날짜는 화면에 표시하지 않음) -->
+    <header class="mb-8">
+      <h1 class="font-serif text-3xl font-extrabold leading-tight tracking-tight">
+        {post.data.title}
+      </h1>
+
+      <!-- 날짜: '최종 업데이트' 하나만 표시. 값은 수정일이 있으면 수정일, 없으면 발행일.
+           JSON-LD 의 datePublished/dateModified 는 별도로 정확한 값을 유지합니다. -->
+      <p class="mt-3 text-sm text-[var(--muted)]">
+        {`최종 업데이트: ${formatDate(post.data.updatedDate ?? post.data.pubDate)}`}
+      </p>
+
+      {
+        post.data.tags.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {post.data.tags.map((tag) => (
+              <li class="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
+                #{tag}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    <!-- [광고 1] 본문 제목 바로 아래 -->
+    <AdUnit slot={ADSENSE.slots.top} minHeight={100} label="광고 자리 (제목 아래)" />
+
+    <!-- 대표 이미지(있을 때만) -->
+    {
+      post.data.cover && (
+        <Image
+          src={post.data.cover}
+          alt={post.data.coverAlt ?? post.data.title}
+          widths={[400, 800, 1200]}
+          sizes="(max-width: 720px) 100vw, 720px"
+          class="mb-8 w-full rounded-lg"
+          loading="eager"
+        />
+      )
+    }
+
+    <!-- 본문. prose 클래스가 제목·목록·이미지 여백을 자동으로 예쁘게 잡습니다.
+         이미지를 여러 장 넣어도 각 이미지가 알아서 정리됩니다. -->
+    <article
+      class="prose prose-neutral dark:prose-invert max-w-none
+             prose-img:rounded-lg prose-img:mx-auto
+             prose-headings:font-bold prose-a:text-[var(--accent)]"
+    >
+      <Content />
+    </article>
+
+    <!-- [광고 3] 본문 맨 끝 -->
+    <AdUnit slot={ADSENSE.slots.bottom} minHeight={280} label="광고 자리 (본문 끝)" />
+
+    <!-- [광고 2] 첫 소제목(h2) 뒤에 끼워 넣기.
+         본문은 마크다운으로 렌더링되므로, 아래 설정값을 읽어 스크립트가
+         첫 h2 를 찾아 그 뒤에 광고 자리를 삽입합니다. -->
+    <div
+      id="in-article-ad-config"
+      data-slot={ADSENSE.slots.inArticle}
+      data-client={ADSENSE.publisherId}
+      data-prod={String(import.meta.env.PROD)}
+      hidden
+    >
+    </div>
+    <script is:inline>
+      (function () {
+        var cfg = document.getElementById('in-article-ad-config');
+        if (!cfg) return;
+        var article = document.querySelector('article.prose');
+        if (!article) return;
+        var slot = cfg.getAttribute('data-slot') || '';
+        var client = cfg.getAttribute('data-client') || '';
+        var isProd = cfg.getAttribute('data-prod') === 'true';
+
+        // 광고를 끼워 넣을 자리(회색 박스) 생성 — CLS 방지용 최소 높이 확보
+        var holder = document.createElement('div');
+        holder.className = 'ad-slot my-8 flex items-center justify-center';
+        holder.style.minHeight = '280px';
+        holder.setAttribute('aria-hidden', 'true');
+
+        var showReal = isProd && slot.length > 0;
+        if (showReal) {
+          var ins = document.createElement('ins');
+          ins.className = 'adsbygoogle';
+          ins.style.display = 'block';
+          ins.style.width = '100%';
+          ins.style.minHeight = '280px';
+          ins.setAttribute('data-ad-client', client);
+          ins.setAttribute('data-ad-slot', slot);
+          ins.setAttribute('data-ad-format', 'fluid');
+          ins.setAttribute('data-ad-layout', 'in-article');
+          holder.appendChild(ins);
+        } else {
+          var ph = document.createElement('div');
+          ph.className =
+            'w-full rounded-md border border-dashed border-[var(--border)] text-center text-xs flex items-center justify-center';
+          ph.style.minHeight = '280px';
+          ph.style.color = 'var(--muted)';
+          ph.textContent = '광고 자리 (첫 소제목 뒤)';
+          holder.appendChild(ph);
+        }
+
+        // 첫 번째 h2 뒤에 삽입. h2 가 없으면 본문 맨 끝에 붙임.
+        var firstH2 = article.querySelector('h2');
+        if (firstH2) {
+          firstH2.insertAdjacentElement('afterend', holder);
+        } else {
+          article.appendChild(holder);
+        }
+
+        // 실제 광고일 때만 로드 요청
+        if (showReal) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        }
+      })();
+    </script>
+
+    <!-- 목록으로 돌아가기 -->
+    <div class="mt-12 border-t border-[var(--border)] pt-6">
+      <a href="/" class="text-sm text-[var(--accent)] hover:underline">
+        ← 목록으로
+      </a>
+    </div>
+  </main>
+</BaseLayout>

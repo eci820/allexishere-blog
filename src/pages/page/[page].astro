@@ -1,0 +1,46 @@
+---
+// 2페이지 이후 목록. 주소: /page/2, /page/3 ...
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostGrid from '../../components/PostGrid.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getPublishedPosts } from '../../utils/posts';
+import { POSTS_PER_PAGE } from '../../consts';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const all = await getPublishedPosts();
+  const lastPage = Math.max(1, Math.ceil(all.length / POSTS_PER_PAGE));
+
+  // 2페이지부터만 이 파일이 담당 (1페이지는 index.astro)
+  const paths = [];
+  for (let p = 2; p <= lastPage; p++) {
+    const start = (p - 1) * POSTS_PER_PAGE;
+    paths.push({
+      params: { page: String(p) },
+      props: {
+        posts: all.slice(start, start + POSTS_PER_PAGE),
+        currentPage: p,
+        lastPage,
+        totalCount: all.length,
+      },
+    });
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { posts, currentPage, lastPage, totalCount } = Astro.props;
+const prevUrl = currentPage - 1 <= 1 ? '/' : `/page/${currentPage - 1}`;
+const nextUrl = currentPage < lastPage ? `/page/${currentPage + 1}` : undefined;
+---
+
+<BaseLayout title={`${currentPage}페이지`}>
+  <main id="top" class="mx-auto max-w-wide px-5 py-10">
+    <PostGrid posts={posts} totalCount={totalCount} />
+    <Pagination
+      currentPage={currentPage}
+      lastPage={lastPage}
+      prevUrl={prevUrl}
+      nextUrl={nextUrl}
+    />
+  </main>
+</BaseLayout>

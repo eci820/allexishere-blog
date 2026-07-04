@@ -1,0 +1,54 @@
+---
+// 수동 광고 한 칸.
+// - CLS(광고 뜰 때 화면 밀림) 방지를 위해 자리 높이를 미리 확보합니다.
+// - 실제 광고(<ins>)는 배포(운영)에서, 슬롯 ID 가 채워졌을 때만 로드합니다.
+//   개발 중이거나 슬롯이 비어 있으면 회색 '광고 자리' 박스만 보여줍니다.
+import { ADSENSE } from '../consts';
+
+interface Props {
+  /** ADSENSE.slots 의 슬롯 ID */
+  slot?: string;
+  /** 자리 최소 높이(px). 광고 크기에 맞춰 미리 확보 */
+  minHeight?: number;
+  /** 개발 중 표시할 라벨(어느 위치 광고인지) */
+  label?: string;
+}
+
+const { slot = '', minHeight = 280, label = '광고 자리' } = Astro.props;
+const client = ADSENSE.publisherId;
+const showReal = import.meta.env.PROD && slot.length > 0;
+---
+
+<div
+  class="ad-slot my-8 flex items-center justify-center"
+  style={`min-height:${minHeight}px`}
+  aria-hidden="true"
+>
+  {
+    showReal ? (
+      <ins
+        class="adsbygoogle block w-full"
+        style={`display:block;min-height:${minHeight}px`}
+        data-ad-client={client}
+        data-ad-slot={slot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    ) : (
+      <div
+        class="w-full rounded-md border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted)] flex items-center justify-center"
+        style={`min-height:${minHeight}px`}
+      >
+        {label}
+      </div>
+    )
+  }
+</div>
+
+{
+  showReal && (
+    <script is:inline>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  )
+}

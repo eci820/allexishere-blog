@@ -1,0 +1,41 @@
+---
+// 소개 페이지 (/about)
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../consts';
+---
+
+<BaseLayout
+  title="소개"
+  description={`${SITE.title} 소개 — ${SITE.description}`}
+>
+  <main id="top" class="mx-auto max-w-content px-5 py-10">
+    <h1 class="font-serif text-3xl font-extrabold tracking-tight">소개</h1>
+
+    <article
+      class="prose prose-neutral dark:prose-invert mt-8 max-w-none prose-a:text-[var(--accent)]"
+    >
+      <p>
+        <strong>{SITE.title}</strong>({SITE.tagline})는 {SITE.description}
+      </p>
+
+      <p>
+        주차정보, 세금·환급, 건강정보를 중심으로 실생활에 바로 도움이 되는 내용을
+        쉽고 정확하게 정리합니다. 공식 자료와 최신 제도를 확인해 작성하며,
+        불필요한 군더더기 없이 핵심만 전달하는 것을 목표로 합니다.
+      </p>
+
+      <h2>다루는 주제</h2>
+      <ul>
+        <li><strong>주차정보</strong> — 공영주차장, 무료주차, 요금 계산, 대안 주차장 안내</li>
+        <li><strong>세금·환급</strong> — 연말정산, 각종 환급금, 세금 신고 팁</li>
+        <li><strong>건강정보</strong> — 건강검진, 질병 예방, 생활 속 건강관리</li>
+      </ul>
+
+      <h2>문의</h2>
+      <p>
+        제안·정정 요청 등 문의는 이메일로 보내주세요:
+        <a href="mailto:eci820@gmail.com">eci820@gmail.com</a>
+      </p>
+    </article>
+  </main>
+</BaseLayout>

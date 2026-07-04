@@ -1,0 +1,51 @@
+---
+// 글 목록에 쓰이는 카드 하나.
+// 구성: 대표이미지(없으면 회색 자리) + 제목(2줄) + 본문 미리보기(3줄). 날짜는 표시하지 않음.
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import { getPostUrl } from '../utils/url';
+import { makeExcerpt } from '../utils/excerpt';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const href = getPostUrl(post);
+// 미리보기 텍스트: 요약(description)이 있으면 그것, 없으면 본문 앞부분에서 생성
+const excerpt = post.data.description?.trim() || makeExcerpt(post.body ?? '');
+---
+
+<article class="group">
+  <a href={href} class="block">
+    <!-- 대표이미지 (4:3). 없으면 회색 자리로 대체 -->
+    <div
+      class="aspect-[4/3] w-full overflow-hidden rounded-md bg-[var(--border)]"
+    >
+      {
+        post.data.cover && (
+          <Image
+            src={post.data.cover}
+            alt={post.data.coverAlt ?? post.data.title}
+            widths={[240, 400, 600]}
+            sizes="(max-width: 640px) 100vw, 300px"
+            class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        )
+      }
+    </div>
+
+    <!-- 제목 (최대 2줄) -->
+    <h2
+      class="mt-3 text-base font-bold leading-snug line-clamp-2 transition group-hover:text-[var(--accent)]"
+    >
+      {post.data.title}
+    </h2>
+
+    <!-- 본문 미리보기 (최대 3줄) -->
+    <p class="mt-2 text-sm leading-relaxed text-[var(--muted)] line-clamp-3">
+      {excerpt}
+    </p>
+  </a>
+</article>
