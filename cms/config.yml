@@ -17,6 +17,13 @@ backend:
 media_folder: src/content/blog
 public_folder: ''
 
+# 업로드 파일명을 안전한 ASCII 로 정리(슬러그화).
+# 한글·공백 파일명("스크린샷 2026....png")이 URL 인코딩(%EC%..)되어 본문에 박히는 걸 방지.
+media_libraries:
+  default:
+    config:
+      slugify_filename: true
+
 collections:
   - name: blog
     label: 블로그 글
@@ -25,9 +32,11 @@ collections:
     # 각 글은 src/content/blog/<슬러그>/index.md (기존 구조 그대로)
     folder: src/content/blog
     path: '{{slug}}/index'
-    # 이미지 업로드는 글 폴더 안(index.md 옆)에 저장 → 본문에서 ./파일명 으로 참조
+    # 이미지 업로드는 글 폴더 안(index.md 옆)에 저장.
+    # public_folder: '.' → 본문 참조를 기존 글과 같은 './파일명' 형태로 씀.
+    # (참고: Astro 는 './pic.png' 와 'pic.png' 를 동일하게 최적화하므로 접두사 유무는 렌더에 영향 없음)
     media_folder: ''
-    public_folder: ''
+    public_folder: '.'
     # .md + YAML frontmatter (기본값이지만 명시). 절대 다른 형식으로 바꾸지 않습니다.
     extension: md
     format: yaml-frontmatter
