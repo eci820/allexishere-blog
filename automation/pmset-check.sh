@@ -7,7 +7,8 @@ echo ""
 echo "=== 상주 적합성 판정 (전원 연결 = AC 기준) ==="
 # AC 블록만 파싱
 AC="$(pmset -g custom 2>/dev/null | awk '/^AC Power:/{f=1;next}/^Battery Power:/{f=0}f')"
-get() { echo "$AC" | grep -iE "^[[:space:]]*$1[[:space:]]" | awk '{print $2}' | head -1; }
+# 키는 대소문자 정확히 + 값은 숫자여야 매칭("Sleep On Power Button" 오매칭 방지)
+get() { echo "$AC" | grep -E "^[[:space:]]*$1[[:space:]]+[0-9]" | awk '{print $2}' | head -1; }
 SLEEP="$(get sleep)"; DISABLE="$(get disablesleep)"; DISP="$(get displaysleep)"
 
 ok=1
