@@ -4,3 +4,6 @@ Allow: /
 
 # 사이트맵 위치 (검색엔진이 전체 글 목록을 빠르게 찾도록)
 Sitemap: https://allexishere.com/sitemap-index.xml
+
+# 다음(Daum) 웹마스터도구 사이트 소유확인
+#DaumWebMasterTool:7bd07381f0bb2a7627ce76cda58b41340154074fd263d7266c2edad0edf40f55:NiOyAE5ZJkiEzD8K4oekAg==
