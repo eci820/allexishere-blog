@@ -62,6 +62,14 @@ const ogImageURL = new URL(image, SITE.url).href;
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
 
+    <!-- 색인 정책: 큰 이미지 미리보기·리치 스니펫 허용.
+         지금은 텍스트 우선이라 썸네일이 없지만, 추후 이미지 재개 시
+         구글 디스커버·큰 썸네일 자격이 즉시 활성되도록 미리 심어둡니다. -->
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
     <!-- 검색엔진 소유확인 -->
     <!-- 구글: 'HTML 파일' 방식으로 확인합니다 → public/googlef051622969252cab.html
          (메타태그 방식이 아니라 파일 방식이라 head 에는 넣지 않습니다) -->

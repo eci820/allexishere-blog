@@ -36,7 +36,9 @@ const blog = defineCollection({
       updatedDate: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
       /** 태그 목록 */
       tags: z.array(z.string()).default([]),
-      /** 대표 이미지. 편집기의 빈 문자열은 '없음'으로 처리 */
+      /** 대표 이미지 — **선택 사항**(비워두는 게 기본). 없으면 목록은 텍스트 카드,
+       *  상세는 히어로 생략, 공유 미리보기(og)는 기본 이미지로 자동 대체됩니다.
+       *  편집기의 빈 문자열은 '없음'으로 처리. */
       cover: z.preprocess(emptyToUndefined, image().optional()),
       /** 대표 이미지 대체 텍스트 */
       coverAlt: z.string().optional(),
