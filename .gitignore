@@ -33,3 +33,10 @@ scratch/
 .obsidian/
 .trash/
 .obsidian/workspace*.json
+
+# 자동화 파이프라인: 비밀·상태·로그 (로컬 전용)
+automation/.env
+automation/state/
+automation/logs/
+# 템플릿은 추적(전역 gitignore의 .env.* 규칙을 이 저장소에서만 해제)
+!automation/.env.example

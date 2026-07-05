@@ -1,0 +1,27 @@
+{
+  "mode": "briefing",
+  "engine": "claude-cli",
+  "_engineNote": "claude-cli=구독 헤드리스(기본) / anthropic-api=API 직접. claude-cli 실패 시 API키 있으면 자동 폴백.",
+  "cliModel": "sonnet",
+  "cliTimeoutSeconds": 240,
+  "model": "claude-sonnet-5",
+  "briefingCount": 9,
+  "briefingSchedule": [ { "h": 8, "m": 0 }, { "h": 11, "m": 20 }, { "h": 17, "m": 0 } ],
+  "draftsPerRun": 5,
+  "source": "trend:5",
+  "sourceOptions": ["trend:5", "trend:3+evergreen:2", "evergreen:5"],
+  "evergreenMix": { "parking": 3, "tax": 1, "health": 1 },
+  "charTarget": { "min": 1800, "max": 2200 },
+  "heartbeatSeconds": 60,
+  "watchdogStaleSeconds": 300,
+  "pollTimeoutSeconds": 50,
+  "pricing": {
+    "_note": "Sonnet 5 표준 요금(USD/1M tokens). 2026-08-31까지 인트로 $2/$10 이므로 실제론 더 쌈. 보수적으로 표준값 사용.",
+    "inputPerM": 3.0,
+    "outputPerM": 15.0,
+    "cacheWriteMult": 1.25,
+    "cacheReadMult": 0.1,
+    "usdToKrw": 1400
+  },
+  "monthlyEstimate": { "weekdaysPerMonth": 22 }
+}

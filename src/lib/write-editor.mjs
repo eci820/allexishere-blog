@@ -124,26 +124,15 @@ function apiUpload(res, body) {
   fs.writeFileSync(path.join(dir, name), Buffer.from(m[2], 'base64'));
   json(res, { ok: true, save: './' + name, show: '/write/media/' + encodeURIComponent(slug) + '/' + encodeURIComponent(name) });
 }
-function apiPublish(res, body) {
+async function apiPublish(res, body) {
   const slug = safeSlug(body.slug);
-  const dir = path.join(BLOG, slug); const f = path.join(dir, 'index.md');
+  const f = path.join(BLOG, slug, 'index.md');
   if (!fs.existsSync(f)) return json(res, { ok: false, error: 'not found' });
-  // draft 해제
-  let raw = fs.readFileSync(f, 'utf8');
-  raw = raw.replace(/^draft:\s*true\s*$/m, 'draft: false');
-  if (!/^draft:/m.test(raw)) raw = raw.replace(/^---\r?\n/, '---\ndraft: false\n');
-  fs.writeFileSync(f, raw);
-  // 이 글 파일들만 커밋+푸시
-  const rel = path.relative(ROOT, dir);
-  try {
-    execFileSync('git', ['add', '--', rel], { cwd: ROOT });
-    try { execFileSync('git', ['commit', '-m', `content: 발행 "${body.title || slug}"`], { cwd: ROOT, stdio: 'pipe' }); }
-    catch (e) { const out = (e.stdout || '').toString(); if (/nothing to commit/.test(out)) return json(res, { ok: true, message: '변경 없음(이미 최신).' }); throw e; }
-    execFileSync('git', ['push'], { cwd: ROOT, stdio: 'pipe' });
-    json(res, { ok: true, message: `커밋+푸시 완료: ${rel}` });
-  } catch (e) {
-    json(res, { ok: false, error: (e.stderr || e.stdout || e.message || '').toString().slice(0, 400) });
-  }
+  // 봇 승인과 동일한 '공유 게시 함수'(락으로 직렬화)를 사용해 동시 발행 충돌을 막습니다.
+  const { publish } = await import('../../automation/publish.mjs');
+  const r = await publish({ slug, title: body.title });
+  if (r.ok) json(res, { ok: true, message: `게시 완료: ${r.url}` });
+  else json(res, { ok: false, error: r.error });
 }
 
 function serveFile(res, filePath) {
@@ -185,7 +174,7 @@ export function writeDevEditor() {
               if (action === 'load') return apiLoad(res, b);
               if (action === 'save') return apiSave(res, b);
               if (action === 'upload') return apiUpload(res, b);
-              if (action === 'publish') return apiPublish(res, b);
+              if (action === 'publish') return await apiPublish(res, b);
             } catch (e) { return json(res, { ok: false, error: (e.message || '').toString() }, 500); }
             return json(res, { ok: false, error: 'unknown action' }, 404);
           }
