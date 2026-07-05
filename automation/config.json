@@ -12,6 +12,8 @@
   "sourceOptions": ["trend:5", "trend:3+evergreen:2", "evergreen:5"],
   "evergreenMix": { "parking": 3, "tax": 1, "health": 1 },
   "charTarget": { "min": 1800, "max": 2200 },
+  "charMinByTier": { "trend": 1600, "calendar": 1800, "evergreen": 1800, "manual": 1700 },
+  "maxSameDayPublish": 3,
   "heartbeatSeconds": 60,
   "watchdogStaleSeconds": 300,
   "pollTimeoutSeconds": 50,

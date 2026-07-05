@@ -140,6 +140,16 @@ function clearEditPending(msgId) {
   delete m[msgId];
   fs.writeFileSync(EDITS, JSON.stringify(m));
 }
+// D-6: 당일 발행 수 카운트(오늘 것만 유지). 발행 성공 시 호출.
+function bumpPublishCount() {
+  const f = path.join(STATE, 'publish-days.json');
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // KST 날짜
+  let m = {};
+  try { m = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+  m = { [today]: (m[today] || 0) + 1 }; // 과거 날짜는 정리
+  fs.writeFileSync(f, JSON.stringify(m));
+  return m[today];
+}
 async function handleEdit(pending, instruction, replyId) {
   clearEditPending(replyId);
   await sendMessage(ME, `⏳ "${pending.title.slice(0, 24)}" 수정 중…`);
@@ -342,7 +352,16 @@ async function handleCallback(cb) {
   } else if (action === 'ok') {
     try {
       const res = await publishSlug(entry.slug, entry.title);
-      await sendMessage(ME, res.ok ? `🚀 게시 완료\n${res.url}` : `❌ 게시 실패: ${res.error}`);
+      if (res.ok) {
+        const n = bumpPublishCount();
+        let msg = `🚀 게시 완료\n${res.url}`;
+        if (n > (CFG.maxSameDayPublish || 3)) {
+          msg += `\n\n📊 오늘 ${n}편째 — 신생 사이트는 분산 발행을 권장합니다. 남은 초안은 내일 승인해도 재고로 유지됩니다.`;
+        }
+        await sendMessage(ME, msg);
+      } else {
+        await sendMessage(ME, `❌ 게시 실패: ${res.error}`);
+      }
     } catch (e) {
       await sendMessage(ME, `❌ 게시 오류: ${e.message}`);
     }

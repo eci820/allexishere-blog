@@ -60,19 +60,62 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 [GFM 표 규칙 — 게시 화면 깨짐 방지]
 - 표 위·아래에 빈 줄. 헤더행 바로 아래 구분행(|---|---|). 행 사이에 빈 줄 절대 금지. 모든 행 열 수 동일.
 
+[저품질·복제 방지 — 필수]
+- 웹에서 찾은 문장을 그대로 옮기지 말고 반드시 '자기 문장'으로 재서술하세요. 직접 인용이 꼭 필요하면 1문장 이내 + 출처 명시로만.
+- 제공된 '관련 글'과 핵심 문단·표 구성이 겹치지 않게(겹치면 다른 각도로 접근).
+- 키워드 남용 금지: 핵심 키워드는 제목·첫 문단·소제목에 자연스럽게만. 본문에서 기계적으로 반복하거나 키워드를 나열하는 문장 금지.
+- 상투 도입·맺음 금지: "오늘은 ~에 대해 알아보겠습니다", "지금까지 ~에 대해 살펴봤습니다" 류 금지.
+
+[YMYL 단정어 금지]
+- "무조건, 100%, 반드시 ~됩니다, 절대" 같은 단정 표현 금지 → "일반적으로, ~일 수 있습니다, 공식 확인이 필요합니다"로 완화.
+- 세금·건강 등 민감 주제는 기준일·고지문·출처 규칙을 반드시 지킬 것.
+
+[자기검증 — 출력 전 1회]
+- h2들이 이 검색어의 '하위 질문'을 빠짐없이 답하는지 스스로 점검하고, 빠진 게 있으면 h2를 보강해 분량 하한을 채우세요. 단, 불필요한 반복(물 타기)으로 늘리지 말 것.
+
 [품질/문체]
 - 여러 출처 종합한 '독자적 정리물'. 특정 기사 복붙·요약 금지. 존댓말, 담백·정확, 이모지 남발 금지.
 - 글 끝에 기준일·고지문: "본 글은 {오늘 날짜} 기준 정보이며, 요금·일정 등은 변동될 수 있으니 공식 출처를 확인하세요."
 - 제공된 '관련 글'이 있으면 본문에 자연스러운 마크다운 링크 1개.`;
 
+// 최근 발행글 컨텍스트(서두·약속어 로테이션용)
+const PROMISE_WORDS = ['총정리', '방법', '가이드', '핵심', '정리', '기준', '비교', '완벽', '한눈에', '팁'];
+function recentContext(n = 5) {
+  if (!fs.existsSync(BLOG)) return { intros: [], usedPromise: [] };
+  const posts = [];
+  for (const d of fs.readdirSync(BLOG)) {
+    const f = path.join(BLOG, d, 'index.md');
+    if (!fs.existsSync(f)) continue;
+    const raw = fs.readFileSync(f, 'utf8');
+    if (/^draft:\s*true/m.test(raw)) continue;
+    const title = (raw.match(/^title:\s*"?(.*?)"?\s*$/m) || [])[1] || '';
+    const pub = (raw.match(/^pubDate:\s*(.*)$/m) || [])[1] || '';
+    const body = raw.split(/^---\s*$/m).slice(2).join('---').split('<!--')[0].trim();
+    const firstLine = (body.split('\n').find((l) => l.trim() && !l.startsWith('#') && !l.startsWith('|')) || '').trim();
+    posts.push({ title, pub, firstLine });
+  }
+  posts.sort((a, b) => b.pub.localeCompare(a.pub));
+  const recent = posts.slice(0, n);
+  return {
+    intros: recent.map((p) => p.firstLine.slice(0, 50)).filter(Boolean),
+    usedPromise: [...new Set(recent.slice(0, 2).flatMap((p) => PROMISE_WORDS.filter((w) => p.title.includes(w))))],
+  };
+}
+
 function task(keyword, opts, ctx) {
-  const { related, hints } = ctx || {};
+  const { related, hints, recent } = ctx || {};
   const hintTxt =
     hints && hints.length
       ? `\n검색량 높은 조합(제목 앞부분에 활용): ${hints.map((h) => `${h.k}(${h.vol.toLocaleString('en-US')})`).join(', ')}`
       : '';
+  let rot = '';
+  if (recent && recent.intros.length)
+    rot += `\n최근 발행 도입부(아래와 겹치지 않는 '다른 방식'으로 시작 — 질문형/상황형/숫자형/뉴스형 중 최근에 안 쓴 것):\n` +
+      recent.intros.map((s) => `  · ${s}…`).join('\n');
+  if (recent && recent.usedPromise.length)
+    rot += `\n최근 제목이 쓴 약속어(연속 사용 금지): ${recent.usedPromise.join(', ')} → 이번엔 다른 약속어(가이드/기준/비교 등) 또는 약속어 없이.`;
   return (
-    `키워드: ${keyword}\n오늘 날짜: ${kstDate()}` + hintTxt + '\n' +
+    `키워드: ${keyword}\n오늘 날짜: ${kstDate()}` + hintTxt + rot + '\n' +
     (related ? `관련 글(본문에 링크 1개로 자연스럽게): [${related.title}](${related.url})\n` : '') +
     (opts.gossip ? `주의: 연예/가십성일 수 있음 — 정보성으로 우회하고 안전규칙 특히 엄수.\n` : '')
   );
@@ -250,7 +293,7 @@ export async function generateOne(keyword, opts, config, chatId) {
   config = config || loadConfig();
   opts = opts || {};
   fs.mkdirSync(STATE, { recursive: true });
-  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword) };
+  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword), recent: recentContext() };
 
   let res;
   try {
@@ -273,6 +316,24 @@ export async function generateOne(keyword, opts, config, chatId) {
   }
 
   const d = res.draft;
+  // D-5 얇음 방지: 계급별 분량 하한의 90% 미만이면 claude-cli 로 1회 보강
+  const tierMin = (config.charMinByTier && config.charMinByTier[opts.source]) || config.charTarget?.min || 1800;
+  if (res.engine === 'claude-cli' && d.body.length < tierMin * 0.9) {
+    try {
+      const bp =
+        `아래 블로그 본문이 짧습니다(현재 약 ${d.body.length}자, 목표 공백포함 ${tierMin}자 이상). ` +
+        `h2별 '하위 질문'을 빠짐없이 답하도록 실질 정보를 보강·확장하세요. 기존 내용·구조·표·링크·문체는 유지하고 ` +
+        `불필요한 반복(물 타기) 없이. frontmatter·코드펜스·설명 없이 수정된 전체 본문 마크다운만 출력.\n\n[현재 본문]\n${d.body}`;
+      const ba = ['-p', bp, '--output-format', 'json', '--allowedTools', 'WebSearch'];
+      if (config.cliModel) ba.push('--model', config.cliModel);
+      const { stdout } = await execFileP('claude', ba, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env } });
+      const bj = JSON.parse(stdout);
+      if (!bj.is_error && bj.result) {
+        const nb = bj.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
+        if (nb.length > d.body.length) { d.body = nb; res.costUsd = (res.costUsd || 0) + (bj.total_cost_usd || 0); }
+      }
+    } catch { /* 보강 실패 시 원본 유지 */ }
+  }
   const slug = uniqueSlug(slugify(d.title));
   const dir = path.join(BLOG, slug);
   fs.mkdirSync(dir, { recursive: true });
