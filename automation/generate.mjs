@@ -163,6 +163,15 @@ function saveDraftMapEntry(id, entry) {
   fs.writeFileSync(f, JSON.stringify(map, null, 1));
 }
 function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+// 짧은 고유 콜백 토큰(예: d1a2b3c) — 'ok:'+id 가 64바이트 안에 들어오게.
+function draftId(slug) {
+  const f = path.join(STATE, 'drafts.json');
+  let map = {};
+  try { map = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+  let id, i = 0;
+  do { id = 'd' + Math.abs(hash(slug + '#' + i)).toString(36); i++; } while (map[id]);
+  return id;
+}
 
 // ── 초안 1편 생성(엔진 선택 + 폴백 + 파일 + 승인메시지 + 비용로그) ──
 // return: { ok, slug } | { ok:false, reason:'limit'|'refusal'|'error', message }
@@ -225,9 +234,9 @@ export async function generateOne(keyword, opts, config, chatId) {
   );
   console.log(`[cost] ${slug} (${res.engine}): ${costLine}`);
 
-  // 텔레그램 승인 메시지
+  // 텔레그램 승인 메시지 (callback_data 는 64바이트 제한 → 짧은 토큰 사용)
   if (chatId) {
-    const id = slug.slice(0, 36) + '_' + Math.abs(hash(slug)).toString(36);
+    const id = draftId(slug);
     saveDraftMapEntry(id, { slug, title: d.title });
     const summary = (d.description || d.body).replace(/\s+/g, ' ').slice(0, 150);
     const msg =
