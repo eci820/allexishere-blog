@@ -6,6 +6,7 @@ import { AUTO_DIR, loadConfig } from './lib/env.mjs';
 import { briefingCandidates } from './keywords.mjs';
 import { calendarRadar } from './lib/calendar.mjs';
 import { enrichKeywords, statLine } from './lib/naver.mjs';
+import { hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 
 const STATE = path.join(AUTO_DIR, 'state');
@@ -69,7 +70,8 @@ export async function runBriefing({ chatId, config } = {}) {
     briefed[c.keyword] = Date.now();
     const title = c.source === 'calendar' ? `${c.label} (최적 발행 D-${c.daysUntil})` : c.keyword;
     const st = statLine(stats[c.keyword]);
-    lines.push(`${i}. ${icon(c.source)} ${title}${c.gossip ? ' ⚠️' : ''}` + (st ? `\n   ${st}` : ''));
+    const badge = hasExistingPost(c.keyword) ? ' 📂기존글' : '';
+    lines.push(`${i}. ${icon(c.source)} ${title}${c.gossip ? ' ⚠️' : ''}${badge}` + (st ? `\n   ${st}` : ''));
     rows.push([{ text: `${icon(c.source)} ${(c.source === 'calendar' ? c.label : c.keyword).slice(0, 40)}`, callback_data: 'gen:' + id }]);
     i++;
   }
@@ -78,7 +80,8 @@ export async function runBriefing({ chatId, config } = {}) {
 
   const header =
     `🗞 키워드 브리핑 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
-    `탭 = 초안 생성(순차). 📅선점 🔥실검 🌲에버그린 · 지표=검색량·문서수·비율\n`;
+    `탭 = 초안 생성(순차). 📅선점 🔥실검 🌲에버그린 · 지표=검색량·문서수·비율\n` +
+    `📂기존글 = 같은 주제 글 보유 → 탭 말고 '갱신 지시' 권장\n`;
   await sendMessage(chatId, header + '\n' + lines.join('\n\n'), inlineButtons(rows));
   return ordered.length;
 }

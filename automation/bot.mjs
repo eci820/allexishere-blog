@@ -57,6 +57,51 @@ function loadKwMap() {
     return {};
   }
 }
+const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+// kwmap 에 키워드 등록 → gen:<id> 콜백으로 재사용(재시도·/draft 계속)
+function registerKw(entry) {
+  const f = path.join(STATE, 'kwmap.json');
+  let map = {};
+  try { map = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+  let id, i = 0;
+  do { id = 'k' + Math.abs(hash(entry.keyword + '#d' + i)).toString(36); i++; } while (map[id]);
+  map[id] = { keyword: entry.keyword, source: entry.source || 'manual', gossip: !!entry.gossip };
+  fs.writeFileSync(f, JSON.stringify(map, null, 1));
+  return id;
+}
+async function existingTopic(keyword) {
+  const { existingMatch } = await import('./lib/topics.mjs');
+  return existingMatch(keyword);
+}
+
+// ── 전문보기용 GFM 표 → 모노스페이스 정렬 ──
+function extractTables(md) {
+  const L = md.split('\n'), out = [];
+  const isRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+  const isSep = (l) => /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(l) && l.includes('-');
+  for (let i = 0; i < L.length; i++) {
+    if (isRow(L[i]) && isSep(L[i + 1] || '')) {
+      const rows = []; let j = i;
+      while (j < L.length && isRow(L[j])) { rows.push(L[j]); j++; }
+      out.push(rows); i = j - 1;
+    }
+  }
+  return out;
+}
+const dispW = (s) => [...String(s)].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x1100 ? 2 : 1), 0);
+function alignTable(rows) {
+  const cells = rows.map((r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+  const data = cells.filter((_, idx) => idx !== 1); // 구분행 제거
+  const ncol = Math.max(...data.map((r) => r.length));
+  const w = Array.from({ length: ncol }, (_, c) => Math.max(...data.map((r) => dispW(r[c] || ''))));
+  const pad = (s, w2) => s + ' '.repeat(Math.max(0, w2 - dispW(s)));
+  return data
+    .map((r, ri) => {
+      const line = r.map((c, ci) => pad(c || '', w[ci])).join('  ');
+      return ri === 0 ? line + '\n' + w.map((x) => '─'.repeat(x)).join('  ') : line;
+    })
+    .join('\n');
+}
 
 // 키워드 탭 → 순차 생성 큐(여러 개 탭해도 하나씩 처리)
 const genQueue = [];
@@ -70,9 +115,8 @@ async function drainQueue() {
     try {
       const r = await genOne(entry);
       if (!r.ok) {
-        if (r.reason === 'limit') await sendMessage(ME, `⏳ "${entry.keyword}" 한도/오류 — 나중에 재시도하세요.`);
-        else if (r.reason === 'refusal') await sendMessage(ME, `⛔ "${entry.keyword}" 안전상 거절(건너뜀).`);
-        else await sendMessage(ME, `❌ "${entry.keyword}" 실패: ${r.message}`);
+        const { sendFailure } = await import('./generate.mjs');
+        await sendFailure(ME, entry, r); // 구분형 오류(한도/인증) + [🔄재시도]
       }
     } catch (e) {
       await sendMessage(ME, `❌ "${entry.keyword}" 오류: ${e.message}`);
@@ -123,15 +167,19 @@ async function handleCommand(text) {
       await sendMessage(
         ME,
         [
-          '🤖 트렌드 초안 봇 (v2.1)',
+          '🤖 트렌드 초안 봇 (v2.3)',
           '/brief — 지금 키워드 브리핑 받기(후보 버튼)',
-          '/draft <키워드> — 지정 키워드로 1편 즉시',
+          '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
           '/draft — 모드 기본동작(briefing=브리핑 / batch=일괄)',
           '/status — 상태 확인',
           '/delete <슬러그> — 초안 삭제',
           '',
           `엔진: ${CFG.engine} · 모드: ${CFG.mode}`,
           '흐름: 브리핑 → 키워드 탭 → 초안 → [✅승인] 눌러야만 게시.',
+          '',
+          '📂 표시(기존 글 보유): 같은 주제 글이 이미 있다는 신호.',
+          '   → 새로 만들지(탭하지) 말고, 그 글을 "갱신"하도록 지시하세요.',
+          '🔄 재시도: 생성 실패 시 원터치 재생성. 🔐인증오류=점검, ⏳한도=리셋 후.',
         ].join('\n')
       );
       break;
@@ -149,8 +197,23 @@ async function handleCommand(text) {
     case '/draft':
       try {
         if (arg) {
-          await sendMessage(ME, `⏳ "${arg}" 초안 생성 중…`);
-          await genOne({ keyword: arg, source: 'manual', gossip: false });
+          // 기존 글과 주제 겹치면 경고 후 진행 여부를 물음
+          const m = await existingTopic(arg);
+          if (m && m.score >= 1) {
+            const id = registerKw({ keyword: arg, source: 'manual', gossip: false });
+            await sendMessage(
+              ME,
+              `⚠️ 유사 발행글이 있습니다:\n📂 "${m.title}"\n\n새 초안을 만들면 주제가 겹칩니다. 기존 글 '갱신'을 권장합니다. 그래도 새로 만들까요?`,
+              inlineButtons([[
+                { text: '✅ 계속(새 초안)', callback_data: 'gen:' + id },
+                { text: '❌ 취소', callback_data: 'cancel:x' },
+              ]])
+            );
+          } else {
+            await sendMessage(ME, `⏳ "${arg}" 초안 생성 중…`);
+            genQueue.push({ keyword: arg, source: 'manual', gossip: false });
+            drainQueue();
+          }
         } else if (CFG.mode === 'batch') {
           await sendMessage(ME, '⏳ 일괄(batch) 생성 중…');
           await generate(null);
@@ -177,7 +240,7 @@ async function handleCommand(text) {
 async function handleCallback(cb) {
   const [action, id] = (cb.data || '').split(':');
 
-  // 키워드 브리핑 버튼 탭 → 생성 큐에 추가(순차 처리)
+  // 키워드 브리핑/재시도/계속 버튼 탭 → 생성 큐에 추가(순차 처리)
   if (action === 'gen') {
     const kw = loadKwMap()[id];
     await answerCallback(cb.id, kw ? `대기열 추가: ${kw.keyword.slice(0, 20)}` : '만료된 버튼');
@@ -185,6 +248,10 @@ async function handleCallback(cb) {
     genQueue.push(kw);
     drainQueue(); // 백그라운드(await 안 함) — 봇은 계속 응답
     return;
+  }
+  if (action === 'cancel') {
+    await answerCallback(cb.id, '취소됨');
+    return sendMessage(ME, '취소했습니다.');
   }
 
   const map = loadDraftMap();
@@ -198,9 +265,18 @@ async function handleCallback(cb) {
 
   if (action === 'view') {
     if (!fs.existsSync(f)) return sendMessage(ME, `파일 없음: ${entry.slug}`);
-    // .md 문서 첨부는 텔레그램 미리보기에서 한글이 깨져 → 텍스트 메시지로 분할 전송(자동 분할)
+    // 문서 첨부는 한글 미리보기가 깨져 → 텍스트로 분할 전송(자동 분할)
     const md = fs.readFileSync(f, 'utf8');
     await sendMessage(ME, `📖 ${entry.title}\n\n${md}`);
+    // 표가 있으면 모노스페이스 정렬로 다시 보여줌(게시 화면은 깔끔하게 렌더)
+    const tables = extractTables(md);
+    if (tables.length) {
+      await sendMessage(ME, '📊 아래 표는 게시 화면에서 깔끔한 표로 렌더됩니다 (여기선 정렬 미리보기):');
+      for (const rows of tables) {
+        const esc = alignTable(rows).replace(/\\/g, '\\\\').replace(/`/g, '\\`');
+        await sendMessage(ME, '```\n' + esc + '\n```', { parse_mode: 'MarkdownV2' });
+      }
+    }
   } else if (action === 'ok') {
     try {
       const res = await publishSlug(entry.slug, entry.title);
