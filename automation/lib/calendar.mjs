@@ -42,5 +42,6 @@ export function calendarRadar(limit = 2, minD = 3, maxD = 14) {
     label: e.label,
     daysUntil: e.daysUntil,
     note: e.window,
+    updateTarget: e.updateTarget || null, // 📂갱신 대상 글 URL(있으면)
   }));
 }

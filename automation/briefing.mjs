@@ -70,7 +70,7 @@ export async function runBriefing({ chatId, config } = {}) {
     briefed[c.keyword] = Date.now();
     const title = c.source === 'calendar' ? `${c.label} (최적 발행 D-${c.daysUntil})` : c.keyword;
     const st = statLine(stats[c.keyword]);
-    const badge = hasExistingPost(c.keyword) ? ' 📂기존글' : '';
+    const badge = c.updateTarget || hasExistingPost(c.keyword) ? ' 📂기존글' : '';
     lines.push(`${i}. ${icon(c.source)} ${title}${c.gossip ? ' ⚠️' : ''}${badge}` + (st ? `\n   ${st}` : ''));
     rows.push([{ text: `${icon(c.source)} ${(c.source === 'calendar' ? c.label : c.keyword).slice(0, 40)}`, callback_data: 'gen:' + id }]);
     i++;
