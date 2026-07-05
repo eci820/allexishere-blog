@@ -198,7 +198,9 @@ async function handleCallback(cb) {
 
   if (action === 'view') {
     if (!fs.existsSync(f)) return sendMessage(ME, `파일 없음: ${entry.slug}`);
-    await sendDocument(ME, `${entry.slug}.md`, fs.readFileSync(f, 'utf8'), `📖 ${entry.title}`);
+    // .md 문서 첨부는 텔레그램 미리보기에서 한글이 깨져 → 텍스트 메시지로 분할 전송(자동 분할)
+    const md = fs.readFileSync(f, 'utf8');
+    await sendMessage(ME, `📖 ${entry.title}\n\n${md}`);
   } else if (action === 'ok') {
     try {
       const res = await publishSlug(entry.slug, entry.title);
