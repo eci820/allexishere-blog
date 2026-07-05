@@ -1,6 +1,7 @@
-# 모든 검색로봇 허용
-User-agent: *
-Allow: /
+# 참고: User-agent/Allow 및 AI 크롤러 차단 블록은 Cloudflare가 배포 시 자동 주입합니다
+# (라이브 파일의 "# BEGIN/END Cloudflare Managed content" 구간).
+# 그 블록에 이미 "User-agent: * / Allow: /"(search=yes)가 있으므로, 여기서는 중복을
+# 피하려고 User-agent 블록을 두지 않고 사이트맵·소유확인만 둡니다(둘 다 그룹 무관 지시/주석).
 
 # 사이트맵 위치 (검색엔진이 전체 글 목록을 빠르게 찾도록)
 Sitemap: https://allexishere.com/sitemap-index.xml
