@@ -1,0 +1,24 @@
+{
+  "_note": "반복 일정 DB. month/day = 관심이 급상승하는 시작 시점(폭발 지점). 브리핑은 D-14~D-3 구간 항목을 📅로 노출. keyword는 검색량이 잡히는 '검색어 형태'(짧게), label은 사람용 설명. 변동 일정(명절 예매·공연)은 source 확인 후 연도별 갱신 권장.",
+  "events": [
+    { "label": "연말정산 간소화 서비스 개통", "keyword": "연말정산 간소화", "month": 1, "day": 15, "category": "tax", "window": "매년 1/15 개통", "source": "국세청 홈택스" },
+    { "label": "자동차세 연납 신청", "keyword": "자동차세 연납", "month": 1, "day": 16, "category": "tax", "window": "매년 1월(연납 최대 할인)", "source": "위택스" },
+    { "label": "부가가치세 2기 확정신고", "keyword": "부가가치세 신고", "month": 1, "day": 20, "category": "tax", "window": "매년 1/1~1/25", "source": "국세청 홈택스" },
+    { "label": "설날 연휴 문 여는 병원·약국", "keyword": "설날 문 여는 병원", "month": 2, "day": 13, "category": "holiday", "window": "2026 설날 2/17(연휴 2/14~2/18)", "source": "응급의료포털 e-gen" },
+    { "label": "근로장려금 반기(하반기분) 신청", "keyword": "근로장려금 반기 신청", "month": 3, "day": 1, "category": "support", "window": "2026 3/1~3/15 신청, 6월말 지급", "source": "국세청" },
+    { "label": "벚꽃 개화 시기·명소", "keyword": "벚꽃 개화 시기", "month": 3, "day": 20, "category": "season", "window": "매년 3월말~4월초", "source": "기상청 개화예상" },
+    { "label": "종합소득세 신고", "keyword": "종합소득세 신고", "month": 5, "day": 1, "category": "tax", "window": "매년 5/1~5/31", "source": "국세청 홈택스" },
+    { "label": "근로장려금 정기 신청", "keyword": "근로장려금 신청", "month": 5, "day": 1, "category": "support", "window": "매년 5/1~5/31 신청", "source": "국세청" },
+    { "label": "장마 기간·예보", "keyword": "장마 기간", "month": 6, "day": 18, "category": "season", "window": "매년 6월 하순~7월", "source": "기상청" },
+    { "label": "폭염·온열질환 예방", "keyword": "온열질환 예방", "month": 7, "day": 10, "category": "season", "window": "매년 7~8월", "source": "질병관리청" },
+    { "label": "재산세 1기분 납부", "keyword": "재산세 조회", "month": 7, "day": 16, "category": "tax", "window": "매년 7/16~7/31", "source": "위택스" },
+    { "label": "부가가치세 1기 확정신고", "keyword": "부가가치세 신고", "month": 7, "day": 20, "category": "tax", "window": "매년 7/1~7/25", "source": "국세청 홈택스" },
+    { "label": "추석 KTX 승차권 예매", "keyword": "추석 기차표 예매", "month": 8, "day": 25, "category": "holiday", "window": "2026 추석 9/25(예매 통상 3~4주 전, 코레일 공지)", "source": "코레일" },
+    { "label": "근로장려금 반기(상반기분) 신청", "keyword": "근로장려금 반기 신청", "month": 9, "day": 1, "category": "support", "window": "2026 9/1~9/15 신청, 12월말 지급", "source": "국세청" },
+    { "label": "재산세 2기분 납부", "keyword": "재산세 조회", "month": 9, "day": 16, "category": "tax", "window": "매년 9/16~9/30", "source": "위택스" },
+    { "label": "추석 연휴 문 여는 병원·약국", "keyword": "추석 문 여는 병원", "month": 9, "day": 21, "category": "holiday", "window": "2026 추석 9/24~9/26", "source": "응급의료포털 e-gen" },
+    { "label": "단풍 시기·명소", "keyword": "단풍 시기", "month": 10, "day": 15, "category": "season", "window": "매년 10월 중순~하순", "source": "기상청 단풍예상" },
+    { "label": "김장 시기·배추 가격", "keyword": "김장 배추 가격", "month": 11, "day": 8, "category": "season", "window": "매년 11월", "source": "aT 농산물유통정보" },
+    { "label": "한파·대설 대비", "keyword": "한파 대비", "month": 12, "day": 12, "category": "season", "window": "매년 12~1월", "source": "행정안전부" }
+  ]
+}
