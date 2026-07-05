@@ -156,3 +156,10 @@ a {
 .prose .callout-body > :last-child {
   margin-bottom: 0;
 }
+
+/* 광고: 미충전(unfilled) 광고는 공간 없이 접기.
+   애드센스가 광고 요청 후 <ins>에 data-ad-status 를 부여함.
+   충전된 광고의 CLS 예약 높이(min-height)는 그대로 유지되고, 미충전만 사라짐. */
+ins.adsbygoogle[data-ad-status='unfilled'] {
+  display: none !important;
+}

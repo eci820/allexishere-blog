@@ -83,9 +83,6 @@ const jsonLd = {
       }
     </header>
 
-    <!-- [광고 1] 본문 제목 바로 아래 -->
-    <AdUnit slot={ADSENSE.slots.top} minHeight={100} label="광고 자리 (제목 아래)" />
-
     <!-- 대표 이미지(있을 때만) -->
     {
       post.data.cover && (
@@ -113,12 +110,13 @@ const jsonLd = {
     <!-- [광고 3] 본문 맨 끝 -->
     <AdUnit slot={ADSENSE.slots.bottom} minHeight={280} label="광고 자리 (본문 끝)" />
 
-    <!-- [광고 2] 첫 소제목(h2) 뒤에 끼워 넣기.
-         본문은 마크다운으로 렌더링되므로, 아래 설정값을 읽어 스크립트가
-         첫 h2 를 찾아 그 뒤에 광고 자리를 삽입합니다. -->
+    <!-- 상단(리드 직후)·중간(첫 소제목 뒤) 광고를 스크립트로 삽입.
+         본문이 마크다운 렌더라 위치를 클라이언트에서 잡습니다.
+         미충전(data-ad-status=unfilled) 광고는 global.css 에서 접혀 공백이 남지 않습니다. -->
     <div
-      id="in-article-ad-config"
-      data-slot={ADSENSE.slots.inArticle}
+      id="ad-config"
+      data-top-slot={ADSENSE.slots.top}
+      data-mid-slot={ADSENSE.slots.inArticle}
       data-client={ADSENSE.publisherId}
       data-prod={String(import.meta.env.PROD)}
       hidden
@@ -126,55 +124,58 @@ const jsonLd = {
     </div>
     <script is:inline>
       (function () {
-        var cfg = document.getElementById('in-article-ad-config');
+        var cfg = document.getElementById('ad-config');
         if (!cfg) return;
         var article = document.querySelector('article.prose');
         if (!article) return;
-        var slot = cfg.getAttribute('data-slot') || '';
         var client = cfg.getAttribute('data-client') || '';
         var isProd = cfg.getAttribute('data-prod') === 'true';
+        var loaded = [];
 
-        // 광고를 끼워 넣을 자리(회색 박스) 생성 — CLS 방지용 최소 높이 확보
-        var holder = document.createElement('div');
-        holder.className = 'ad-slot my-8 flex items-center justify-center';
-        holder.style.minHeight = '280px';
-        holder.setAttribute('aria-hidden', 'true');
-
-        var showReal = isProd && slot.length > 0;
-        // 운영인데 슬롯이 비어 있으면 아무것도 삽입하지 않음(회색 '광고 자리' 노출 방지).
-        // 개발 중(!isProd)에는 위치 확인용 회색 박스를 보여줍니다.
-        if (!showReal && isProd) return;
-        if (showReal) {
-          var ins = document.createElement('ins');
-          ins.className = 'adsbygoogle';
-          ins.style.display = 'block';
-          ins.style.width = '100%';
-          ins.style.minHeight = '280px';
-          ins.setAttribute('data-ad-client', client);
-          ins.setAttribute('data-ad-slot', slot);
-          ins.setAttribute('data-ad-format', 'fluid');
-          ins.setAttribute('data-ad-layout', 'in-article');
-          holder.appendChild(ins);
-        } else {
-          var ph = document.createElement('div');
-          ph.className =
-            'w-full rounded-md border border-dashed border-[var(--border)] text-center text-xs flex items-center justify-center';
-          ph.style.minHeight = '280px';
-          ph.style.color = 'var(--muted)';
-          ph.textContent = '광고 자리 (첫 소제목 뒤)';
-          holder.appendChild(ph);
+        // anchor 바로 뒤에 광고 삽입. 운영=<ins>(미충전 시 CSS로 접힘), 개발=위치 마커.
+        function insertAd(anchor, slot, opts, devLabel) {
+          if (isProd && !slot) return; // 운영인데 슬롯 비면 삽입 안 함
+          var el;
+          if (isProd && slot) {
+            el = document.createElement('ins');
+            el.className = 'adsbygoogle my-8';
+            el.style.display = 'block';
+            el.style.width = '100%';
+            el.style.minHeight = opts.minHeight + 'px'; // 충전 시 CLS 예약(미충전은 접힘)
+            el.setAttribute('data-ad-client', client);
+            el.setAttribute('data-ad-slot', slot);
+            el.setAttribute('data-ad-format', opts.format);
+            if (opts.layout) el.setAttribute('data-ad-layout', opts.layout);
+            else el.setAttribute('data-full-width-responsive', 'true');
+          } else {
+            // 개발: 위치만 확인하는 얇은 마커(공백 최소)
+            el = document.createElement('div');
+            el.className =
+              'my-6 w-full rounded-md border border-dashed border-[var(--border)] text-center text-xs py-2';
+            el.style.color = 'var(--muted)';
+            el.textContent = devLabel;
+          }
+          if (anchor) anchor.insertAdjacentElement('afterend', el);
+          else article.appendChild(el);
+          if (isProd && slot) loaded.push(el);
         }
 
-        // 첫 번째 h2 뒤에 삽입. h2 가 없으면 본문 맨 끝에 붙임.
-        var firstH2 = article.querySelector('h2');
-        if (firstH2) {
-          firstH2.insertAdjacentElement('afterend', holder);
-        } else {
-          article.appendChild(holder);
-        }
+        // 상단: 첫 문단(리드) 직후 — 첫 소제목(h2)보다 앞이라 중간 슬롯과 겹치지 않음
+        insertAd(
+          article.querySelector('p'),
+          cfg.getAttribute('data-top-slot') || '',
+          { minHeight: 100, format: 'auto' },
+          '광고 (리드 직후)'
+        );
+        // 중간: 첫 소제목(h2) 직후
+        insertAd(
+          article.querySelector('h2'),
+          cfg.getAttribute('data-mid-slot') || '',
+          { minHeight: 280, format: 'fluid', layout: 'in-article' },
+          '광고 (첫 소제목 뒤)'
+        );
 
-        // 실제 광고일 때만 로드 요청
-        if (showReal) {
+        for (var i = 0; i < loaded.length; i++) {
           (window.adsbygoogle = window.adsbygoogle || []).push({});
         }
       })();
