@@ -303,32 +303,127 @@ export async function generateOne(keyword, opts, config, chatId) {
   );
   console.log(`[cost] ${slug} (${res.engine}): ${costLine}`);
 
-  // 텔레그램 초안 카드(개선)
+  // 텔레그램 초안 카드
   if (chatId) {
-    const id = saveDraft(slug, d.title);
-    const toc = extractToc(d.body);
-    const feats = bodyFeatures(d.body);
-    const tissues = feats.hasTable ? validateTables(d.body) : [];
-    const badge = hasExistingPost(keyword);
-    const richLine = [feats.hasTable ? '표 포함' : '', feats.hasList ? '목록 포함' : ''].filter(Boolean).join(' · ');
-    const msg =
-      `📝 ${d.title}\n` +
-      (d.context ? `🧭 ${d.context}\n` : '') +
-      `🔑 ${keyword}\n` +
-      (badge ? `📂 유사 발행글 보유: "${badge.title}"\n   → 새로 만들지 말고 그 글 '갱신'을 지시하세요\n` : '') +
-      (toc.length ? `📑 목차: ${toc.join(' · ')}\n` : '') +
-      (richLine ? `🧩 ${richLine}\n` : '') +
-      (tissues.length ? `⚠️ 표 문법 점검: ${tissues.join(', ')}\n` : '') +
-      (d.riskNotes && !/없음|없습니다/.test(d.riskNotes) ? `⚠️ 검수: ${d.riskNotes.slice(0, 180)}\n` : '') +
-      `💰 ${costLine}\n\n승인하면 게시됩니다.`;
-    await sendMessage(chatId, msg, inlineButtons([[
-      { text: '📖 전문보기', callback_data: 'view:' + id },
-      { text: '✅ 승인', callback_data: 'ok:' + id },
-      { text: '❌ 반려', callback_data: 'no:' + id },
-    ]]));
+    await sendDraftCard(chatId, slug, d.title, { context: d.context, keyword, riskNotes: d.riskNotes, costLine });
   }
   fs.writeFileSync(path.join(STATE, 'last-run.json'), JSON.stringify({ ts: Date.now() }));
   return { ok: true, slug };
+}
+
+// 초안 카드 전송(생성·수정 공용). 본문은 파일에서 읽어 목차·표·배지 계산.
+export async function sendDraftCard(chatId, slug, title, opts = {}) {
+  if (!chatId) return;
+  const f = path.join(BLOG, slug, 'index.md');
+  const raw = fs.readFileSync(f, 'utf8');
+  const body = raw.split(/^---\s*$/m).slice(2).join('---').split('<!--')[0];
+  const id = saveDraft(slug, title);
+  const toc = extractToc(body);
+  const feats = bodyFeatures(body);
+  const tissues = feats.hasTable ? validateTables(body) : [];
+  const badge = hasExistingPost(opts.keyword || title);
+  const richLine = [feats.hasTable ? '표 포함' : '', feats.hasList ? '목록 포함' : ''].filter(Boolean).join(' · ');
+  const rn = opts.riskNotes;
+  const msg =
+    `📝 ${title}\n` +
+    (opts.context ? `🧭 ${opts.context}\n` : '') +
+    (opts.keyword ? `🔑 ${opts.keyword}\n` : '') +
+    (badge ? `📂 유사 발행글 보유: "${badge.title}"\n   → 새로 만들지 말고 그 글 '갱신'을 지시하세요\n` : '') +
+    (toc.length ? `📑 목차: ${toc.join(' · ')}\n` : '') +
+    (richLine ? `🧩 ${richLine}\n` : '') +
+    (tissues.length ? `⚠️ 표 문법 점검: ${tissues.join(', ')}\n` : '') +
+    (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
+    (opts.note ? `${opts.note}\n` : '') +
+    (opts.costLine ? `💰 ${opts.costLine}\n` : '') +
+    `\n승인하면 게시됩니다. (수정은 발행 전에만)`;
+  await sendMessage(chatId, msg, inlineButtons([[
+    { text: '📖 전문', callback_data: 'view:' + id },
+    { text: '✏️ 수정', callback_data: 'edit:' + id },
+    { text: '✅ 승인', callback_data: 'ok:' + id },
+    { text: '❌ 반려', callback_data: 'no:' + id },
+  ]]));
+}
+
+// 초안 수정(발행 전만). instruction '제목:'→제목·슬러그 교체 / 그 외→claude-cli 부분수정.
+export async function editDraft(slug, instruction, config, chatId) {
+  config = config || loadConfig();
+  const f = path.join(BLOG, slug, 'index.md');
+  if (!fs.existsSync(f)) return { ok: false, error: '초안 없음' };
+  const raw = fs.readFileSync(f, 'utf8');
+  if (!/^draft:\s*true/m.test(raw)) return { ok: false, error: 'published' }; // 발행글 차단
+
+  const m = raw.match(/^(---[\s\S]*?---\n+)([\s\S]*)$/);
+  const fm = m[1];
+  const rest = m[2];
+  const riskIdx = rest.indexOf('<!--');
+  const body = (riskIdx >= 0 ? rest.slice(0, riskIdx) : rest).trim();
+  const riskComment = riskIdx >= 0 ? rest.slice(riskIdx) : '';
+
+  // 백업(state, git 밖)
+  const bakDir = path.join(STATE, 'backups');
+  fs.mkdirSync(bakDir, { recursive: true });
+  fs.writeFileSync(path.join(bakDir, slug + '.' + Date.now() + '.bak'), raw);
+
+  // (a) 제목 교체 → 제목·슬러그(발행 전이므로) 변경
+  const t = instruction.trim();
+  if (/^제목\s*[:：]/.test(t)) {
+    const newTitle = t.replace(/^제목\s*[:：]\s*/, '').trim();
+    if (!newTitle) return { ok: false, error: '새 제목이 비어 있습니다' };
+    const nfm = fm.replace(/^title:\s*.*$/m, `title: ${dq(newTitle)}`);
+    fs.writeFileSync(f, nfm + rest);
+    let finalSlug = slug;
+    const newSlug = uniqueSlug(slugify(newTitle));
+    if (newSlug !== slug) {
+      fs.renameSync(path.join(BLOG, slug), path.join(BLOG, newSlug));
+      finalSlug = newSlug;
+    }
+    if (chatId) await sendDraftCard(chatId, finalSlug, newTitle, { note: '✏️ 제목·주소 교체됨' });
+    return { ok: true, slug: finalSlug, kind: 'title' };
+  }
+
+  // (b) AI 부분 수정(claude-cli 구독)
+  const prompt =
+    `아래는 발행 전 블로그 초안의 본문 마크다운입니다. 다음 '수정 지시'대로 지정된 부분만 고치고, ` +
+    `나머지 본문은 한 글자도 바꾸지 마세요. GFM 표·목록 구조는 그대로 유지하세요. ` +
+    `frontmatter·코드펜스·설명 없이 '수정된 전체 본문 마크다운'만 출력하세요.\n\n` +
+    `[수정 지시]\n${instruction}\n\n[현재 본문]\n${body}`;
+  const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
+  if (config.cliModel) args.push('--model', config.cliModel);
+  let newBody, costUsd = 0;
+  try {
+    const { stdout } = await execFileP('claude', args, {
+      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env },
+    });
+    const j = JSON.parse(stdout);
+    if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
+    newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
+    costUsd = j.total_cost_usd || 0;
+  } catch (e) {
+    return { ok: false, error: 'AI 수정 실패: ' + ((e.stderr || e.message || '') + '').slice(0, 120) };
+  }
+  if (!newBody || newBody.length < 50) return { ok: false, error: 'AI 수정 결과가 비었습니다(원본 유지).' };
+
+  // 안전: 길이 급변 감지(지시 범위 이탈 의심)
+  const oldLen = body.length, newLen = newBody.length;
+  const ratio = Math.abs(newLen - oldLen) / oldLen;
+  const bigChange = ratio > 0.4;
+
+  fs.writeFileSync(f, fm + newBody + (riskComment ? '\n\n' + riskComment : '\n'));
+  fs.appendFileSync(
+    path.join(STATE, 'cost-log.jsonl'),
+    JSON.stringify({ ts: kstNow(), slug, action: 'edit', engine: 'claude-cli', subscription: true, usd: +Number(costUsd).toFixed(5), note: '구독 포함(추가 청구 0)' }) + '\n'
+  );
+
+  const title = (fm.match(/^title:\s*"?(.*?)"?\s*$/m) || [])[1] || slug;
+  if (chatId) {
+    if (bigChange)
+      await sendMessage(chatId, `⚠️ 수정 후 길이가 크게 변했습니다(${oldLen}→${newLen}자, ${Math.round(ratio * 100)}%). 지시 범위를 벗어났을 수 있으니 [전문]으로 꼭 확인하세요. (원본 백업됨: state/backups/)`);
+    await sendDraftCard(chatId, slug, title, {
+      costLine: `구독 포함(추가 청구 0) · 환산 $${Number(costUsd).toFixed(4)}`,
+      note: bigChange ? '⚠️ 큰 변경 감지 — 확인 요망' : '✏️ 부분 수정됨',
+    });
+  }
+  return { ok: true, slug, kind: 'ai', bigChange };
 }
 
 // ── 일괄/직접 생성(batch 모드) ──

@@ -125,6 +125,37 @@ async function drainQueue() {
   genBusy = false;
 }
 
+// ---- 초안 수정(발행 전) : [✏️수정] → 답장 지시 → 부분수정 ----
+const EDITS = path.join(STATE, 'edits.json');
+const loadEditPending = () => {
+  try { return JSON.parse(fs.readFileSync(EDITS, 'utf8')); } catch { return {}; }
+};
+function saveEditPending(msgId, entry) {
+  const m = loadEditPending();
+  m[msgId] = { ...entry, ts: Date.now() };
+  fs.writeFileSync(EDITS, JSON.stringify(m));
+}
+function clearEditPending(msgId) {
+  const m = loadEditPending();
+  delete m[msgId];
+  fs.writeFileSync(EDITS, JSON.stringify(m));
+}
+async function handleEdit(pending, instruction, replyId) {
+  clearEditPending(replyId);
+  await sendMessage(ME, `⏳ "${pending.title.slice(0, 24)}" 수정 중…`);
+  try {
+    const { editDraft } = await import('./generate.mjs');
+    const r = await editDraft(pending.slug, instruction, CFG, ME);
+    if (!r.ok) {
+      if (r.error === 'published') await sendMessage(ME, '🔒 발행된 글은 여기서 수정 불가(편집기·별도 지시로).');
+      else await sendMessage(ME, `❌ 수정 실패: ${r.error}`);
+    }
+    // 성공 시 editDraft 가 수정된 카드를 다시 보냄
+  } catch (e) {
+    await sendMessage(ME, `❌ 수정 오류: ${e.message}`);
+  }
+}
+
 // ---- 상태 ----
 function statusText() {
   let last = '없음';
@@ -167,7 +198,7 @@ async function handleCommand(text) {
       await sendMessage(
         ME,
         [
-          '🤖 트렌드 초안 봇 (v2.3)',
+          '🤖 트렌드 초안 봇 (v2.4)',
           '/brief — 지금 키워드 브리핑 받기(후보 버튼)',
           '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
           '/draft — 모드 기본동작(briefing=브리핑 / batch=일괄)',
@@ -175,8 +206,13 @@ async function handleCommand(text) {
           '/delete <슬러그> — 초안 삭제',
           '',
           `엔진: ${CFG.engine} · 모드: ${CFG.mode}`,
-          '흐름: 브리핑 → 키워드 탭 → 초안 → [✅승인] 눌러야만 게시.',
+          '흐름: 브리핑 → 키워드 탭 → 초안 → (필요시 ✏️수정) → [✅승인] 눌러야만 게시.',
           '',
+          '✏️ 수정(발행 전만): 초안 카드의 [✏️수정] → 안내에 답장으로 지시.',
+          '   • "제목: 새 제목" → 제목·주소 교체',
+          '   • "첫 문단 쉽게 / 표에 ○○행 추가 / 끝에 주의 한 줄" → AI 부분수정.',
+          '   여러 번 수정 가능. 표·이미지 정밀 편집은 편집기(npm run write) 권장.',
+          '   발행된 글은 여기서 수정 불가 → 편집기 또는 별도 지시.',
           '📂 표시(기존 글 보유): 같은 주제 글이 이미 있다는 신호.',
           '   → 새로 만들지(탭하지) 말고, 그 글을 "갱신"하도록 지시하세요.',
           '🔄 재시도: 생성 실패 시 원터치 재생성. 🔐인증오류=점검, ⏳한도=리셋 후.',
@@ -258,11 +294,37 @@ async function handleCallback(cb) {
   const entry = map[id];
   await answerCallback(
     cb.id,
-    action === 'ok' ? '게시 처리 중…' : action === 'view' ? '전문 전송 중…' : '반려됨'
+    action === 'ok' ? '게시 처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : '반려됨'
   );
   if (!entry) return sendMessage(ME, '만료된 초안입니다(봇 재시작됨).');
   const f = path.join(ROOT, 'src/content/blog', entry.slug, 'index.md');
 
+  if (action === 'edit') {
+    // 안전장치: 발행된(draft:false) 글은 수정 차단
+    if (fs.existsSync(f) && !/^draft:\s*true/m.test(fs.readFileSync(f, 'utf8'))) {
+      return sendMessage(
+        ME,
+        `🔒 "${entry.title}"는 이미 발행된 글이라 여기서 수정할 수 없습니다.\n편집기(npm run write)에서 열거나, 재산세 갱신처럼 별도 지시로 고쳐주세요.`
+      );
+    }
+    const sent = await sendMessage(
+      ME,
+      [
+        `✏️ "${entry.title}"`,
+        '무엇을 고칠까요? 이 메시지에 답장(reply)으로 지시해 주세요.',
+        '',
+        '예시:',
+        '• 제목: 새로운 제목',
+        '• 첫 문단을 더 쉽게 풀어줘',
+        '• 표에 9월분 행을 추가해줘',
+        '• 마지막에 주의사항 한 줄 추가',
+        '',
+        '표·이미지 정밀 편집은 편집기(npm run write)를 권장합니다.',
+      ].join('\n')
+    );
+    saveEditPending(sent.message_id, { slug: entry.slug, title: entry.title });
+    return;
+  }
   if (action === 'view') {
     if (!fs.existsSync(f)) return sendMessage(ME, `파일 없음: ${entry.slug}`);
     // 문서 첨부는 한글 미리보기가 깨져 → 텍스트로 분할 전송(자동 분할)
@@ -303,8 +365,22 @@ async function main() {
         const cb = u.callback_query;
         const fromId = String(msg?.from?.id || cb?.from?.id || '');
         if (fromId !== ME) continue; // 화이트리스트: 나만
-        if (msg?.text) await handleCommand(msg.text);
-        else if (cb) await handleCallback(cb);
+        if (msg?.text) {
+          let replyId = msg.reply_to_message?.message_id;
+          const pendings = loadEditPending();
+          let pending = replyId ? pendings[replyId] : null;
+          // 답장이 아니어도, 15분 내 대기 중 수정요청이 있으면 가장 최근 것에 적용(폴백)
+          if (!pending && !msg.text.startsWith('/')) {
+            const keys = Object.keys(pendings).sort((a, b) => (pendings[b].ts || 0) - (pendings[a].ts || 0));
+            if (keys.length && Date.now() - (pendings[keys[0]].ts || 0) < 15 * 60 * 1000) {
+              pending = pendings[keys[0]];
+              replyId = keys[0];
+            }
+          }
+          if (pending) await handleEdit(pending, msg.text, replyId);
+          else if (msg.text.startsWith('/')) await handleCommand(msg.text);
+          else await sendMessage(ME, '명령은 /help, 초안 수정은 카드의 [✏️수정]을 누른 뒤 지시하세요.');
+        } else if (cb) await handleCallback(cb);
       }
     } catch (e) {
       // 네트워크 오류 등 → 잠깐 쉬고 계속(데몬은 죽지 않음)
