@@ -14,6 +14,7 @@
   "charTarget": { "min": 1800, "max": 2200 },
   "charMinByTier": { "trend": 1600, "calendar": 1800, "evergreen": 1800, "manual": 1700 },
   "maxSameDayPublish": 3,
+  "_maxSameDayPublishNote": "하루 승인 발행 상한(KST 기준). 상한 도달 후 추가 승인 시 차단하지 않고 '재확인' 단계를 띄움 — 사람이 [상한 무시하고 지금 발행]을 한 번 더 누르면 발행. 대기 초안은 재고로 남아 다음 날 발행 가능.",
   "heartbeatSeconds": 60,
   "watchdogStaleSeconds": 300,
   "pollTimeoutSeconds": 50,

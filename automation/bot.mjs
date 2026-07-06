@@ -7,8 +7,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { loadEnv, loadConfig, requireSecrets, AUTO_DIR, ROOT } from './lib/env.mjs';
-import { getUpdates, sendMessage, sendDocument, answerCallback } from './lib/telegram.mjs';
+import { getUpdates, sendMessage, sendDocument, answerCallback, inlineButtons } from './lib/telegram.mjs';
 
 loadEnv();
 requireSecrets(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID']);
@@ -38,7 +39,10 @@ async function generate(keyword) {
   const { runGenerate } = await import('./generate.mjs');
   return runGenerate({ keyword, chatId: ME, config: CFG });
 }
+let _publishImpl = null; // 테스트 주입용 seam(프로덕션 경로엔 영향 없음)
+export function __setPublishImpl(fn) { _publishImpl = fn; }
 async function publishSlug(slug, title) {
+  if (_publishImpl) return _publishImpl(slug, title);
   const { publish } = await import('./publish.mjs');
   return publish({ slug, title });
 }
@@ -140,15 +144,43 @@ function clearEditPending(msgId) {
   delete m[msgId];
   fs.writeFileSync(EDITS, JSON.stringify(m));
 }
-// D-6: 당일 발행 수 카운트(오늘 것만 유지). 발행 성공 시 호출.
+// D-6: 당일 발행 수 카운트(오늘 것만 유지).
+function kstToday() {
+  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // KST 날짜
+}
+// 오늘 이미 발행한 편수(읽기 전용) — 상한 판정에 사용.
+function todayPublishCount() {
+  const f = path.join(STATE, 'publish-days.json');
+  try { return JSON.parse(fs.readFileSync(f, 'utf8'))[kstToday()] || 0; } catch { return 0; }
+}
+// 발행 성공 시 호출해 카운트 +1.
 function bumpPublishCount() {
   const f = path.join(STATE, 'publish-days.json');
-  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // KST 날짜
+  const today = kstToday();
   let m = {};
   try { m = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
   m = { [today]: (m[today] || 0) + 1 }; // 과거 날짜는 정리
   fs.writeFileSync(f, JSON.stringify(m));
   return m[today];
+}
+// 실제 게시 실행(상한 이하 승인 · 상한 재확인 후 공용). 오직 사람 승인으로만 도달.
+async function doPublish(entry) {
+  try {
+    const res = await publishSlug(entry.slug, entry.title);
+    if (res.ok) {
+      const n = bumpPublishCount();
+      const cap = CFG.maxSameDayPublish || 3;
+      let msg = `🚀 게시 완료\n${res.url}`;
+      if (n >= cap) {
+        msg += `\n\n📊 오늘 ${n}편 발행(상한 ${cap}편). 신생 사이트는 분산 발행을 권장합니다. 남은 초안은 내일 승인해도 재고로 유지됩니다.`;
+      }
+      await sendMessage(ME, msg);
+    } else {
+      await sendMessage(ME, `❌ 게시 실패: ${res.error}`);
+    }
+  } catch (e) {
+    await sendMessage(ME, `❌ 게시 오류: ${e.message}`);
+  }
 }
 async function handleEdit(pending, instruction, replyId) {
   clearEditPending(replyId);
@@ -304,7 +336,7 @@ async function handleCallback(cb) {
   const entry = map[id];
   await answerCallback(
     cb.id,
-    action === 'ok' ? '게시 처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : '반려됨'
+    action === 'ok' || action === 'okforce' ? '처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : action === 'hold' ? '보류' : '반려됨'
   );
   if (!entry) return sendMessage(ME, '만료된 초안입니다(봇 재시작됨).');
   const f = path.join(ROOT, 'src/content/blog', entry.slug, 'index.md');
@@ -350,21 +382,32 @@ async function handleCallback(cb) {
       }
     }
   } else if (action === 'ok') {
-    try {
-      const res = await publishSlug(entry.slug, entry.title);
-      if (res.ok) {
-        const n = bumpPublishCount();
-        let msg = `🚀 게시 완료\n${res.url}`;
-        if (n > (CFG.maxSameDayPublish || 3)) {
-          msg += `\n\n📊 오늘 ${n}편째 — 신생 사이트는 분산 발행을 권장합니다. 남은 초안은 내일 승인해도 재고로 유지됩니다.`;
-        }
-        await sendMessage(ME, msg);
-      } else {
-        await sendMessage(ME, `❌ 게시 실패: ${res.error}`);
-      }
-    } catch (e) {
-      await sendMessage(ME, `❌ 게시 오류: ${e.message}`);
+    const cap = CFG.maxSameDayPublish || 3;
+    const already = todayPublishCount();
+    if (already >= cap) {
+      // 상한 도달 — 차단하지 않고 사람이 한 번 더 확인하도록 재확인 단계를 둔다.
+      // (대원칙: 게시는 오직 사람의 명시적 승인으로만. 여기선 '재확인'이 그 승인.)
+      await sendMessage(
+        ME,
+        [
+          `🛑 오늘 발행 상한(${cap}편) 도달 — 내일 발행을 권장합니다.`,
+          `이 초안은 재고로 남아 내일 그대로 승인·발행할 수 있어요.`,
+          '',
+          `그래도 지금 "${entry.title}"를 발행하려면 아래에서 한 번 더 확인해 주세요.`,
+        ].join('\n'),
+        inlineButtons([[
+          { text: `⚠️ 상한 무시하고 지금 발행`, callback_data: 'okforce:' + id },
+          { text: '🗓 내일로 보류', callback_data: 'hold:' + id },
+        ]])
+      );
+      return;
     }
+    await doPublish(entry);
+  } else if (action === 'okforce') {
+    // 상한 재확인 통과 — 사람이 명시적으로 한 번 더 확인함.
+    await doPublish(entry);
+  } else if (action === 'hold') {
+    await sendMessage(ME, `🗓 보류(재고 유지): "${entry.title}"\n내일 카드에서 다시 ✅ 승인하면 발행됩니다.`);
   } else if (action === 'no') {
     await sendMessage(ME, `↩️ 반려(초안 보관): ${entry.slug}\n삭제하려면 /delete ${entry.slug}`);
   }
@@ -412,7 +455,15 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// 직접 실행(node bot.mjs)일 때만 데몬 기동. import(테스트 등) 시엔 기동 안 함.
+const runDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (runDirectly) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
+
+// 테스트 전용 export
+export { handleCallback, todayPublishCount, bumpPublishCount, doPublish };
