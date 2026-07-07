@@ -1,11 +1,13 @@
-// 키워드 브리핑 v2.2: 캘린더 레이더(폭발 예정) + 실검/에버그린 후보 + 네이버 지표(검색량·문서수·비율).
-// 버튼 탭 = 그 키워드로 초안 생성(bot.mjs 처리). 발행/기출 주제 제외.
+// 키워드 브리핑 v2.5: 캘린더 레이더(폭발 예정) + 실검/에버그린 후보 + 네이버 지표(검색량·문서수·비율)
+//   + 블로그 적합도 판단(★1~5·한 줄 이유·위험 경고). 완전 자동 발행이 아니라 사람이 고르기 쉽게 평가만 제공.
+// 버튼 탭 = 그 키워드로 초안 생성(bot.mjs 처리). 대원칙 불변: 게시는 사람 승인만. 발행/기출 주제 제외.
 import fs from 'node:fs';
 import path from 'node:path';
 import { AUTO_DIR, loadConfig } from './lib/env.mjs';
 import { briefingCandidates } from './keywords.mjs';
 import { calendarRadar } from './lib/calendar.mjs';
 import { enrichKeywords, statLine } from './lib/naver.mjs';
+import { scoreKeyword, starBar, WARN_LABEL } from './lib/suitability.mjs';
 import { hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 
@@ -71,7 +73,11 @@ export async function runBriefing({ chatId, config } = {}) {
     const title = c.source === 'calendar' ? `${c.label} (최적 발행 D-${c.daysUntil})` : c.keyword;
     const st = statLine(stats[c.keyword]);
     const badge = c.updateTarget || hasExistingPost(c.keyword) ? ' 📂기존글' : '';
-    lines.push(`${i}. ${icon(c.source)} ${title}${c.gossip ? ' ⚠️' : ''}${badge}` + (st ? `\n   ${st}` : ''));
+    const sc = scoreKeyword(c, stats[c.keyword]); // 적합도 별점·이유·경고
+    const sub = [`   ${starBar(sc.stars)} ${sc.reason}`];
+    if (st) sub.push(`   ${st}`);
+    if (sc.warn) sub.push(`   ${WARN_LABEL}`);
+    lines.push(`${i}. ${icon(c.source)} ${title}${badge}\n` + sub.join('\n'));
     rows.push([{ text: `${icon(c.source)} ${(c.source === 'calendar' ? c.label : c.keyword).slice(0, 40)}`, callback_data: 'gen:' + id }]);
     i++;
   }
@@ -81,6 +87,7 @@ export async function runBriefing({ chatId, config } = {}) {
   const header =
     `🗞 키워드 브리핑 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
     `탭 = 초안 생성(순차). 📅선점 🔥실검 🌲에버그린 · 지표=검색량·문서수·비율\n` +
+    `★적합도 = 경쟁·비율·의도·수명 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
     `📂기존글 = 같은 주제 글 보유 → 탭 말고 '갱신 지시' 권장\n`;
   await sendMessage(chatId, header + '\n' + lines.join('\n\n'), inlineButtons(rows));
   return ordered.length;
