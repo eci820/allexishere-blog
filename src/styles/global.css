@@ -88,6 +88,11 @@ a {
   overflow: hidden;
 }
 
+/* 목차(TOC)로 소제목 이동 시, 화면 맨 위에 딱 붙지 않게 약간의 여백을 둡니다. */
+.prose :is(h2, h3) {
+  scroll-margin-top: 1.25rem;
+}
+
 /* 본문 연속 이미지 그리드 (rehype-image-grid 가 <div class="img-grid"> 로 묶음)
    모바일 2열 · 데스크톱(≥768px) 3열. 단독 이미지 1장은 묶이지 않아 크게 유지됨. */
 .prose .img-grid {

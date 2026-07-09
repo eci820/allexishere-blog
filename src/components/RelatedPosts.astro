@@ -1,0 +1,40 @@
+---
+// '함께 읽으면 좋은 글' — 본문 끝(하단 광고 위)에 내부 링크 2~3개를 노출해
+// 이관 글(잠자는 글)까지 순환시키는 장치입니다.
+import type { CollectionEntry } from 'astro:content';
+import { getPostUrl } from '../utils/url';
+import { formatDate } from '../utils/date';
+
+interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 0 && (
+    <section
+      class="mt-12 border-t border-[var(--border)] pt-8"
+      aria-label="함께 읽으면 좋은 글"
+    >
+      <h2 class="font-serif text-xl font-bold tracking-tight">
+        함께 읽으면 좋은 글
+      </h2>
+      <ul class="mt-4 space-y-4">
+        {posts.map((post) => (
+          <li>
+            <a href={getPostUrl(post)} class="group block">
+              <span class="block text-base font-semibold leading-snug transition group-hover:text-[var(--accent)]">
+                {post.data.title}
+              </span>
+              <span class="mt-1 block text-xs text-[var(--muted)]">
+                {formatDate(post.data.pubDate)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

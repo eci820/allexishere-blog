@@ -5,10 +5,15 @@ import { Image } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import RelatedPosts from '../../components/RelatedPosts.astro';
 import { SITE, ADSENSE } from '../../consts';
 import { getPostUrl } from '../../utils/url';
 import { makeExcerpt } from '../../utils/excerpt';
 import { formatDate } from '../../utils/date';
+import { getPublishedPosts } from '../../utils/posts';
+import { getRelatedPosts } from '../../utils/related';
+import { extractFaq, buildFaqJsonLd } from '../../utils/faq';
 
 export const getStaticPaths = (async () => {
   // 초안은 운영 빌드에서만 제외(개발에서는 미리보기 위해 포함)
@@ -26,15 +31,20 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+// headings: 목차(TOC)용 소제목 목록을 함께 받습니다.
+const { Content, headings } = await render(post);
 
 const description =
   post.data.description?.trim() || makeExcerpt(post.body ?? '', 160);
 const canonicalURL = new URL(getPostUrl(post), SITE.url).href;
 const ogImage = post.data.cover?.src ?? SITE.defaultOgImage;
 
+// '함께 읽으면 좋은 글' — 이관 글 포함 전체 발행글 중 관련도 높은 2~3편.
+const allPosts = await getPublishedPosts();
+const relatedPosts = getRelatedPosts(post, allPosts, 3);
+
 // 구글 검색용 구조화 데이터(Article)
-const jsonLd = {
+const articleJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: post.data.title,
@@ -46,6 +56,11 @@ const jsonLd = {
   mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalURL },
   url: canonicalURL,
 };
+
+// 본문에 '자주 묻는 질문' 섹션이 있으면 FAQPage 스키마도 함께 출력.
+// (Article 과 FAQPage 를 배열로 넘기면 head 에 하나의 JSON-LD 로 합쳐집니다)
+const faqJsonLd = buildFaqJsonLd(extractFaq(post.body ?? ''));
+const jsonLd = faqJsonLd ? [articleJsonLd, faqJsonLd] : articleJsonLd;
 ---
 
 <BaseLayout
@@ -97,6 +112,9 @@ const jsonLd = {
       )
     }
 
+    <!-- 목차(TOC): h2 3개 이상인 글에만 자동 노출. 탭하면 해당 섹션으로 이동 -->
+    <TableOfContents headings={headings} />
+
     <!-- 본문. prose 클래스가 제목·목록·이미지 여백을 자동으로 예쁘게 잡습니다.
          이미지를 여러 장 넣어도 각 이미지가 알아서 정리됩니다. -->
     <article
@@ -106,6 +124,9 @@ const jsonLd = {
     >
       <Content />
     </article>
+
+    <!-- 함께 읽으면 좋은 글: 본문 끝, 하단 광고 위 -->
+    <RelatedPosts posts={relatedPosts} />
 
     <!-- [광고 3] 본문 맨 끝 -->
     <AdUnit slot={ADSENSE.slots.bottom} minHeight={280} label="광고 자리 (본문 끝)" />
