@@ -42,6 +42,9 @@ export function calendarRadar(limit = 2, minD = 3, maxD = 14) {
     label: e.label,
     daysUntil: e.daysUntil,
     note: e.window,
+    // 글감 각도(지식형 k·판단형 j). 판단형 우선 — 콘텐츠 도그마: 원리→돈 드는 판단.
+    angleJudgment: (e.angles && e.angles.j) || '',
+    angleKnowledge: (e.angles && e.angles.k) || '',
     updateTarget: e.updateTarget || null, // 📂갱신 대상 글 URL(있으면)
   }));
 }

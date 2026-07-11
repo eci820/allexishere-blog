@@ -1,5 +1,6 @@
-// 키워드 브리핑 v2.5: 캘린더 레이더(폭발 예정) + 실검/에버그린 후보 + 네이버 지표(검색량·문서수·비율)
-//   + 블로그 적합도 판단(★1~5·한 줄 이유·위험 경고). 완전 자동 발행이 아니라 사람이 고르기 쉽게 평가만 제공.
+// 키워드 브리핑 v2.7: 에버그린 '원리+판단' 중심. 계급 균형 —
+//   🔥실검 2(정보형만) / 🔬과학·생활원리 2 / 💪건강·영양·헬스 2 / 📅캘린더 2 / 🌲에버그린 2.
+//   + 네이버 지표(검색량·문서수·비율) + 적합도 별점(★1~5·이유·경고). 캘린더는 글감 각도(판단형 우선)까지 제안.
 // 버튼 탭 = 그 키워드로 초안 생성(bot.mjs 처리). 대원칙 불변: 게시는 사람 승인만. 발행/기출 주제 제외.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +18,8 @@ const KWMAP = path.join(STATE, 'kwmap.json'); // id -> {keyword, source, gossip}
 
 const load = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return {}; } };
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
-const icon = (src) => (src === 'calendar' ? '📅' : src === 'trend' ? '🔥' : '🌲');
+const icon = (src) =>
+  src === 'calendar' ? '📅' : src === 'trend' ? '🔥' : src === 'science' ? '🔬' : src === 'health' ? '💪' : '🌲';
 // 정렬 키: 검색량 내림차순(없으면 맨 뒤)
 const volKey = (s) => (s && s.vol != null ? s.vol : -1);
 
@@ -52,13 +54,16 @@ export async function runBriefing({ chatId, config } = {}) {
     console.error('[briefing] 지표 실패:', e.message);
   }
 
-  // 4) 계급별 정렬: 📅캘린더·🌲에버그린 = 검색량 내림차순 / 🔥실검 = 원래 순위 유지
-  const calSorted = cal.slice().sort((a, b) => volKey(stats[b.keyword]) - volKey(stats[a.keyword]));
-  const trend = candidates.filter((c) => c.source === 'trend'); // 순위 유지
-  const ever = candidates
-    .filter((c) => c.source === 'evergreen')
-    .sort((a, b) => volKey(stats[b.keyword]) - volKey(stats[a.keyword]));
-  const ordered = [...calSorted, ...trend, ...ever];
+  // 4) 계급별 정렬 + 표시 순서(🔥실검 → 🔬과학 → 💪건강 → 📅캘린더 → 🌲에버그린).
+  //    🔥실검 = 원래 순위 유지 / 🔬·💪·🌲 = 검색량 내림차순 / 📅캘린더 = D-day 임박순(선점).
+  const byVol = (a, b) => volKey(stats[b.keyword]) - volKey(stats[a.keyword]);
+  const tier = (src) => candidates.filter((c) => c.source === src);
+  const trend = tier('trend'); // 순위 유지
+  const science = tier('science').sort(byVol);
+  const health = tier('health').sort(byVol);
+  const ever = tier('evergreen').sort(byVol);
+  const calSorted = cal.slice().sort((a, b) => a.daysUntil - b.daysUntil); // 임박순
+  const ordered = [...trend, ...science, ...health, ...calSorted, ...ever];
 
   // 5) 메시지 + 버튼 + kwmap
   const kwmap = load(KWMAP);
@@ -68,7 +73,7 @@ export async function runBriefing({ chatId, config } = {}) {
   let i = 1;
   for (const c of ordered) {
     const id = 'k' + Math.abs(hash(c.keyword)).toString(36) + '_' + n++;
-    kwmap[id] = { keyword: c.keyword, source: c.source, gossip: !!c.gossip };
+    kwmap[id] = { keyword: c.keyword, source: c.source, gossip: !!c.gossip, ...(c.angle ? { angle: c.angle } : {}) };
     briefed[c.keyword] = Date.now();
     const title = c.source === 'calendar' ? `${c.label} (최적 발행 D-${c.daysUntil})` : c.keyword;
     const st = statLine(stats[c.keyword]);
@@ -76,6 +81,10 @@ export async function runBriefing({ chatId, config } = {}) {
     const sc = scoreKeyword(c, stats[c.keyword]); // 적합도 별점·이유·경고
     const sub = [`   ${starBar(sc.stars)} ${sc.reason}`];
     if (st) sub.push(`   ${st}`);
+    // 📅 캘린더: 글감 각도 제안(판단형 우선 → 없으면 지식형). 도그마: 원리→돈 드는 판단.
+    if (c.source === 'calendar' && (c.angleJudgment || c.angleKnowledge)) {
+      sub.push(c.angleJudgment ? `   ✍️ 판단형 각도: ${c.angleJudgment}` : `   ✍️ 지식형 각도: ${c.angleKnowledge}`);
+    }
     if (sc.warn) sub.push(`   ${WARN_LABEL}`);
     lines.push(`${i}. ${icon(c.source)} ${title}${badge}\n` + sub.join('\n'));
     rows.push([{ text: `${icon(c.source)} ${(c.source === 'calendar' ? c.label : c.keyword).slice(0, 40)}`, callback_data: 'gen:' + id }]);
@@ -85,10 +94,10 @@ export async function runBriefing({ chatId, config } = {}) {
   fs.writeFileSync(BRIEFED, JSON.stringify(briefed));
 
   const header =
-    `🗞 키워드 브리핑 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
-    `탭 = 초안 생성(순차). 📅선점 🔥실검 🌲에버그린 · 지표=검색량·문서수·비율\n` +
-    `★적합도 = 경쟁·비율·의도·수명 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
-    `📂기존글 = 같은 주제 글 보유 → 탭 말고 '갱신 지시' 권장\n`;
+    `🗞 키워드 브리핑 v2.7 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
+    `탭 = 초안 생성(순차). 🔥실검 🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
+    `★적합도 = 경쟁·비율·의도·수명·단가 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
+    `✍️ 각도 = 원리 설명 → 돈 드는 판단(선택·비용·시기)으로 연결. 📂기존글 = '갱신 지시' 권장\n`;
   await sendMessage(chatId, header + '\n' + lines.join('\n\n'), inlineButtons(rows));
   return ordered.length;
 }
