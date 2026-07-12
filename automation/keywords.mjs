@@ -73,70 +73,9 @@ const EVERGREEN = {
   tax: ['연말정산 환급', '자동차세 연납', '재산세 조회', '종합소득세 신고', '근로장려금 신청'],
 };
 
-// 🔬 과학·생활원리 시드 — angle 태그: 'life'(생활원리형·고단가 우선) / 'knowledge'(자연·과학 원리).
-// 콘텐츠 도그마: 원리 설명 → 돈이 드는 실생활 판단(요금·선택·시기). life는 가전 요금/선택 결합, 롱테일 각도로 좁힘.
-const SCIENCE_SEEDS = [
-  // (b) 생활원리형(고단가·우선) — 가전 원리 + 전기요금/선택 판단
-  { keyword: '에어컨 제습 냉방 전기요금', angle: 'life' },
-  { keyword: '제습기 전기요금', angle: 'life' },
-  { keyword: '공기청정기 필터 교체 주기', angle: 'life' },
-  { keyword: '공기청정기 전기요금', angle: 'life' },
-  { keyword: '전기장판 전기요금', angle: 'life' },
-  { keyword: '보일러 외출모드 전기요금', angle: 'life' },
-  { keyword: '인덕션 하이라이트 차이', angle: 'life' },
-  { keyword: '건조기 전기요금', angle: 'life' },
-  { keyword: '정수기 렌탈 자가관리 비교', angle: 'life' },
-  // (a) 지식형 — 자연/과학 원리
-  { keyword: '유성우 보는 법', angle: 'knowledge' },
-  { keyword: '일식 월식 차이', angle: 'knowledge' },
-  { keyword: '오로라 발생 원리', angle: 'knowledge' },
-  { keyword: '정전기 없애는 법', angle: 'knowledge' },
-  { keyword: '태풍 발생 원리', angle: 'knowledge' },
-  { keyword: '발효 원리', angle: 'knowledge' },
-];
-
-// 💪 건강·영양·헬스 시드(고단가 우선순위 순, 전원 +1.25). 신생 사이트 원칙: 대형 키워드 정면 승부 금지 →
-// 롱테일 정보형 각도로 좁힘(예: '실손보험'(X) → '4세대 실손보험 전환 조건'(O)).
-const HEALTH_SEEDS = [
-  // (A) 의료제도·검진
-  '국가건강검진 항목',
-  '위내시경 주기',
-  '대장내시경 비용',
-  '임플란트 건강보험 적용 조건',
-  '4세대 실손보험 전환 조건',
-  '비급여 진료비 확인 방법',
-  // (B) 영양제 원리
-  '유산균 냉장보관 이유',
-  '프로바이오틱스 프리바이오틱스 차이',
-  '오메가3 rTG TG 차이',
-  '마그네슘 종류별 흡수율',
-  '영양제 공복 식후',
-  '영양제 병용 금기',
-  // (C) 헬스·운동
-  '단백질 하루 필요량 계산',
-  'WPI WPC 차이',
-  '점진적 과부하 원리',
-  '근손실 진실',
-  // (D) 수면·회복
-  '수면 사이클 렘수면',
-  '카페인 반감기',
-  '매트리스 경도 선택',
-  // (E) 대사·식단
-  '혈당 스파이크 원리',
-  '간헐적 단식 과학',
-  '기초대사량 계산',
-];
-
-// 롱테일 시드 균형 픽: exclude(기존글·발행·이미 뽑음) 제외하고 앞에서부터 count개.
-// 30일 briefed 제외가 회전(rotation)을 담당하므로 별도 셔플 없이 순서 픽으로 충분.
-function pickSeeds(pool, count, exclude, keyOf = (x) => x) {
-  const out = [];
-  for (const item of pool) {
-    if (out.length >= count) break;
-    if (!exclude.has(keyOf(item))) out.push(item);
-  }
-  return out;
-}
+// 🔬 과학·생활원리 / 💪 건강·영양·헬스 시드풀은 축2에서 data/topics-pool.json 으로 이전됨
+// (automation/lib/topicsPool.mjs 의 SEED_TOPICS). 브리핑은 재고에서 status·쿨다운·발행매칭으로 픽한다.
+// 아래 EVERGREEN 은 batch 모드(selectKeywords) 하위호환용으로만 유지.
 
 function pickEvergreen(count, mix, exclude) {
   const out = [];
@@ -205,53 +144,37 @@ export async function selectKeywords(config) {
   return { keywords: chosen.slice(0, config.draftsPerRun || 5), notes };
 }
 
-// 브리핑용 후보 — v2.7 계급 균형: 🔥실검(정보형만)·🔬과학·💪건강·🌲에버그린을 tierCounts대로.
-// (📅캘린더는 briefing.mjs에서 별도로 앞에 붙는다.) 발행/기출(exclude) 제외.
+// 브리핑용 후보 — v2.7 계급 균형 + 축2 재고: 🔥실검(정보형만·라이브)·🔬과학·💪건강·🌲에버그린(재고).
+// (📅캘린더는 briefing.mjs에서 별도로 앞에 붙는다.) 재고 픽은 3중 방어(status·30일 쿨다운·발행매칭) 적용.
 export async function briefingCandidates(config, exclude = new Set()) {
-  const titles = existingTitles();
-  const isDup = (k) =>
-    exclude.has(k) || titles.some((t) => t.includes(k) || (k.length >= 4 && k.includes(t.slice(0, 5))));
   const counts = config.tierCounts || { trend: 2, science: 2, health: 2, evergreen: 2 };
   const out = [];
-  const seen = new Set();
-  const add = (keyword, srcTier, extra = {}) => {
-    if (seen.has(keyword) || isDup(keyword)) return false;
-    out.push({ keyword, source: srcTier, gossip: false, ...extra });
-    seen.add(keyword);
-    return true;
-  };
-  // 지금까지 뽑힌 것 + 기존글 + exclude 를 합친 '건너뛸 집합'(시드 픽 사전 필터용)
-  const skipSet = () => new Set([...titles, ...exclude, ...seen]);
-
   let source = null, note = '';
 
-  // 🔥 실검 — '정보형만'. 가십·인물 신변·정치(위험) 신호 완전 제외 후, 정보형 신호 우선.
+  // 🔥 실검 — 라이브 수집, '정보형만'(가십·인물 신변·정치 완전 제외 후 정보형 우선).
+  const titles = existingTitles();
+  const isDup = (k) => exclude.has(k) || titles.some((t) => t.includes(k) || (k.length >= 4 && k.includes(t.slice(0, 5))));
   try {
     const t = await collectTrend();
     source = t.source;
-    let trend = t.keywords.filter((k) => !isDup(k) && !seen.has(k) && !GOSSIP.test(k) && !RISK.test(k));
+    let trend = t.keywords.filter((k) => !isDup(k) && !GOSSIP.test(k) && !RISK.test(k));
     trend.sort((a, b) => (INFO.test(b) ? 1 : 0) - (INFO.test(a) ? 1 : 0));
-    for (const k of trend) {
-      if (out.filter((o) => o.source === 'trend').length >= counts.trend) break;
-      add(k, 'trend');
-    }
+    for (const k of trend.slice(0, counts.trend)) out.push({ keyword: k, source: 'trend', gossip: false });
   } catch (e) {
     note = e.message;
   }
 
-  // 🔬 과학·생활원리(life/knowledge angle 유지)
-  for (const s of pickSeeds(SCIENCE_SEEDS, counts.science, skipSet(), (x) => x.keyword)) {
-    add(s.keyword, 'science', { angle: s.angle });
-  }
-
-  // 💪 건강·영양·헬스
-  for (const k of pickSeeds(HEALTH_SEEDS, counts.health, skipSet())) {
-    add(k, 'health');
-  }
-
-  // 🌲 에버그린(주차·세금 등 일반 생활정보)
-  for (const k of pickEvergreen(counts.evergreen, config.evergreenMix || { parking: 3, tax: 2 }, skipSet())) {
-    add(k, 'evergreen');
+  // 🔬·💪·🌲 — 주제 재고(topics-pool.json)에서 픽. pickForBrief가 markProposed·auto-published 처리.
+  const { seedPoolIfEmpty, pickForBrief } = await import('./lib/topicsPool.mjs');
+  const pool = seedPoolIfEmpty();
+  for (const tier of ['science', 'health', 'evergreen']) {
+    for (const p of pickForBrief(pool, tier, counts[tier], exclude)) {
+      out.push({
+        keyword: p.keyword, source: p.source, gossip: false, id: p.id,
+        angle: p.source === 'science' ? p.series : undefined, // 별점·생성용(life/knowledge)
+        poolAngle: p.angle, // 판단 각도(표시용)
+      });
+    }
   }
 
   return { candidates: out, source, note };

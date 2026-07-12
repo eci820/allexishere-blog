@@ -4,9 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ROOT, AUTO_DIR } from './lib/env.mjs';
+import { markPublished, soakPublished } from './lib/topicsPool.mjs';
 
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
 const LOCK = path.join(AUTO_DIR, 'state', 'publish.lock');
+const POOL_FILES = ['data/topics-pool.json', 'data/update-cooldown.json']; // 재고 상태 영속화(커밋 동승)
 
 async function withLock(fn, waitMs = 30000) {
   fs.mkdirSync(path.dirname(LOCK), { recursive: true });
@@ -41,7 +43,7 @@ function readOriginalPath(md) {
   return m ? m[1] : '';
 }
 
-export async function publish({ slug, title }) {
+export async function publish({ slug, title, keyword }) {
   return withLock(async () => {
     const dir = path.join(BLOG, slug);
     const f = path.join(dir, 'index.md');
@@ -52,10 +54,18 @@ export async function publish({ slug, title }) {
     if (!/^draft:/m.test(raw)) raw = raw.replace(/^---\r?\n/, '---\ndraft: false\n');
     fs.writeFileSync(f, raw);
 
+    // 축2 소진: 재고 주제를 published + slug 기록. 키워드 알면 직접, 모르면 제목 매칭.
+    try {
+      if (keyword) markPublished(keyword, slug);
+      else soakPublished(slug, title || '');
+    } catch (e) { console.error('[publish] 재고 소진 실패:', e.message); }
+
     const rel = path.relative(ROOT, dir);
     const git = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'pipe' });
+    // 재고 상태 파일도 커밋에 동승(존재 시)
+    const extraAdds = POOL_FILES.filter((p) => fs.existsSync(path.join(ROOT, p)));
     try {
-      git(['add', '--', rel]);
+      git(['add', '--', rel, ...extraAdds]);
       try {
         git(['commit', '-m', `content: 발행 "${title || slug}"`]);
       } catch (e) {
@@ -81,6 +91,34 @@ export async function publish({ slug, title }) {
     const url = orig
       ? 'https://allexishere.com' + encodeURI(orig)
       : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
+    return { ok: true, url };
+  });
+}
+
+// 📂 갱신 반영: 이미 발행된(draft:false) 글의 로컬 변경을 커밋·배포(주소 불변). 오직 사람 [✅]로만 도달.
+export async function commitUpdate({ slug, title }) {
+  return withLock(async () => {
+    const dir = path.join(BLOG, slug);
+    const f = path.join(dir, 'index.md');
+    if (!fs.existsSync(f)) return { ok: false, error: '글 없음: ' + slug };
+    const rel = path.relative(ROOT, dir);
+    const git = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'pipe' });
+    const extraAdds = POOL_FILES.filter((p) => fs.existsSync(path.join(ROOT, p)));
+    try {
+      git(['add', '--', rel, ...extraAdds]);
+      try {
+        git(['commit', '-m', `갱신: "${title || slug}"`]);
+      } catch (e) {
+        const out = ((e.stdout || '') + (e.stderr || '')).toString();
+        if (!/nothing to commit/.test(out)) throw e;
+      }
+      try { git(['push']); }
+      catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: 'push 실패: ' + (e2.stderr || e2.message || '').toString().slice(0, 300) }; } }
+    } catch (e) {
+      return { ok: false, error: (e.stderr || e.message || '').toString().slice(0, 300) };
+    }
+    const orig = readOriginalPath(fs.readFileSync(f, 'utf8'));
+    const url = orig ? 'https://allexishere.com' + encodeURI(orig) : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
     return { ok: true, url };
   });
 }

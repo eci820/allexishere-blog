@@ -1,7 +1,8 @@
-// 키워드 브리핑 v2.7: 에버그린 '원리+판단' 중심. 계급 균형 —
+// 키워드 브리핑 v2.7 + 축2(주제 재고): 에버그린 '원리+판단' 중심. 계급 균형 —
 //   🔥실검 2(정보형만) / 🔬과학·생활원리 2 / 💪건강·영양·헬스 2 / 📅캘린더 2 / 🌲에버그린 2.
-//   + 네이버 지표(검색량·문서수·비율) + 적합도 별점(★1~5·이유·경고). 캘린더는 글감 각도(판단형 우선)까지 제안.
-// 버튼 탭 = 그 키워드로 초안 생성(bot.mjs 처리). 대원칙 불변: 게시는 사람 승인만. 발행/기출 주제 제외.
+//   🔬·💪·🌲는 재고(topics-pool.json)에서 3중 방어(status·30일 쿨다운·발행매칭)로 픽. 재고 부족 시 자동 보충.
+//   + 📂 갱신 후보(다시 게시할 가치 있는 글) 1~2개를 사유와 함께 별도 노출(탭 시 '갱신 진단' 먼저).
+// 하루 1회(오전 10시경) 발송. 버튼 탭 = 초안 생성(bot.mjs). 대원칙 불변: 게시는 사람 승인만.
 import fs from 'node:fs';
 import path from 'node:path';
 import { AUTO_DIR, loadConfig } from './lib/env.mjs';
@@ -10,6 +11,7 @@ import { calendarRadar } from './lib/calendar.mjs';
 import { enrichKeywords, statLine } from './lib/naver.mjs';
 import { scoreKeyword, starBar, WARN_LABEL } from './lib/suitability.mjs';
 import { hasExistingPost } from './lib/topics.mjs';
+import { updateCandidates } from './lib/updateTrack.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 
 const STATE = path.join(AUTO_DIR, 'state');
@@ -32,13 +34,21 @@ export async function runBriefing({ chatId, config } = {}) {
   for (const k of Object.keys(briefed)) if (briefed[k] < cut) delete briefed[k];
   const exclude = new Set(Object.keys(briefed));
 
+  // 0) 재고 자동 보충(pending < 30이면 claude-cli로 20개 보충). 실패해도 브리핑은 계속.
+  try {
+    const { replenishIfLow } = await import('./lib/replenish.mjs');
+    const rep = await replenishIfLow(config);
+    if (rep && rep.note && chatId) await sendMessage(chatId, rep.note);
+  } catch (e) {
+    console.error('[briefing] 재고 보충 실패:', e.message);
+  }
+
   // 1) 캘린더 레이더(D-14~D-3, 최대 2)
   const cal = calendarRadar(2).filter((c) => !exclude.has(c.keyword));
   for (const c of cal) exclude.add(c.keyword); // 실검/에버그린과 중복 방지
 
-  // 2) 실검 + 에버그린(남은 슬롯)
-  const remain = Math.max(0, (config.briefingCount || 9) - cal.length);
-  const { candidates, source, note } = await briefingCandidates({ ...config, briefingCount: remain }, exclude);
+  // 2) 실검(라이브) + 🔬·💪·🌲(재고). 계급별 개수는 tierCounts. 캘린더 키워드는 exclude로 중복 방지.
+  const { candidates, source, note } = await briefingCandidates(config, exclude);
 
   const all = [...cal, ...candidates];
   if (!all.length) {
@@ -81,15 +91,32 @@ export async function runBriefing({ chatId, config } = {}) {
     const sc = scoreKeyword(c, stats[c.keyword]); // 적합도 별점·이유·경고
     const sub = [`   ${starBar(sc.stars)} ${sc.reason}`];
     if (st) sub.push(`   ${st}`);
-    // 📅 캘린더: 글감 각도 제안(판단형 우선 → 없으면 지식형). 도그마: 원리→돈 드는 판단.
+    // 글감 각도(판단형 우선). 📅캘린더 = calendar.json angles / 🔬·💪 = 재고 poolAngle.
     if (c.source === 'calendar' && (c.angleJudgment || c.angleKnowledge)) {
       sub.push(c.angleJudgment ? `   ✍️ 판단형 각도: ${c.angleJudgment}` : `   ✍️ 지식형 각도: ${c.angleKnowledge}`);
+    } else if ((c.source === 'science' || c.source === 'health') && c.poolAngle) {
+      sub.push(`   ✍️ 판단 각도: ${c.poolAngle}`);
     }
     if (sc.warn) sub.push(`   ${WARN_LABEL}`);
     lines.push(`${i}. ${icon(c.source)} ${title}${badge}\n` + sub.join('\n'));
     rows.push([{ text: `${icon(c.source)} ${(c.source === 'calendar' ? c.label : c.keyword).slice(0, 40)}`, callback_data: 'gen:' + id }]);
     i++;
   }
+
+  // 6) 📂 갱신 후보(다시 게시할 가치 있는 글) — 사유 1줄 + [갱신] 버튼(탭 시 진단 먼저, 즉시 생성 아님)
+  let upCount = 0;
+  try {
+    for (const u of updateCandidates(2)) {
+      const id = 'u' + Math.abs(hash(u.slug)).toString(36) + '_' + n++;
+      kwmap[id] = { type: 'update', slug: u.slug, title: u.title, url: u.url };
+      lines.push(`${i}. 📂 갱신: ${u.title}\n   🔧 사유: ${u.reasons.join(' · ')}`);
+      rows.push([{ text: `📂 갱신 진단: ${u.title.slice(0, 34)}`, callback_data: 'updiag:' + id }]);
+      i++; upCount++;
+    }
+  } catch (e) {
+    console.error('[briefing] 갱신 후보 계산 실패:', e.message);
+  }
+
   fs.writeFileSync(KWMAP, JSON.stringify(kwmap, null, 1));
   fs.writeFileSync(BRIEFED, JSON.stringify(briefed));
 
@@ -97,9 +124,10 @@ export async function runBriefing({ chatId, config } = {}) {
     `🗞 키워드 브리핑 v2.7 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
     `탭 = 초안 생성(순차). 🔥실검 🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
     `★적합도 = 경쟁·비율·의도·수명·단가 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
-    `✍️ 각도 = 원리 설명 → 돈 드는 판단(선택·비용·시기)으로 연결. 📂기존글 = '갱신 지시' 권장\n`;
+    `✍️ 각도 = 원리 → 돈 드는 판단(선택·비용·시기)으로 연결.` +
+    (upCount ? ` 📂갱신 = 탭하면 '갱신 진단' 먼저(즉시 생성 아님).\n` : `\n`);
   await sendMessage(chatId, header + '\n' + lines.join('\n\n'), inlineButtons(rows));
-  return ordered.length;
+  return ordered.length + upCount;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

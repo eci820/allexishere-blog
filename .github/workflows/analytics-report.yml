@@ -1,0 +1,43 @@
+name: analytics-report
+
+# Cloudflare Web Analytics → 텔레그램 일일 리포트 + 누적 영속화
+on:
+  schedule:
+    # 23:00 UTC == 08:00 KST (KST 어제분 집계가 마감된 뒤)
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Run analytics report
+        run: node scripts/analytics-report.mjs
+        env:
+          CF_ANALYTICS_TOKEN: ${{ secrets.CF_ANALYTICS_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          # 자동 발견 실패 시에만 시크릿으로 지정(없으면 빈 값 → 스크립트가 자동 탐색)
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_SITE_TAG: ${{ secrets.CF_SITE_TAG }}
+
+      - name: Commit history if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/analytics-history.json
+          git diff --staged --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "chore: analytics 누적 갱신 ($(date -u +%F))"
+          git push || { git pull --rebase && git push; }

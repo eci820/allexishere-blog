@@ -39,7 +39,7 @@ write_plist com.allexishere.bot <<PLIST
 </dict></plist>
 PLIST
 
-# 2) 키워드 브리핑 (하루 3회: 08:00 / 11:20 / 17:00)
+# 2) 키워드 브리핑 (하루 1회: 10:00 — 오전에 골라 하루 3~5편 띄엄띄엄 발행)
 write_plist com.allexishere.briefing <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -48,9 +48,7 @@ write_plist com.allexishere.briefing <<PLIST
   <key>ProgramArguments</key><array><string>$NODE</string><string>$PROJECT/automation/briefing.mjs</string></array>
   <key>WorkingDirectory</key><string>$PROJECT</string>
   <key>StartCalendarInterval</key><array>
-    <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
-    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>20</integer></dict>
-    <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
   </array>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODEDIR:/usr/bin:/bin:/usr/sbin</string></dict>
   <key>StandardOutPath</key><string>$PROJECT/automation/logs/briefing.out.log</string>

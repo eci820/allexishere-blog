@@ -41,10 +41,10 @@ async function generate(keyword) {
 }
 let _publishImpl = null; // 테스트 주입용 seam(프로덕션 경로엔 영향 없음)
 export function __setPublishImpl(fn) { _publishImpl = fn; }
-async function publishSlug(slug, title) {
-  if (_publishImpl) return _publishImpl(slug, title);
+async function publishSlug(slug, title, keyword) {
+  if (_publishImpl) return _publishImpl(slug, title, keyword);
   const { publish } = await import('./publish.mjs');
-  return publish({ slug, title });
+  return publish({ slug, title, keyword });
 }
 async function runBriefing() {
   const { runBriefing } = await import('./briefing.mjs');
@@ -163,16 +163,16 @@ function bumpPublishCount() {
   fs.writeFileSync(f, JSON.stringify(m));
   return m[today];
 }
-// 실제 게시 실행(상한 이하 승인 · 상한 재확인 후 공용). 오직 사람 승인으로만 도달.
+// 실제 게시 실행(예약 도래·즉시 발행 공용). 오직 사람 승인으로만 도달.
 async function doPublish(entry) {
   try {
-    const res = await publishSlug(entry.slug, entry.title);
+    const res = await publishSlug(entry.slug, entry.title, entry.keyword);
     if (res.ok) {
       const n = bumpPublishCount();
-      const cap = CFG.maxSameDayPublish || 3;
+      const cap = CFG.maxSameDayPublish || 5;
       let msg = `🚀 게시 완료\n${res.url}`;
       if (n >= cap) {
-        msg += `\n\n📊 오늘 ${n}편 발행(상한 ${cap}편). 신생 사이트는 분산 발행을 권장합니다. 남은 초안은 내일 승인해도 재고로 유지됩니다.`;
+        msg += `\n\n📊 오늘 ${n}편 발행(상한 ${cap}편). 남은 예약은 내일 이어서 발행됩니다.`;
       }
       await sendMessage(ME, msg);
     } else {
@@ -182,6 +182,27 @@ async function doPublish(entry) {
     await sendMessage(ME, `❌ 게시 오류: ${e.message}`);
   }
 }
+
+// 띄엄띄엄 예약 발행 큐 드레인 — 봇 루프가 매 주기 호출. 도래분을 상한 내에서 발행.
+async function drainStaggerQueue() {
+  const { popDue } = await import('./lib/publishQueue.mjs');
+  const cap = CFG.maxSameDayPublish || 5;
+  const due = popDue(todayPublishCount(), cap);
+  for (const it of due) await doPublish(it);
+}
+
+// 갱신 대기 레지스트리(진단→생성→반영). state/updates.json: id → {slug,title,backup,url}
+function registerUpdate(entry) {
+  const f = path.join(STATE, 'updates.json');
+  let map = {};
+  try { map = JSON.parse(fs.readFileSync(f, 'utf8')); } catch {}
+  let id, i = 0;
+  do { id = 'u' + Math.abs(hash(entry.slug + '#u' + i)).toString(36); i++; } while (map[id]);
+  map[id] = { ...entry, ts: Date.now() };
+  fs.writeFileSync(f, JSON.stringify(map, null, 1));
+  return id;
+}
+const loadUpdateMap = () => { try { return JSON.parse(fs.readFileSync(path.join(STATE, 'updates.json'), 'utf8')); } catch { return {}; } };
 async function handleEdit(pending, instruction, replyId) {
   clearEditPending(replyId);
   await sendMessage(ME, `⏳ "${pending.title.slice(0, 24)}" 수정 중…`);
@@ -240,7 +261,9 @@ async function handleCommand(text) {
       await sendMessage(
         ME,
         [
-          '🤖 트렌드 초안 봇 (v2.4)',
+          '🤖 콘텐츠 봇 (v2.7 + 축2 재고)',
+          '흐름: 하루 1회(10시) 브리핑 → 골라서 초안 → [✅승인] → 하루 3~5편 띄엄띄엄 자동 발행.',
+          '📂 갱신 후보는 탭하면 진단 먼저 → [갱신 초안 생성] → [✅갱신 반영](주소 불변).',
           '/brief — 지금 키워드 브리핑 받기(후보 버튼)',
           '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
           '/draft — 모드 기본동작(briefing=브리핑 / batch=일괄)',
@@ -332,11 +355,81 @@ async function handleCallback(cb) {
     return sendMessage(ME, '취소했습니다.');
   }
 
+  // 📂 갱신 진단(즉시 생성 아님) — 무엇이 낡았는지 먼저 보여주고 [갱신 초안 생성] 버튼 제공.
+  if (action === 'updiag') {
+    const u = loadKwMap()[id];
+    await answerCallback(cb.id, u ? '갱신 진단 중…' : '만료된 버튼');
+    if (!u || u.type !== 'update') return sendMessage(ME, '만료된 갱신 후보입니다(브리핑 재수신 필요).');
+    const { diagnose } = await import('./lib/updateTrack.mjs');
+    const dg = diagnose(u.slug);
+    if (!dg.ok) return sendMessage(ME, `❌ ${dg.error}`);
+    const gid = registerUpdate({ slug: u.slug, title: u.title, url: u.url });
+    const msg = [
+      `📂 갱신 진단: ${dg.title}`,
+      `🔗 ${dg.url}  ·  본문 ${dg.len}자`,
+      `🔧 낡은 신호:`,
+      ...dg.reasons.map((r) => `  • ${r}`),
+      dg.lastUpdated ? `🕒 마지막 갱신: ${new Date(dg.lastUpdated).toLocaleDateString('ko-KR')}` : '',
+      '',
+      '표준: 주소 불변 · 공식출처·기준일 · [D]가드 · FAQ 2~3개 보강. 최종 반영은 [✅]만.',
+      '아래를 눌러야 갱신 초안을 생성합니다(즉시 생성 아님).',
+    ].filter(Boolean).join('\n');
+    return sendMessage(ME, msg, inlineButtons([[
+      { text: '🔧 갱신 초안 생성', callback_data: 'upgen:' + gid },
+      { text: '❌ 취소', callback_data: 'cancel:x' },
+    ]]));
+  }
+  // 🔧 갱신 초안 생성 → 발행글 제자리 최신화(백업). 반영은 다음 카드의 [✅]에서만.
+  if (action === 'upgen') {
+    const u = loadUpdateMap()[id];
+    await answerCallback(cb.id, u ? '갱신 생성 중…' : '만료');
+    if (!u) return sendMessage(ME, '만료된 갱신 요청입니다.');
+    await sendMessage(ME, `⏳ "${u.title.slice(0, 24)}" 갱신 초안 생성 중… (1~3분)`);
+    try {
+      const { refreshPublished } = await import('./generate.mjs');
+      const r = await refreshPublished(u.slug, CFG, ME);
+      if (!r.ok) return sendMessage(ME, `❌ ${r.error}`);
+      const aid = registerUpdate({ slug: r.slug, title: r.title, backup: r.backup });
+      return sendMessage(ME, [
+        `📝 갱신 초안 완성: ${r.title}`,
+        `길이 ${r.oldLen}→${r.newLen}자. 발행글이 로컬에서 교체됐습니다(아직 미반영·주소 불변).`,
+        '[전문] 확인 후 [✅ 갱신 반영]을 눌러야 커밋·배포됩니다. 취소하면 원본 복원.',
+      ].join('\n'), inlineButtons([[
+        { text: '📖 전문', callback_data: 'upview:' + aid },
+        { text: '✅ 갱신 반영', callback_data: 'upok:' + aid },
+        { text: '❌ 취소(복원)', callback_data: 'upno:' + aid },
+      ]]));
+    } catch (e) { return sendMessage(ME, `❌ 갱신 오류: ${e.message}`); }
+  }
+  if (action === 'upview' || action === 'upok' || action === 'upno') {
+    const u = loadUpdateMap()[id];
+    await answerCallback(cb.id, action === 'upview' ? '전문 전송' : action === 'upok' ? '반영 중…' : '복원 중…');
+    if (!u) return sendMessage(ME, '만료된 갱신 요청입니다.');
+    const f = path.join(ROOT, 'src/content/blog', u.slug, 'index.md');
+    if (action === 'upview') {
+      if (!fs.existsSync(f)) return sendMessage(ME, '파일 없음');
+      return sendMessage(ME, `📖 ${u.title}\n\n${fs.readFileSync(f, 'utf8')}`);
+    }
+    if (action === 'upno') { // 원본 복원
+      try { if (u.backup && fs.existsSync(u.backup)) fs.copyFileSync(u.backup, f); } catch (e) { return sendMessage(ME, `❌ 복원 실패: ${e.message}`); }
+      return sendMessage(ME, `↩️ 갱신 취소 — 원본 복원됨: ${u.slug}`);
+    }
+    // upok: 쿨다운 기록 → 커밋·배포
+    try {
+      const { recordUpdated } = await import('./lib/updateTrack.mjs');
+      recordUpdated(u.slug);
+      const { commitUpdate } = await import('./publish.mjs');
+      const res = await commitUpdate({ slug: u.slug, title: u.title });
+      if (res.ok) return sendMessage(ME, `🚀 갱신 반영 완료(주소 불변)\n${res.url}`);
+      return sendMessage(ME, `❌ 갱신 반영 실패: ${res.error}`);
+    } catch (e) { return sendMessage(ME, `❌ 갱신 반영 오류: ${e.message}`); }
+  }
+
   const map = loadDraftMap();
   const entry = map[id];
   await answerCallback(
     cb.id,
-    action === 'ok' || action === 'okforce' ? '처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : action === 'hold' ? '보류' : '반려됨'
+    action === 'ok' || action === 'okforce' || action === 'okqueue' ? '처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : action === 'hold' ? '보류' : '반려됨'
   );
   if (!entry) return sendMessage(ME, '만료된 초안입니다(봇 재시작됨).');
   const f = path.join(ROOT, 'src/content/blog', entry.slug, 'index.md');
@@ -382,34 +475,45 @@ async function handleCallback(cb) {
       }
     }
   } else if (action === 'ok') {
-    const cap = CFG.maxSameDayPublish || 3;
-    const already = todayPublishCount();
-    if (already >= cap) {
-      // 상한 도달 — 차단하지 않고 사람이 한 번 더 확인하도록 재확인 단계를 둔다.
-      // (대원칙: 게시는 오직 사람의 명시적 승인으로만. 여기선 '재확인'이 그 승인.)
+    // 승인 = 발행 동의(대원칙 불변). 즉시가 아니라 '띄엄띄엄' 예약 슬롯에 넣는다(하루 3~5편 분산).
+    const { enqueue, scheduledTodayCount, kstHM } = await import('./lib/publishQueue.mjs');
+    const cap = CFG.maxSameDayPublish || 5;
+    if (scheduledTodayCount(todayPublishCount()) >= cap) {
+      // 오늘 발행+예약이 상한 — 내일로 넘기거나(예약) 지금 강제 발행.
       await sendMessage(
         ME,
         [
-          `🛑 오늘 발행 상한(${cap}편) 도달 — 내일 발행을 권장합니다.`,
-          `이 초안은 재고로 남아 내일 그대로 승인·발행할 수 있어요.`,
-          '',
-          `그래도 지금 "${entry.title}"를 발행하려면 아래에서 한 번 더 확인해 주세요.`,
+          `🛑 오늘 발행+예약이 상한(${cap}편)에 찼습니다.`,
+          `"${entry.title}"는 예약하면 내일 창(${(CFG.publishStagger?.startHour) ?? 11}시~)부터 자동 발행됩니다.`,
+          `지금 바로 올리려면 [지금 발행].`,
         ].join('\n'),
         inlineButtons([[
-          { text: `⚠️ 상한 무시하고 지금 발행`, callback_data: 'okforce:' + id },
-          { text: '🗓 내일로 보류', callback_data: 'hold:' + id },
+          { text: '🗓 내일 예약', callback_data: 'okqueue:' + id },
+          { text: '⚡ 지금 발행', callback_data: 'okforce:' + id },
         ]])
       );
       return;
     }
-    await doPublish(entry);
+    const { at, rolled, position } = enqueue({ slug: entry.slug, title: entry.title, keyword: entry.keyword }, CFG);
+    const when = `${rolled ? '내일' : '오늘'} ${kstHM(at)}`;
+    await sendMessage(
+      ME,
+      `🗓 예약 발행: ${when}(KST) — "${entry.title}"\n승인 확정됨. 때가 되면 자동 게시됩니다(오늘 ${position}번째 예약). 지금 바로 원하면 아래 [지금 발행].`,
+      inlineButtons([[{ text: '⚡ 지금 발행', callback_data: 'okforce:' + id }]])
+    );
+  } else if (action === 'okqueue') {
+    const { enqueue, kstHM } = await import('./lib/publishQueue.mjs');
+    const { at, rolled } = enqueue({ slug: entry.slug, title: entry.title, keyword: entry.keyword }, CFG);
+    await sendMessage(ME, `🗓 예약됨: ${rolled ? '내일' : '오늘'} ${kstHM(at)}(KST) — "${entry.title}"`);
   } else if (action === 'okforce') {
-    // 상한 재확인 통과 — 사람이 명시적으로 한 번 더 확인함.
+    // 사람이 '지금 발행'을 명시 → 즉시 게시(예약 우회).
     await doPublish(entry);
   } else if (action === 'hold') {
-    await sendMessage(ME, `🗓 보류(재고 유지): "${entry.title}"\n내일 카드에서 다시 ✅ 승인하면 발행됩니다.`);
+    await sendMessage(ME, `🗓 보류(재고 유지): "${entry.title}"\n다음 브리핑 카드에서 다시 ✅ 승인하면 예약됩니다.`);
   } else if (action === 'no') {
-    await sendMessage(ME, `↩️ 반려(초안 보관): ${entry.slug}\n삭제하려면 /delete ${entry.slug}`);
+    // 반려 = 재고 skipped(재제안 금지, 되살림 가능). 재고 주제일 때만 소진.
+    try { const { markSkipped } = await import('./lib/topicsPool.mjs'); if (entry.keyword) markSkipped(entry.keyword); } catch {}
+    await sendMessage(ME, `↩️ 반려: ${entry.slug} (재고는 skipped 처리)\n삭제하려면 /delete ${entry.slug}`);
   }
 }
 
@@ -448,6 +552,9 @@ async function main() {
       // 네트워크 오류 등 → 잠깐 쉬고 계속(데몬은 죽지 않음)
       await new Promise((r) => setTimeout(r, 3000));
     }
+    // 띄엄띄엄 예약 발행: 매 주기 도래분 확인·발행(대원칙: 이미 승인된 것만).
+    try { await drainStaggerQueue(); } catch (e) { console.error('[stagger]', e.message); }
+
     if (Date.now() - lastBeat > CFG.heartbeatSeconds * 1000) {
       writeHeartbeat({ status: 'polling', offset });
       lastBeat = Date.now();

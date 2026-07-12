@@ -304,7 +304,7 @@ function mapUpsert(file, keyFn, entry) {
   fs.writeFileSync(f, JSON.stringify(map, null, 1));
   return id;
 }
-const saveDraft = (slug, title) => mapUpsert('drafts.json', (i) => 'd' + Math.abs(hash(slug + '#' + i)).toString(36), { slug, title });
+const saveDraft = (slug, title, keyword) => mapUpsert('drafts.json', (i) => 'd' + Math.abs(hash(slug + '#' + i)).toString(36), { slug, title, keyword: keyword || '' });
 const saveRetryKw = (item) =>
   mapUpsert('kwmap.json', (i) => 'k' + Math.abs(hash(item.keyword + '#r' + i)).toString(36), {
     keyword: item.keyword, source: item.source || 'manual', gossip: !!item.gossip,
@@ -431,7 +431,7 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   const f = path.join(BLOG, slug, 'index.md');
   const raw = fs.readFileSync(f, 'utf8');
   const body = raw.split(/^---\s*$/m).slice(2).join('---').split('<!--')[0];
-  const id = saveDraft(slug, title);
+  const id = saveDraft(slug, title, opts.keyword);
   const toc = extractToc(body);
   const feats = bodyFeatures(body);
   const tissues = feats.hasTable ? validateTables(body) : [];
@@ -538,6 +538,58 @@ export async function editDraft(slug, instruction, config, chatId) {
     });
   }
   return { ok: true, slug, kind: 'ai', bigChange };
+}
+
+// ── 📂 갱신(축2 [4]): 발행글을 '갱신 표준'으로 제자리 최신화. 백업 후 본문 교체(주소·draft:false 유지). ──
+// 커밋(=발행 반영)은 하지 않음 — bot 이 승인 카드([✅갱신 반영]) 받은 뒤에만 커밋. 취소 시 백업 복원.
+export async function refreshPublished(slug, config, chatId) {
+  config = config || loadConfig();
+  const f = path.join(BLOG, slug, 'index.md');
+  if (!fs.existsSync(f)) return { ok: false, error: '발행글 없음: ' + slug };
+  const raw = fs.readFileSync(f, 'utf8');
+  if (/^draft:\s*true/m.test(raw)) return { ok: false, error: '이 글은 아직 발행 전(초안)입니다 — /draft 흐름으로.' };
+
+  const m = raw.match(/^(---[\s\S]*?---\n+)([\s\S]*)$/);
+  const fm = m[1], rest = m[2];
+  const riskIdx = rest.indexOf('<!--');
+  const body = (riskIdx >= 0 ? rest.slice(0, riskIdx) : rest).trim();
+  const tail = riskIdx >= 0 ? rest.slice(riskIdx) : '';
+  const title = (fm.match(/^title:\s*"?(.*?)"?\s*$/m) || [])[1] || slug;
+
+  // 백업(state, git 밖)
+  const bakDir = path.join(STATE, 'backups');
+  fs.mkdirSync(bakDir, { recursive: true });
+  const backup = path.join(bakDir, slug + '.update.' + Date.now() + '.bak');
+  fs.writeFileSync(backup, raw);
+
+  const prompt =
+    `아래는 이미 발행된 한국어 블로그 글의 본문입니다. '갱신 표준'에 따라 낡은 부분만 최신화하세요.\n\n` +
+    `[갱신 표준(1차 스프린트 표준 준수)]\n` +
+    `- 주소(URL)·제목의 핵심 키워드는 유지. 구조(h2/h3·표·내부링크)는 보존하고 낡은 내용만 교체.\n` +
+    `- 낡은 연도·수치·일정·제도를 오늘(${kstDate()}) 기준으로 갱신. 확인 불가한 수치는 단정하지 말고 '공식 출처 확인' 안내로.\n` +
+    `- 공식·공공기관 출처 우선, 기준일 병기. 종료·변경된 제도는 과거 시제로 표기하고 후속 제도로 안내([D]가드).\n` +
+    `- 자주 묻는 질문(FAQ) 2~3개를 신설 또는 보강.\n` +
+    `- YMYL(건강·세금) 단정어 금지("무조건/100%/반드시 ~됩니다" → 완화).\n` +
+    `frontmatter·코드펜스·설명 없이 '갱신된 전체 본문 마크다운'만 출력.\n\n[현재 본문]\n${body}`;
+  const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
+  if (config.cliModel) args.push('--model', config.cliModel);
+  let newBody, costUsd = 0;
+  try {
+    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env } });
+    const j = JSON.parse(stdout);
+    if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
+    newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
+    costUsd = j.total_cost_usd || 0;
+  } catch (e) {
+    return { ok: false, error: '갱신 생성 실패: ' + ((e.stderr || e.message || '') + '').slice(0, 120), backup };
+  }
+  if (!newBody || newBody.length < 100) return { ok: false, error: '갱신 결과가 비었습니다(원본 유지).', backup };
+
+  const oldLen = body.length, newLen = newBody.length;
+  fs.writeFileSync(f, fm + newBody + (tail ? '\n\n' + tail : '\n'));
+  fs.appendFileSync(path.join(STATE, 'cost-log.jsonl'),
+    JSON.stringify({ ts: kstNow(), slug, action: 'refresh', engine: 'claude-cli', subscription: true, usd: +Number(costUsd).toFixed(5), note: '구독 포함(추가 청구 0)' }) + '\n');
+  return { ok: true, slug, title, backup, oldLen, newLen, costUsd };
 }
 
 // ── 일괄/직접 생성(batch 모드) ──
