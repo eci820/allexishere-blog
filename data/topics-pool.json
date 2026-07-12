@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T06:12:17.990Z",
+  "updatedAt": "2026-07-12T07:06:25.266Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -20,8 +20,8 @@
       "tier": "science",
       "series": "life",
       "angle": "하루 요금·에어컨 대비",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "제습기-전기요금-얼마-나올까-계산-기준과-절약-가이드-2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
       "metrics": null
