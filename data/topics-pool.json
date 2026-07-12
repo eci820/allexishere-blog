@@ -1,6 +1,6 @@
 {
-  "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T16:33:50.980Z",
+  "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
+  "updatedAt": "2026-07-12T21:40:40.069Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -573,11 +573,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "900만원 채우는 순서",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "t42zh8j",
@@ -585,11 +586,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "60일·300만원 추가공제 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "th4l582",
@@ -597,11 +599,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "수령 시기·조기연금 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tpjt9gs",
@@ -609,11 +612,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "가입 유불리 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "t4r94nd",
@@ -621,11 +625,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "납입액·연말정산 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "the7iyl",
@@ -633,11 +638,12 @@
       "tier": "finance",
       "series": "tax",
       "angle": "고배당주 신청 유불리(2026)",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tca6r4e",
@@ -645,11 +651,12 @@
       "tier": "finance",
       "series": "tax",
       "angle": "2천만원 초과 대비",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "th7a216",
@@ -657,11 +664,12 @@
       "tier": "finance",
       "series": "tax",
       "angle": "연말 매도 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "te6qwx1",
@@ -669,11 +677,12 @@
       "tier": "finance",
       "series": "save",
       "angle": "CMA vs 파킹 선택",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "t9klgwc",
@@ -681,11 +690,12 @@
       "tier": "finance",
       "series": "save",
       "angle": "은행 분산 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tu9x34z",
@@ -693,11 +703,12 @@
       "tier": "finance",
       "series": "invest",
       "angle": "국내 해외 ETF 세금 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "timw09g",
@@ -705,11 +716,12 @@
       "tier": "finance",
       "series": "invest",
       "angle": "환전 시점·수수료 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tk6q7b0",
@@ -717,11 +729,12 @@
       "tier": "finance",
       "series": "invest",
       "angle": "KRX금 vs 골드뱅킹 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tm1mbns",
@@ -729,11 +742,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "소득기준·한도 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tsfmumk",
@@ -741,11 +755,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "대상·한도 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tgokyr3",
@@ -753,11 +768,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "중도상환수수료·시점 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tuwzs2q",
@@ -765,11 +781,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "3년·연 10% 면제 활용",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "ty5yxc6",
@@ -777,11 +794,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "대환 전 점수 관리",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tcuqyqk",
@@ -789,11 +807,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "버팀목·한도 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "thx3qt9",
@@ -801,11 +820,12 @@
       "tier": "realestate",
       "series": "lease",
       "angle": "확정일자·전세보증 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "t947kwu",
@@ -813,11 +833,12 @@
       "tier": "realestate",
       "series": "lease",
       "angle": "가입 비용·조건 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "ttjoqyl",
@@ -825,11 +846,12 @@
       "tier": "realestate",
       "series": "lease",
       "angle": "신고 의무·과태료",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "ta23ggj",
@@ -837,11 +859,12 @@
       "tier": "realestate",
       "series": "tax",
       "angle": "2년 보유·거주 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tve6b3c",
@@ -849,11 +872,12 @@
       "tier": "realestate",
       "series": "subscribe",
       "angle": "지역·면적별 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tuvgv13",
@@ -909,11 +933,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "세액공제 우선순위 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tkz5fqy",
@@ -921,11 +946,12 @@
       "tier": "finance",
       "series": "pension",
       "angle": "운용 선택 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "ttelwih",
@@ -933,11 +959,12 @@
       "tier": "finance",
       "series": "tax",
       "angle": "250만원 공제·환율 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tn8vuxj",
@@ -945,11 +972,12 @@
       "tier": "realestate",
       "series": "loan",
       "angle": "자격·금리 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tmygi30",
@@ -957,11 +985,12 @@
       "tier": "realestate",
       "series": "lease",
       "angle": "상한요율 확인",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "ty5j081",
@@ -969,11 +998,12 @@
       "tier": "realestate",
       "series": "tax",
       "angle": "생애최초·조정지역 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "txuyo91",
@@ -981,11 +1011,12 @@
       "tier": "realestate",
       "series": "tax",
       "angle": "과세 기준일 판단",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "tn7dcfo",
@@ -993,11 +1024,12 @@
       "tier": "realestate",
       "series": "subscribe",
       "angle": "무주택·부양가족 점수",
-      "status": "pending",
+      "status": "quarantined",
       "slug": null,
       "addedAt": "2026-07-12T16:33:50.975Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "quarantinedAt": "2026-07-13"
     },
     {
       "id": "t8hst11",

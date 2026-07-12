@@ -49,6 +49,8 @@ const blog = defineCollection({
       originalPath: z.string().optional(),
       /** 초안 여부. true 면 배포 빌드에서 제외 */
       draft: z.boolean().default(false),
+      /** 실험 코호트 태그(검증용). 예: "2026-07-13_conditions_changed" */
+      cohort: z.string().optional(),
     }),
 });
 
