@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T07:08:18.533Z",
+  "updatedAt": "2026-07-12T09:35:53.915Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -47,7 +47,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-12T07:23:54.202Z",
       "metrics": null
     },
     {
@@ -59,7 +59,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-12T07:23:54.202Z",
       "metrics": null
     },
     {
@@ -188,8 +188,8 @@
       "tier": "health",
       "series": "A",
       "angle": "대상·주기 확인, 연말 몰림 회피",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "국가건강검진-항목-조회부터-연령별-검사까지-총정리2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
       "metrics": null
@@ -215,7 +215,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-12T07:23:54.215Z",
       "metrics": null
     },
     {
@@ -227,7 +227,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-12T07:23:54.215Z",
       "metrics": null
     },
     {
@@ -524,11 +524,12 @@
       "tier": "evergreen",
       "series": "tax",
       "angle": "연납 할인 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "자동차세-연납-방법-뜻부터-할인율까지-2026년-총정리",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tmzmqns",
