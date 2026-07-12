@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T07:06:25.266Z",
+  "updatedAt": "2026-07-12T07:08:18.533Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -200,8 +200,8 @@
       "tier": "health",
       "series": "A",
       "angle": "권장 주기·비용 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "위내시경-주기-2026년-나이위험군별-검진-기준-가이드",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
       "metrics": null
