@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T11:00:19.486Z",
+  "updatedAt": "2026-07-12T11:36:42.659Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -32,8 +32,8 @@
       "tier": "science",
       "series": "life",
       "angle": "필터 비용·교체 시기",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "공기청정기-필터-교체-주기-헤파프리필터-교체-기준-2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
       "metrics": null
