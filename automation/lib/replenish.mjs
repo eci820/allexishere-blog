@@ -4,7 +4,7 @@
 import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { loadPool, savePool, addTopics, pendingCount, liveIndex, matchLive } from './topicsPool.mjs';
+import { loadPool, savePool, addTopics, pendingCount, eligibleCount, liveIndex, matchLive } from './topicsPool.mjs';
 import { scoreKeyword } from './suitability.mjs';
 
 const execFileP = promisify(execFile);
@@ -44,7 +44,8 @@ function parseArr(text) {
 export async function replenishIfLow(config, { threshold = 30, want = 20 } = {}) {
   const pool = loadPool();
   if (!pool) return null;
-  if (pendingCount(pool) >= threshold) return null;
+  // 신선(제안 가능) 재고가 임계 미만이면 보충 — 총 pending이 아직 많아도 쿨다운으로 마르는 걸 방지.
+  if (eligibleCount(pool) >= threshold) return null;
 
   // 중복 금지 목록: 현재 재고 전체 + 발행글 제목(대표어)
   const existing = [

@@ -71,6 +71,62 @@ export const SEED_TOPICS = [
   { keyword: '재산세 조회', tier: 'evergreen', series: 'tax', angle: '납부·카드 혜택' },
   { keyword: '종합소득세 신고', tier: 'evergreen', series: 'tax', angle: '대상·신고 판단' },
   { keyword: '근로장려금 신청', tier: 'evergreen', series: 'tax', angle: '자격·신청 시기' },
+
+  // 💰 금융·재테크·세금(최고 CPC) — 신생 사이트 원칙: 롱테일 판단형 각도. 투자 권유·수익 보장 금지(YMYL).
+  // (pension) 연금·절세계좌
+  { keyword: 'ISA 연금저축 IRP 차이', tier: 'finance', series: 'pension', angle: '세액공제 우선순위 판단' },
+  { keyword: '연금저축 IRP 세액공제 한도', tier: 'finance', series: 'pension', angle: '900만원 채우는 순서' },
+  { keyword: 'ISA 만기 연금계좌 이전', tier: 'finance', series: 'pension', angle: '60일·300만원 추가공제 판단' },
+  { keyword: '국민연금 예상수령액 조회', tier: 'finance', series: 'pension', angle: '수령 시기·조기연금 판단' },
+  { keyword: '퇴직연금 DB DC 차이', tier: 'finance', series: 'pension', angle: '운용 선택 판단' },
+  { keyword: '청년도약계좌 조건', tier: 'finance', series: 'pension', angle: '가입 유불리 판단' },
+  { keyword: '주택청약통장 소득공제', tier: 'finance', series: 'pension', angle: '납입액·연말정산 판단' },
+  // (tax) 금융 세금
+  { keyword: '배당소득 분리과세 신청', tier: 'finance', series: 'tax', angle: '고배당주 신청 유불리(2026)' },
+  { keyword: '금융소득종합과세 기준', tier: 'finance', series: 'tax', angle: '2천만원 초과 대비' },
+  { keyword: '해외주식 양도소득세 신고', tier: 'finance', series: 'tax', angle: '250만원 공제·환율 판단' },
+  { keyword: '주식 양도세 대주주 기준', tier: 'finance', series: 'tax', angle: '연말 매도 판단' },
+  // (save) 예적금·금리
+  { keyword: '파킹통장 금리 비교', tier: 'finance', series: 'save', angle: 'CMA vs 파킹 선택' },
+  { keyword: '예금자보호 한도', tier: 'finance', series: 'save', angle: '은행 분산 판단' },
+  // (invest) 투자 원리
+  { keyword: 'ETF 분배금 세금', tier: 'finance', series: 'invest', angle: '국내 해외 ETF 세금 판단' },
+  { keyword: '달러 환테크 방법', tier: 'finance', series: 'invest', angle: '환전 시점·수수료 판단' },
+  { keyword: '금 투자 방법 비교', tier: 'finance', series: 'invest', angle: 'KRX금 vs 골드뱅킹 판단' },
+
+  // 🏠 대출·부동산(고 CPC) — 조건·한도·세금은 기준일 병기·공식 출처(주택도시기금·국세청·금융위).
+  // (loan) 정책·주담대
+  { keyword: '신생아 특례대출 조건', tier: 'realestate', series: 'loan', angle: '소득기준·한도 판단' },
+  { keyword: '디딤돌대출 소득기준', tier: 'realestate', series: 'loan', angle: '자격·금리 판단' },
+  { keyword: '보금자리론 조건', tier: 'realestate', series: 'loan', angle: '대상·한도 판단' },
+  { keyword: '주택담보대출 갈아타기', tier: 'realestate', series: 'loan', angle: '중도상환수수료·시점 판단' },
+  { keyword: '중도상환수수료 면제 조건', tier: 'realestate', series: 'loan', angle: '3년·연 10% 면제 활용' },
+  { keyword: '신용점수 올리는 법', tier: 'realestate', series: 'loan', angle: '대환 전 점수 관리' },
+  { keyword: '전세자금대출 조건', tier: 'realestate', series: 'loan', angle: '버팀목·한도 판단' },
+  // (lease) 전월세
+  { keyword: '전세사기 예방 방법', tier: 'realestate', series: 'lease', angle: '확정일자·전세보증 판단' },
+  { keyword: '전세보증금 반환보증', tier: 'realestate', series: 'lease', angle: '가입 비용·조건 판단' },
+  { keyword: '전월세 신고제 대상', tier: 'realestate', series: 'lease', angle: '신고 의무·과태료' },
+  { keyword: '부동산 중개보수 계산', tier: 'realestate', series: 'lease', angle: '상한요율 확인' },
+  // (tax) 부동산 세금
+  { keyword: '취득세 세율 계산', tier: 'realestate', series: 'tax', angle: '생애최초·조정지역 판단' },
+  { keyword: '1주택 양도세 비과세 조건', tier: 'realestate', series: 'tax', angle: '2년 보유·거주 판단' },
+  { keyword: '재산세 종부세 차이', tier: 'realestate', series: 'tax', angle: '과세 기준일 판단' },
+  // (subscribe) 청약
+  { keyword: '청약 가점 계산', tier: 'realestate', series: 'subscribe', angle: '무주택·부양가족 점수' },
+  { keyword: '청약통장 예치금 기준', tier: 'realestate', series: 'subscribe', angle: '지역·면적별 판단' },
+
+  // 💪 건강 — (A) 의료·보험 고CPC 보강
+  { keyword: '라식 라섹 차이 비용', tier: 'health', series: 'A', angle: '회복·비용 판단' },
+  { keyword: '백내장 다초점렌즈 실비', tier: 'health', series: 'A', angle: '급여·비급여 판단' },
+  { keyword: '도수치료 실손보험 청구', tier: 'health', series: 'A', angle: '횟수·한도 판단' },
+  { keyword: '운전자보험 필요성', tier: 'health', series: 'A', angle: '특약 선택 판단' },
+  { keyword: '암보험 갱신형 비갱신형', tier: 'health', series: 'A', angle: '형태 선택 판단' },
+  { keyword: '건강보험료 산정 기준', tier: 'health', series: 'A', angle: '지역·직장 판단' },
+
+  // 🔬 과학·생활원리 — life 에너지 고단가 보강
+  { keyword: '태양광 설치 지원금', tier: 'science', series: 'life', angle: '설치비·회수기간 판단' },
+  { keyword: '전기차 충전요금 완속 급속', tier: 'science', series: 'life', angle: '충전 방식 선택' },
 ];
 
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h).toString(36); };
@@ -185,6 +241,15 @@ export function pendingCount(pool, tier) {
   return pool.topics.filter((t) => t.status === 'pending' && (!tier || t.tier === tier)).length;
 }
 
+// 지금 '제안 가능한'(pending & 30일 쿨다운 아닌) 수 — 보충 트리거 판단용(신선 재고가 마르기 전에 채움).
+export function eligibleCount(pool, tier) {
+  const now = Date.now();
+  return pool.topics.filter((t) =>
+    t.status === 'pending' && (!tier || t.tier === tier) &&
+    (!t.lastProposedAt || now - Date.parse(t.lastProposedAt) >= PROPOSE_COOLDOWN)
+  ).length;
+}
+
 // 발행 소진: 키워드/슬러그로 pending → published (publish.mjs에서 호출)
 export function markPublished(keyword, slug) {
   const pool = loadPool();
@@ -240,7 +305,8 @@ export function addTopics(pool, items) {
   let added = 0;
   for (const it of items) {
     if (!it.keyword || have.has(it.keyword)) continue;
-    if (matchLive(it.keyword)) continue; // 이미 발행된 주제면 재고에 넣지 않음
+    const lm = matchLive(it.keyword);
+    if (lm && lm.score >= 2) continue; // 발행글과 '강매칭'(2토큰↑)일 때만 제외 — 단일 공통어 오탐 방지
     pool.topics.push({
       id: topicId(it.keyword), keyword: it.keyword, tier: it.tier || 'evergreen',
       series: it.series || '', angle: it.angle || '', status: it.status || 'pending',

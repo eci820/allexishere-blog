@@ -21,7 +21,8 @@ const KWMAP = path.join(STATE, 'kwmap.json'); // id -> {keyword, source, gossip}
 const load = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return {}; } };
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 const icon = (src) =>
-  src === 'calendar' ? '📅' : src === 'trend' ? '🔥' : src === 'science' ? '🔬' : src === 'health' ? '💪' : '🌲';
+  src === 'calendar' ? '📅' : src === 'trend' ? '🔥' : src === 'finance' ? '💰' : src === 'realestate' ? '🏠'
+  : src === 'science' ? '🔬' : src === 'health' ? '💪' : '🌲';
 // 정렬 키: 검색량 내림차순(없으면 맨 뒤)
 const volKey = (s) => (s && s.vol != null ? s.vol : -1);
 
@@ -64,16 +65,16 @@ export async function runBriefing({ chatId, config } = {}) {
     console.error('[briefing] 지표 실패:', e.message);
   }
 
-  // 4) 계급별 정렬 + 표시 순서(🔥실검 → 🔬과학 → 💪건강 → 📅캘린더 → 🌲에버그린).
-  //    🔥실검 = 원래 순위 유지 / 🔬·💪·🌲 = 검색량 내림차순 / 📅캘린더 = D-day 임박순(선점).
+  // 4) 계급별 정렬 + 표시 순서(💰금융 → 🏠부동산 → 💪건강 → 🔬과학 → 🔥실검 → 📅캘린더 → 🌲에버그린).
+  //    고CPC 계급을 앞으로. 🔥실검 = 원래 순위 유지 / 재고 계급 = 검색량 내림차순 / 📅캘린더 = D-day 임박순.
   const byVol = (a, b) => volKey(stats[b.keyword]) - volKey(stats[a.keyword]);
-  const tier = (src) => candidates.filter((c) => c.source === src);
-  const trend = tier('trend'); // 순위 유지
-  const science = tier('science').sort(byVol);
-  const health = tier('health').sort(byVol);
-  const ever = tier('evergreen').sort(byVol);
+  const tier = (src) => candidates.filter((c) => c.source === src).sort(byVol);
+  const trend = candidates.filter((c) => c.source === 'trend'); // 순위 유지
   const calSorted = cal.slice().sort((a, b) => a.daysUntil - b.daysUntil); // 임박순
-  const ordered = [...trend, ...science, ...health, ...calSorted, ...ever];
+  const ordered = [
+    ...tier('finance'), ...tier('realestate'), ...tier('health'), ...tier('science'),
+    ...trend, ...calSorted, ...tier('evergreen'),
+  ];
 
   // 5) 메시지 + 버튼 + kwmap
   const kwmap = load(KWMAP);
@@ -122,7 +123,7 @@ export async function runBriefing({ chatId, config } = {}) {
 
   const header =
     `🗞 키워드 브리핑 v2.7 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
-    `탭 = 초안 생성(순차). 🔥실검 🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
+    `탭 = 초안 생성(순차). 💰금융 🏠부동산 💪건강 🔬과학 🔥실검 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
     `★적합도 = 경쟁·비율·의도·수명·단가 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
     `✍️ 각도 = 원리 → 돈 드는 판단(선택·비용·시기)으로 연결.` +
     (upCount ? ` 📂갱신 = 탭하면 '갱신 진단' 먼저(즉시 생성 아님).\n` : `\n`);

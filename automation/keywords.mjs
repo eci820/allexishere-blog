@@ -147,7 +147,7 @@ export async function selectKeywords(config) {
 // 브리핑용 후보 — v2.7 계급 균형 + 축2 재고: 🔥실검(정보형만·라이브)·🔬과학·💪건강·🌲에버그린(재고).
 // (📅캘린더는 briefing.mjs에서 별도로 앞에 붙는다.) 재고 픽은 3중 방어(status·30일 쿨다운·발행매칭) 적용.
 export async function briefingCandidates(config, exclude = new Set()) {
-  const counts = config.tierCounts || { trend: 2, science: 2, health: 2, evergreen: 2 };
+  const counts = config.tierCounts || { trend: 2, finance: 3, realestate: 3, health: 3, science: 2, evergreen: 1 };
   const out = [];
   let source = null, note = '';
 
@@ -167,7 +167,7 @@ export async function briefingCandidates(config, exclude = new Set()) {
   // 🔬·💪·🌲 — 주제 재고(topics-pool.json)에서 픽. pickForBrief가 markProposed·auto-published 처리.
   const { seedPoolIfEmpty, pickForBrief } = await import('./lib/topicsPool.mjs');
   const pool = seedPoolIfEmpty();
-  for (const tier of ['science', 'health', 'evergreen']) {
+  for (const tier of ['finance', 'realestate', 'health', 'science', 'evergreen']) {
     for (const p of pickForBrief(pool, tier, counts[tier], exclude)) {
       out.push({
         keyword: p.keyword, source: p.source, gossip: false, id: p.id,
