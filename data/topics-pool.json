@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped. lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-12T09:35:53.915Z",
+  "updatedAt": "2026-07-12T11:00:19.486Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -212,8 +212,8 @@
       "tier": "health",
       "series": "A",
       "angle": "주기·비급여 비용 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대장내시경-비용-국가검진-지원과-실비-비교2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": "2026-07-12T07:23:54.215Z",
       "metrics": null
