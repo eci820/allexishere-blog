@@ -5,6 +5,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ROOT, AUTO_DIR } from './lib/env.mjs';
 import { markPublished, soakPublished } from './lib/topicsPool.mjs';
+import { submitIndexNow } from './lib/indexnow.mjs';
 
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
 const LOCK = path.join(AUTO_DIR, 'state', 'publish.lock');
@@ -91,6 +92,7 @@ export async function publish({ slug, title, keyword }) {
     const url = orig
       ? 'https://allexishere.com' + encodeURI(orig)
       : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
+    submitIndexNow(url); // IndexNow 통보(90초 지연·fire-and-forget, 실패는 로그만)
     return { ok: true, url };
   });
 }
@@ -119,6 +121,7 @@ export async function commitUpdate({ slug, title }) {
     }
     const orig = readOriginalPath(fs.readFileSync(f, 'utf8'));
     const url = orig ? 'https://allexishere.com' + encodeURI(orig) : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
+    submitIndexNow(url); // 갱신도 동일하게 IndexNow 통보(fire-and-forget)
     return { ok: true, url };
   });
 }
