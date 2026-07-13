@@ -112,6 +112,20 @@ const ogImageURL = new URL(image, SITE.url).href;
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
+    <!-- Google Analytics 4 (gtag.js). 운영(배포)에서만 로드 — dev 트래킹 오염 방지.
+         모든 페이지(홈·글상세·404·목록)가 이 BaseLayout <head>를 공유하므로 전역 적용됩니다. -->
+    {import.meta.env.PROD && (
+      <Fragment>
+        <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-R9KHQ1L04E"></script>
+        <script is:inline>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-R9KHQ1L04E');
+        </script>
+      </Fragment>
+    )}
+
     <!-- Google AdSense 자동광고 스크립트. 운영(배포)에서만 로드합니다.
          (localhost 에서 광고를 띄우면 '부정 클릭'으로 오해받을 수 있어 제외) -->
     {import.meta.env.PROD && (
