@@ -1,10 +1,14 @@
 name: analytics-report
 
 # Cloudflare Web Analytics → 텔레그램 일일 리포트 + 누적 영속화
+#
+# ⚠️ 스케줄 비활성(2026-07-16). hrinsight4u.com 리포트의 실제 발신처는 eci820/HRstudy 이며,
+#    이 저장소의 사본은 CF_ANALYTICS_TOKEN 등 시크릿이 없어 매일 실패(=실패 메일)만 만들었다.
+#    코드·누적 데이터(data/analytics-history.json)는 HRstudy 와의 이력 분리 확인 전까지 보존하고,
+#    수동 실행(workflow_dispatch)만 남긴다. 되돌리려면 아래 schedule 블록을 복원:
+#      schedule:
+#        - cron: "0 23 * * *"   # 23:00 UTC == 08:00 KST
 on:
-  schedule:
-    # 23:00 UTC == 08:00 KST (KST 어제분 집계가 마감된 뒤)
-    - cron: "0 23 * * *"
   workflow_dispatch: {}
 
 permissions:
