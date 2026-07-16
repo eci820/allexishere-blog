@@ -163,32 +163,40 @@ function bumpPublishCount() {
   fs.writeFileSync(f, JSON.stringify(m));
   return m[today];
 }
-// 실제 게시 실행(예약 도래·즉시 발행 공용). 오직 사람 승인으로만 도달.
-async function doPublish(entry) {
+// 발행 상한 게이트 — config.publishCap.enabled=false(기본)면 무제한.
+// true 로 되돌리면 perDay 상한이 부활해 초과분 발행을 거부한다.
+const capOn = () => CFG.publishCap?.enabled === true;
+const capPerDay = () => CFG.publishCap?.perDay ?? 5;
+
+// 실제 게시 실행 — 승인 = 즉시 1회 게시. 오직 사람 승인으로만 도달, 대기하는 항목 없음.
+// 실패는 절대 조용히 넘어가지 않는다: 사유를 붙여 알리고 멈춘 뒤 [🔄 재발행]을 제공.
+async function doPublish(entry, cbId) {
   try {
     const res = await publishSlug(entry.slug, entry.title, entry.keyword);
     if (res.ok) {
       const n = bumpPublishCount();
-      const cap = CFG.maxSameDayPublish || 5;
-      let msg = `🚀 게시 완료\n${res.url}`;
-      if (n >= cap) {
-        msg += `\n\n📊 오늘 ${n}편 발행(상한 ${cap}편). 남은 예약은 내일 이어서 발행됩니다.`;
-      }
-      await sendMessage(ME, msg);
-    } else {
-      await sendMessage(ME, `❌ 게시 실패: ${res.error}`);
+      await sendMessage(ME, `🚀 게시 완료 (오늘 ${n}편째)\n${res.url}`);
+      return true;
     }
+    // res.error 는 publish.mjs 가 분류·보장한 비어있지 않은 사유.
+    const reason = res.error || '알 수 없는 오류(사유 미상 — 봇 로그 확인 필요)';
+    console.error('[publish] 실패:', entry.slug, reason);
+    await sendMessage(
+      ME,
+      `❌ 게시 실패: ${reason}\n\n📄 "${entry.title}"\n중단됨 — 초안은 그대로 남아 있습니다. 원인 해결 후 아래로 재시도하세요.`,
+      cbId ? inlineButtons([[{ text: '🔄 재발행', callback_data: 'ok:' + cbId }]]) : undefined
+    );
+    return false;
   } catch (e) {
-    await sendMessage(ME, `❌ 게시 오류: ${e.message}`);
+    const reason = e?.message || `알 수 없는 예외(${e})`;
+    console.error('[publish] 예외:', entry.slug, e);
+    await sendMessage(
+      ME,
+      `❌ 게시 실패: ${reason}\n\n📄 "${entry.title}"\n중단됨 — 초안은 그대로 남아 있습니다.`,
+      cbId ? inlineButtons([[{ text: '🔄 재발행', callback_data: 'ok:' + cbId }]]) : undefined
+    );
+    return false;
   }
-}
-
-// 띄엄띄엄 예약 발행 큐 드레인 — 봇 루프가 매 주기 호출. 도래분을 상한 내에서 발행.
-async function drainStaggerQueue() {
-  const { popDue } = await import('./lib/publishQueue.mjs');
-  const cap = CFG.maxSameDayPublish || 5;
-  const due = popDue(todayPublishCount(), cap);
-  for (const it of due) await doPublish(it);
 }
 
 // 갱신 대기 레지스트리(진단→생성→반영). state/updates.json: id → {slug,title,backup,url}
@@ -262,7 +270,7 @@ async function handleCommand(text) {
         ME,
         [
           '🤖 콘텐츠 봇 (v2.7 + 축2 재고)',
-          '흐름: 하루 1회(10시) 브리핑 → 골라서 초안 → [✅승인] → 하루 3~5편 띄엄띄엄 자동 발행.',
+          '흐름: 하루 1회(10시) 브리핑 → 골라서 초안 → [✅승인] = 즉시 게시(예약 없음·발행 상한 없음).',
           '📂 갱신 후보는 탭하면 진단 먼저 → [갱신 초안 생성] → [✅갱신 반영](주소 불변).',
           '/brief — 지금 키워드 브리핑 받기(후보 버튼)',
           '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
@@ -271,7 +279,8 @@ async function handleCommand(text) {
           '/delete <슬러그> — 초안 삭제',
           '',
           `엔진: ${CFG.engine} · 모드: ${CFG.mode}`,
-          '흐름: 브리핑 → 키워드 탭 → 초안 → (필요시 ✏️수정) → [✅승인] 눌러야만 게시.',
+          '흐름: 브리핑 → 키워드 탭 → 초안 → (필요시 ✏️수정) → [✅승인] 눌러야만 게시(누르면 바로 게시).',
+          '게시 실패 시 사유를 표시하고 멈춥니다 — 초안은 남아 있고 [🔄재발행]으로 재시도.',
           '',
           '✏️ 수정(발행 전만): 초안 카드의 [✏️수정] → 안내에 답장으로 지시.',
           '   • "제목: 새 제목" → 제목·주소 교체',
@@ -429,7 +438,7 @@ async function handleCallback(cb) {
   const entry = map[id];
   await answerCallback(
     cb.id,
-    action === 'ok' || action === 'okforce' || action === 'okqueue' ? '처리 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : action === 'hold' ? '보류' : '반려됨'
+    action === 'ok' ? '게시 중…' : action === 'view' ? '전문 전송 중…' : action === 'edit' ? '수정 안내 전송' : action === 'hold' ? '보류' : '반려됨'
   );
   if (!entry) return sendMessage(ME, '만료된 초안입니다(봇 재시작됨).');
   const f = path.join(ROOT, 'src/content/blog', entry.slug, 'index.md');
@@ -475,41 +484,15 @@ async function handleCallback(cb) {
       }
     }
   } else if (action === 'ok') {
-    // 승인 = 발행 동의(대원칙 불변). 즉시가 아니라 '띄엄띄엄' 예약 슬롯에 넣는다(하루 3~5편 분산).
-    const { enqueue, scheduledTodayCount, kstHM } = await import('./lib/publishQueue.mjs');
-    const cap = CFG.maxSameDayPublish || 5;
-    if (scheduledTodayCount(todayPublishCount()) >= cap) {
-      // 오늘 발행+예약이 상한 — 내일로 넘기거나(예약) 지금 강제 발행.
-      await sendMessage(
-        ME,
-        [
-          `🛑 오늘 발행+예약이 상한(${cap}편)에 찼습니다.`,
-          `"${entry.title}"는 예약하면 내일 창(${(CFG.publishStagger?.startHour) ?? 11}시~)부터 자동 발행됩니다.`,
-          `지금 바로 올리려면 [지금 발행].`,
-        ].join('\n'),
-        inlineButtons([[
-          { text: '🗓 내일 예약', callback_data: 'okqueue:' + id },
-          { text: '⚡ 지금 발행', callback_data: 'okforce:' + id },
-        ]])
-      );
+    // 승인 = 즉시 1회 게시(대원칙 불변). 예약·대기 없음.
+    if (capOn() && todayPublishCount() >= capPerDay()) {
+      // 게이트가 켜져 있을 때만 도달. 기본(enabled:false)에선 절대 막지 않는다.
+      await sendMessage(ME, `🛑 오늘 발행이 상한(${capPerDay()}편)에 찼습니다 — "${entry.title}" 게시 안 함.\n무제한으로 돌리려면 config.json 의 publishCap.enabled 를 false 로.`);
       return;
     }
-    const { at, rolled, position } = enqueue({ slug: entry.slug, title: entry.title, keyword: entry.keyword }, CFG);
-    const when = `${rolled ? '내일' : '오늘'} ${kstHM(at)}`;
-    await sendMessage(
-      ME,
-      `🗓 예약 발행: ${when}(KST) — "${entry.title}"\n승인 확정됨. 때가 되면 자동 게시됩니다(오늘 ${position}번째 예약). 지금 바로 원하면 아래 [지금 발행].`,
-      inlineButtons([[{ text: '⚡ 지금 발행', callback_data: 'okforce:' + id }]])
-    );
-  } else if (action === 'okqueue') {
-    const { enqueue, kstHM } = await import('./lib/publishQueue.mjs');
-    const { at, rolled } = enqueue({ slug: entry.slug, title: entry.title, keyword: entry.keyword }, CFG);
-    await sendMessage(ME, `🗓 예약됨: ${rolled ? '내일' : '오늘'} ${kstHM(at)}(KST) — "${entry.title}"`);
-  } else if (action === 'okforce') {
-    // 사람이 '지금 발행'을 명시 → 즉시 게시(예약 우회).
-    await doPublish(entry);
+    await doPublish(entry, id);
   } else if (action === 'hold') {
-    await sendMessage(ME, `🗓 보류(재고 유지): "${entry.title}"\n다음 브리핑 카드에서 다시 ✅ 승인하면 예약됩니다.`);
+    await sendMessage(ME, `🗓 보류(재고 유지): "${entry.title}"\n다음 브리핑 카드에서 다시 ✅ 승인하면 즉시 게시됩니다.`);
   } else if (action === 'no') {
     // 반려 = 재고 skipped(재제안 금지, 되살림 가능). 재고 주제일 때만 소진.
     try { const { markSkipped } = await import('./lib/topicsPool.mjs'); if (entry.keyword) markSkipped(entry.keyword); } catch {}
@@ -522,9 +505,11 @@ async function main() {
   await sendMessage(ME, '🤖 봇 시작됨. /help');
   let offset = 0;
   let lastBeat = 0;
+  let loopFails = 0; // 연속 폴링 실패 — 침묵 방지용
   for (;;) {
     try {
       const updates = await getUpdates(offset, CFG.pollTimeoutSeconds);
+      loopFails = 0;
       for (const u of updates) {
         offset = u.update_id + 1;
         const msg = u.message;
@@ -549,11 +534,15 @@ async function main() {
         } else if (cb) await handleCallback(cb);
       }
     } catch (e) {
-      // 네트워크 오류 등 → 잠깐 쉬고 계속(데몬은 죽지 않음)
+      // 네트워크 오류 등 → 잠깐 쉬고 계속(데몬은 죽지 않음). 삼키더라도 흔적은 남긴다.
+      console.error('[bot] 폴링 오류:', e?.message || e);
+      loopFails++;
+      // 연속 실패가 길어지면 침묵하지 않고 1회 알린다(복구 시 loopFails 리셋 → 재발 시 다시 알림).
+      if (loopFails === 20) {
+        try { await sendMessage(ME, `⚠️ 봇 폴링 연속 실패 ${loopFails}회: ${e?.message || e}\n네트워크·토큰을 확인하세요(봇은 계속 재시도 중).`); } catch {}
+      }
       await new Promise((r) => setTimeout(r, 3000));
     }
-    // 띄엄띄엄 예약 발행: 매 주기 도래분 확인·발행(대원칙: 이미 승인된 것만).
-    try { await drainStaggerQueue(); } catch (e) { console.error('[stagger]', e.message); }
 
     if (Date.now() - lastBeat > CFG.heartbeatSeconds * 1000) {
       writeHeartbeat({ status: 'polling', offset });

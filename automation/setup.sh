@@ -39,7 +39,7 @@ write_plist com.allexishere.bot <<PLIST
 </dict></plist>
 PLIST
 
-# 2) 키워드 브리핑 (하루 1회: 10:00 — 오전에 골라 하루 3~5편 띄엄띄엄 발행)
+# 2) 키워드 브리핑 (하루 1회: 10:00 — 오전에 골라 [✅승인] 시 즉시 게시. 예약·상한 없음)
 write_plist com.allexishere.briefing <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

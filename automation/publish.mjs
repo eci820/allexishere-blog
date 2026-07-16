@@ -44,13 +44,42 @@ function readOriginalPath(md) {
   return m ? m[1] : '';
 }
 
+// 실패 사유 추출 — 절대 빈 문자열을 반환하지 않는다.
+// ⚠️ execFileSync 의 e.stderr/e.stdout 은 Buffer 다. 빈 Buffer 는 truthy 라서
+//    (e.stderr || e.message) 로 쓰면 stderr 가 비었을 때 ''(빈 사유)가 새어나간다.
+//    git commit 은 실패 메시지를 주로 stdout 으로 내보내므로 이 경로에 정확히 걸린다.
+function errText(e) {
+  const pick = (v) => (v == null ? '' : v.toString().trim());
+  const parts = [pick(e?.stderr), pick(e?.stdout), pick(e?.message)].filter(Boolean);
+  const text = parts.join(' | ').slice(0, 300);
+  if (text) return text;
+  // 여기까지 왔으면 아무 출력도 없는 실패 — 그래도 사유 없이 보내지 않는다.
+  const code = e?.status ?? e?.code;
+  return `알 수 없는 오류${code != null ? `(exit ${code})` : ''}${e?.syscall ? ` [${e.syscall}]` : ''}`;
+}
+
+// 사유 분류 — 원문 앞에 사람이 읽을 라벨을 붙여 무엇을 해야 할지 즉시 알게 한다.
+function classify(raw, stage) {
+  const s = String(raw);
+  const label =
+    /Authentication failed|could not read Username|Permission denied|403 Forbidden|Invalid username or password|Bad credentials|(token[^\n]{0,20}(expired|invalid|revoked))|((expired|invalid|revoked)[^\n]{0,20}token)/i.test(s) ? '🔐 인증 토큰 만료·권한 없음'
+    : /non-fast-forward|rejected|fetch first|Updates were rejected|CONFLICT|Automatic merge failed|need to resolve/i.test(s) ? '🔀 GitHub push 충돌'
+    : /Could not resolve host|Connection timed out|Network is unreachable|Failed to connect|unable to access|ECONNRESET|ETIMEDOUT/i.test(s) ? '🌐 네트워크 오류'
+    : /nothing to commit|no changes added/i.test(s) ? '📄 커밋할 변경 없음'
+    : /pre-commit|hook declined|hook failed/i.test(s) ? '🪝 git 훅 거부'
+    : /index\.lock|another git process/i.test(s) ? '🔒 git 잠김(다른 프로세스)'
+    : '⚠️ ' + stage;
+  return `${label} — ${s}`;
+}
+
 export async function publish({ slug, title, keyword }) {
   return withLock(async () => {
     const dir = path.join(BLOG, slug);
     const f = path.join(dir, 'index.md');
-    if (!fs.existsSync(f)) return { ok: false, error: '글 없음: ' + slug };
+    if (!fs.existsSync(f)) return { ok: false, error: `📄 글 없음 — ${slug} (초안 파일이 삭제됐거나 슬러그가 바뀜)` };
 
     let raw = fs.readFileSync(f, 'utf8');
+    if (/^draft:\s*false/m.test(raw)) return { ok: false, error: `📄 이미 발행된 슬러그 — ${slug} (중복 발행 시도)` };
     raw = raw.replace(/^draft:\s*true\s*$/m, 'draft: false');
     if (!/^draft:/m.test(raw)) raw = raw.replace(/^---\r?\n/, '---\ndraft: false\n');
     fs.writeFileSync(f, raw);
@@ -81,11 +110,11 @@ export async function publish({ slug, title, keyword }) {
           git(['pull', '--rebase']);
           git(['push']);
         } catch (e2) {
-          return { ok: false, error: 'push 실패: ' + (e2.stderr || e2.message || '').toString().slice(0, 300) };
+          return { ok: false, error: classify(errText(e2), 'push 실패') };
         }
       }
     } catch (e) {
-      return { ok: false, error: (e.stderr || e.message || '').toString().slice(0, 300) };
+      return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
 
     const orig = readOriginalPath(raw);
@@ -102,7 +131,7 @@ export async function commitUpdate({ slug, title }) {
   return withLock(async () => {
     const dir = path.join(BLOG, slug);
     const f = path.join(dir, 'index.md');
-    if (!fs.existsSync(f)) return { ok: false, error: '글 없음: ' + slug };
+    if (!fs.existsSync(f)) return { ok: false, error: `📄 글 없음 — ${slug}` };
     const rel = path.relative(ROOT, dir);
     const git = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'pipe' });
     const extraAdds = POOL_FILES.filter((p) => fs.existsSync(path.join(ROOT, p)));
@@ -115,9 +144,9 @@ export async function commitUpdate({ slug, title }) {
         if (!/nothing to commit/.test(out)) throw e;
       }
       try { git(['push']); }
-      catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: 'push 실패: ' + (e2.stderr || e2.message || '').toString().slice(0, 300) }; } }
+      catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: classify(errText(e2), 'push 실패') }; } }
     } catch (e) {
-      return { ok: false, error: (e.stderr || e.message || '').toString().slice(0, 300) };
+      return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
     const orig = readOriginalPath(fs.readFileSync(f, 'utf8'));
     const url = orig ? 'https://allexishere.com' + encodeURI(orig) : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
@@ -125,3 +154,6 @@ export async function commitUpdate({ slug, title }) {
     return { ok: true, url };
   });
 }
+
+// 테스트 전용 export(프로덕션 경로엔 영향 없음)
+export { errText, classify };

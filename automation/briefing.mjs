@@ -105,7 +105,7 @@ export async function runBriefing({ chatId, config } = {}) {
   // 6) 📂 갱신 후보(다시 게시할 가치 있는 글) — 사유 1줄 + [갱신] 버튼(탭 시 진단 먼저, 즉시 생성 아님)
   let upCount = 0;
   try {
-    for (const u of updateCandidates(2)) {
+    for (const u of updateCandidates(config.updateCount ?? 3)) {
       const id = 'u' + Math.abs(hash(u.slug)).toString(36) + '_' + n++;
       kwmap[id] = { type: 'update', slug: u.slug, title: u.title, url: u.url };
       lines.push(`${i}. 📂 갱신: ${u.title}\n   🔧 사유: ${u.reasons.join(' · ')}`);
