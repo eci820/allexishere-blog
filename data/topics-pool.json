@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-17T05:24:06.378Z",
+  "updatedAt": "2026-07-17T06:30:17.469Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -344,8 +344,8 @@
       "tier": "health",
       "series": "C",
       "angle": "유당불내증 시 선택",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "WPI-WPC-차이-헬스-보충제-고르는-기준-2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": "2026-07-17T01:00:04.616Z",
       "metrics": null
