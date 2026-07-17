@@ -51,6 +51,11 @@ export function scoreKeyword(c, stat) {
   } else if (c.source === 'evergreen') {
     pts += 1.25; // 한 달 뒤에도 검색됨
     tierTag = '에버그린';
+  } else if (c.source === 'parking') {
+    // 🅿️ 시설 주차 — 검색의도가 명확하고(요금·위치) 수명이 김. 유입 실측 근거로 신설.
+    // ⚠️ 이 분기가 없으면 아래 else 로 떨어져 '실검'으로 오분류된다(실검은 폐지된 계급).
+    pts += 1.25;
+    tierTag = '주차';
   } else if (c.source === 'health') {
     pts += 1.25; // 💪 건강·영양·헬스 — 수명·단가 높음
     tierTag = '건강';

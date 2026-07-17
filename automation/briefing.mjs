@@ -21,10 +21,27 @@ const KWMAP = path.join(STATE, 'kwmap.json'); // id -> {keyword, source, gossip}
 const load = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return {}; } };
 const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 const icon = (src) =>
-  src === 'calendar' ? '📅' : src === 'trend' ? '🔥' : src === 'finance' ? '💰' : src === 'realestate' ? '🏠'
-  : src === 'science' ? '🔬' : src === 'health' ? '💪' : '🌲';
+  src === 'calendar' ? '📅' : src === 'parking' ? '🅿️' : src === 'trend' ? '🔥' : src === 'finance' ? '💰'
+  : src === 'realestate' ? '🏠' : src === 'science' ? '🔬' : src === 'health' ? '💪' : '🌲';
 // 정렬 키: 검색량 내림차순(없으면 맨 뒤)
 const volKey = (s) => (s && s.vol != null ? s.vol : -1);
+
+// 신규 계급(🔬과학·💪건강·🌲에버그린) 배분 — 목표 need 를 맞추도록 base 에서 가감.
+//  · 부족분은 건강→과학 순으로 보충(둘 다 +1.25 고단가 계급, 재고도 깊음).
+//  · 초과분(need<base)은 에버그린→과학→건강 순으로 감축(에버그린 재고가 가장 얕음).
+//  · trend(실검)는 항상 0 — 폐지된 계급.
+export function distributeNewTier(need, base) {
+  const c = { trend: 0, science: base.science ?? 2, health: base.health ?? 2, evergreen: base.evergreen ?? 1 };
+  let cur = c.science + c.health + c.evergreen;
+  const add = ['health', 'science'];
+  for (let k = 0; cur < need; k++, cur++) c[add[k % add.length]]++;
+  const trim = ['evergreen', 'science', 'health'];
+  for (let k = 0; cur > need && k < 999; k++) {
+    const t = trim[k % trim.length];
+    if (c[t] > 0) { c[t]--; cur--; }
+  }
+  return c;
+}
 
 export async function runBriefing({ chatId, config } = {}) {
   config = config || loadConfig();
@@ -46,12 +63,52 @@ export async function runBriefing({ chatId, config } = {}) {
 
   // 1) 캘린더 레이더(D-14~D-3, 최대 2)
   const cal = calendarRadar(2).filter((c) => !exclude.has(c.keyword));
-  for (const c of cal) exclude.add(c.keyword); // 실검/에버그린과 중복 방지
+  for (const c of cal) exclude.add(c.keyword); // 주차/에버그린과 중복 방지
 
-  // 2) 실검(라이브) + 🔬·💪·🌲(재고). 계급별 개수는 tierCounts. 캘린더 키워드는 exclude로 중복 방지.
-  const { candidates, source, note } = await briefingCandidates(config, exclude);
+  // 1.5) 🅿️ 주차 슬롯(7일 한정 테스트) — 재고 주입 후 오늘치 픽. until 지나면 자동 비활성.
+  const { seedParkingTopics, parkingSlotState, pickParking } = await import('./lib/parking.mjs');
+  const pState = parkingSlotState(config);
+  let parking = [];
+  if (pState.active) {
+    try {
+      seedParkingTopics(); // 멱등 주입(발행글 강매칭분은 addTopics가 자동 제외)
+      const { loadPool } = await import('./lib/topicsPool.mjs');
+      parking = pickParking(loadPool(), pState.count, exclude);
+      for (const p of parking) exclude.add(p.keyword);
+    } catch (e) { console.error('[briefing] 주차 슬롯 실패:', e.message); }
+  }
 
-  const all = [...cal, ...candidates];
+  // 1.6) 📂 갱신 후보를 미리 계산(개수가 신규 배분을 좌우). 표시는 섹션 6에서. updateCandidates는 읽기전용.
+  let updates = [];
+  try { updates = updateCandidates(Math.min(2, config.updateCount ?? 2)); }
+  catch (e) { console.error('[briefing] 갱신 후보 계산 실패:', e.message); }
+
+  // 2) 신규 배분: 총 12 = 주차 + 갱신 + 캘린더 + (🔬과학·💪건강·🌲에버그린).
+  //    갱신/캘린더/주차가 모자란 날은 부족분을 신규(건강→과학)로 메워 12를 유지한다.
+  const TOTAL = config.briefingCount || 12;
+  const need = Math.max(0, TOTAL - parking.length - updates.length - cal.length);
+  const counts = distributeNewTier(need, config.tierCounts || { science: 2, health: 2, evergreen: 1 });
+  const { candidates, source, note } = await briefingCandidates(config, exclude, counts);
+
+  // 2.5) 12개 보증 — 캘린더 공백·재고 쿨다운으로 신규가 목표에 못 미치면 부족분을 깊은 재고(건강→과학→에버그린)에서 보충.
+  //     재고가 정말 마른 날은 12 미만으로 우아하게 저하(replenishIfLow가 앞에서 보충 시도).
+  let short = TOTAL - parking.length - updates.length - cal.length - candidates.length;
+  if (short > 0) {
+    try {
+      const { seedPoolIfEmpty, pickForBrief } = await import('./lib/topicsPool.mjs');
+      const pool = seedPoolIfEmpty();
+      const ex2 = new Set([...exclude, ...parking.map((p) => p.keyword), ...cal.map((c) => c.keyword), ...candidates.map((c) => c.keyword)]);
+      for (const t of ['health', 'science', 'evergreen']) {
+        if (short <= 0) break;
+        for (const p of pickForBrief(pool, t, short, ex2)) {
+          candidates.push({ keyword: p.keyword, source: p.source, gossip: false, id: p.id, angle: p.source === 'science' ? p.series : undefined, poolAngle: p.angle });
+          ex2.add(p.keyword); short--;
+        }
+      }
+    } catch (e) { console.error('[briefing] 12개 보충 실패:', e.message); }
+  }
+
+  const all = [...parking, ...cal, ...candidates];
   if (!all.length) {
     if (chatId) await sendMessage(chatId, '🗞 브리핑: 새 후보가 없습니다(모두 발행/기출).');
     return 0;
@@ -65,14 +122,13 @@ export async function runBriefing({ chatId, config } = {}) {
     console.error('[briefing] 지표 실패:', e.message);
   }
 
-  // 4) 계급별 정렬 + 표시 순서(🔥실검 → 🔬과학 → 💪건강 → 📅캘린더 → 🌲에버그린).
-  //    🔥실검 = 원래 순위 유지 / 🔬·💪·🌲 = 검색량 내림차순 / 📅캘린더 = D-day 임박순(선점).
-  //    💰금융·🏠부동산은 격리(quarantined)로 후보에 없음.
+  // 4) 계급별 정렬 + 표시 순서(🅿️주차 → 🔬과학 → 💪건강 → 📅캘린더 → 🌲에버그린).
+  //    🔥실검은 폐지(tierCounts.trend=0). 🅿️주차 = 우선순위(삽입) 순 / 🔬·💪·🌲 = 검색량 내림차순 /
+  //    📅캘린더 = D-day 임박순(선점). 💰금융·🏠부동산은 격리(quarantined)로 후보에 없음.
   const byVol = (a, b) => volKey(stats[b.keyword]) - volKey(stats[a.keyword]);
   const tier = (src) => candidates.filter((c) => c.source === src).sort(byVol);
-  const trend = candidates.filter((c) => c.source === 'trend'); // 순위 유지
   const calSorted = cal.slice().sort((a, b) => a.daysUntil - b.daysUntil); // 임박순
-  const ordered = [...trend, ...tier('science'), ...tier('health'), ...calSorted, ...tier('evergreen')];
+  const ordered = [...parking, ...tier('science'), ...tier('health'), ...calSorted, ...tier('evergreen')];
 
   // 5) 메시지 + 버튼 + kwmap
   const kwmap = load(KWMAP);
@@ -82,7 +138,7 @@ export async function runBriefing({ chatId, config } = {}) {
   let i = 1;
   for (const c of ordered) {
     const id = 'k' + Math.abs(hash(c.keyword)).toString(36) + '_' + n++;
-    kwmap[id] = { keyword: c.keyword, source: c.source, gossip: !!c.gossip, ...(c.angle ? { angle: c.angle } : {}) };
+    kwmap[id] = { keyword: c.keyword, source: c.source, gossip: !!c.gossip, ...(c.angle ? { angle: c.angle } : {}), ...(c.poolAngle ? { poolAngle: c.poolAngle } : {}) };
     briefed[c.keyword] = Date.now();
     const title = c.source === 'calendar' ? `${c.label} (최적 발행 D-${c.daysUntil})` : c.keyword;
     const st = statLine(stats[c.keyword]);
@@ -93,7 +149,7 @@ export async function runBriefing({ chatId, config } = {}) {
     // 글감 각도(판단형 우선). 📅캘린더 = calendar.json angles / 🔬·💪 = 재고 poolAngle.
     if (c.source === 'calendar' && (c.angleJudgment || c.angleKnowledge)) {
       sub.push(c.angleJudgment ? `   ✍️ 판단형 각도: ${c.angleJudgment}` : `   ✍️ 지식형 각도: ${c.angleKnowledge}`);
-    } else if ((c.source === 'science' || c.source === 'health') && c.poolAngle) {
+    } else if ((c.source === 'science' || c.source === 'health' || c.source === 'parking') && c.poolAngle) {
       sub.push(`   ✍️ 판단 각도: ${c.poolAngle}`);
     }
     if (sc.warn) sub.push(`   ${WARN_LABEL}`);
@@ -102,26 +158,25 @@ export async function runBriefing({ chatId, config } = {}) {
     i++;
   }
 
-  // 6) 📂 갱신 후보(다시 게시할 가치 있는 글) — 사유 1줄 + [갱신] 버튼(탭 시 진단 먼저, 즉시 생성 아님)
+  // 6) 📂 갱신 후보 — 1.6에서 미리 계산한 updates(하루 상한 2) 를 표시. 초과분은 다음날 다시 후보.
   let upCount = 0;
-  try {
-    for (const u of updateCandidates(config.updateCount ?? 3)) {
-      const id = 'u' + Math.abs(hash(u.slug)).toString(36) + '_' + n++;
-      kwmap[id] = { type: 'update', slug: u.slug, title: u.title, url: u.url };
-      lines.push(`${i}. 📂 갱신: ${u.title}\n   🔧 사유: ${u.reasons.join(' · ')}`);
-      rows.push([{ text: `📂 갱신 진단: ${u.title.slice(0, 34)}`, callback_data: 'updiag:' + id }]);
-      i++; upCount++;
-    }
-  } catch (e) {
-    console.error('[briefing] 갱신 후보 계산 실패:', e.message);
+  for (const u of updates) {
+    const id = 'u' + Math.abs(hash(u.slug)).toString(36) + '_' + n++;
+    kwmap[id] = { type: 'update', slug: u.slug, title: u.title, url: u.url };
+    lines.push(`${i}. 📂 갱신: ${u.title}\n   🔧 사유: ${u.reasons.join(' · ')}`);
+    rows.push([{ text: `📂 갱신 진단: ${u.title.slice(0, 34)}`, callback_data: 'updiag:' + id }]);
+    i++; upCount++;
   }
 
   fs.writeFileSync(KWMAP, JSON.stringify(kwmap, null, 1));
   fs.writeFileSync(BRIEFED, JSON.stringify(briefed));
 
+  const parkNote = pState.active
+    ? `🅿️주차 ${parking.length}칸(테스트 ~${config.parkingSlots?.until || '?'}) `
+    : (config.parkingSlots?.enabled ? `🅿️주차 테스트 종료(원복) ` : '');
   const header =
     `🗞 키워드 브리핑 v2.7 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
-    `탭 = 초안 생성(순차). 🔥실검 🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
+    `탭 = 초안 생성(순차). ${parkNote}🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
     `★적합도 = 경쟁·비율·의도·수명·단가 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
     `✍️ 각도 = 원리 → 돈 드는 판단(선택·비용·시기)으로 연결.` +
     (upCount ? ` 📂갱신 = 탭하면 '갱신 진단' 먼저(즉시 생성 아님).\n` : `\n`);

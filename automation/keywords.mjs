@@ -146,22 +146,27 @@ export async function selectKeywords(config) {
 
 // 브리핑용 후보 — v2.7 계급 균형 + 축2 재고: 🔥실검(정보형만·라이브)·🔬과학·💪건강·🌲에버그린(재고).
 // (📅캘린더는 briefing.mjs에서 별도로 앞에 붙는다.) 재고 픽은 3중 방어(status·30일 쿨다운·발행매칭) 적용.
-export async function briefingCandidates(config, exclude = new Set()) {
-  const counts = config.tierCounts || { trend: 2, science: 2, health: 2, evergreen: 2 };
+// countsOverride: 갱신·주차 개수에 따라 신규 배분을 조정할 때 briefing.mjs 가 넘긴다(총 12 유지).
+export async function briefingCandidates(config, exclude = new Set(), countsOverride = null) {
+  const counts = countsOverride || config.tierCounts || { trend: 0, science: 2, health: 2, evergreen: 1 };
   const out = [];
   let source = null, note = '';
 
-  // 🔥 실검 — 라이브 수집, '정보형만'(가십·인물 신변·정치 완전 제외 후 정보형 우선).
+  // 🔥 실검 — counts.trend=0 이면 계급 자체가 폐지된 상태(수집도 건너뜀).
+  //    GSC/네이버 실측상 실검 주제는 노출만 나오고 클릭이 0이라 2026-07-17 폐지.
+  //    되돌리려면 config.tierCounts.trend 를 2로 — 아래 수집 로직은 그대로 살아있다.
   const titles = existingTitles();
   const isDup = (k) => exclude.has(k) || titles.some((t) => t.includes(k) || (k.length >= 4 && k.includes(t.slice(0, 5))));
-  try {
-    const t = await collectTrend();
-    source = t.source;
-    let trend = t.keywords.filter((k) => !isDup(k) && !GOSSIP.test(k) && !RISK.test(k));
-    trend.sort((a, b) => (INFO.test(b) ? 1 : 0) - (INFO.test(a) ? 1 : 0));
-    for (const k of trend.slice(0, counts.trend)) out.push({ keyword: k, source: 'trend', gossip: false });
-  } catch (e) {
-    note = e.message;
+  if (counts.trend > 0) {
+    try {
+      const t = await collectTrend();
+      source = t.source;
+      let trend = t.keywords.filter((k) => !isDup(k) && !GOSSIP.test(k) && !RISK.test(k));
+      trend.sort((a, b) => (INFO.test(b) ? 1 : 0) - (INFO.test(a) ? 1 : 0));
+      for (const k of trend.slice(0, counts.trend)) out.push({ keyword: k, source: 'trend', gossip: false });
+    } catch (e) {
+      note = e.message;
+    }
   }
 
   // 🔬·💪·🌲 — 주제 재고(topics-pool.json)에서 픽. pickForBrief가 markProposed·auto-published 처리.
