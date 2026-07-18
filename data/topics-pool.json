@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-18T01:05:41.344Z",
+  "updatedAt": "2026-07-18T08:26:17.535Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -924,7 +924,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-18T08:21:58.794Z",
       "metrics": null
     },
     {
@@ -1142,7 +1142,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-18T08:21:58.794Z",
       "metrics": {
         "vol": 130,
         "doc": 51395,
@@ -1178,7 +1178,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-18T08:21:58.795Z",
       "metrics": {
         "vol": 10,
         "doc": 28278,
@@ -1232,7 +1232,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-18T08:21:58.795Z",
       "metrics": {
         "vol": 10,
         "doc": 331,
@@ -1268,7 +1268,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-18T08:21:58.795Z",
       "metrics": {
         "vol": 45,
         "doc": 84849,
@@ -1301,11 +1301,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "공연일 만차·영종도 차량 접근·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": "2026-07-18T01:01:14.432Z",
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tvi5pyz",
@@ -1325,11 +1326,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안·요금",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": "2026-07-18T01:01:14.432Z",
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tfb5sin",
@@ -1337,11 +1339,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안 주차",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t1q5ags",
@@ -1349,11 +1352,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안·요금",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "th4an64",
@@ -1361,11 +1365,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안 주차",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tjt42zr",
@@ -1373,11 +1378,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안·요금",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t9gkc91",
@@ -1385,11 +1391,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 요금·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tfjisek",
@@ -1397,11 +1404,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 만차·대안 주차",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t836fp",
@@ -1409,11 +1417,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기일 통제·대안 주차",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tapnzec",
@@ -1421,11 +1430,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "콘서트일 혼잡·대안·요금",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t7awu2b",
@@ -1433,11 +1443,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "콘서트·농구일 만차·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t2hvr6t",
@@ -1445,11 +1456,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "행사일 만차·요금·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tpdpjf9",
@@ -1457,11 +1469,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·행사일 대비·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tszxxz9",
@@ -1469,11 +1482,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·감면 조건·만차 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t46ejoc",
@@ -1481,11 +1495,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·감면 조건·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t4nemjv",
@@ -1493,11 +1508,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·감면 조건·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tt9istl",
@@ -1505,11 +1521,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·감면·인근 공영",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tsx4cxy",
@@ -1517,11 +1534,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·감면 조건",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tdktjw4",
@@ -1529,11 +1547,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·무료 조건·인근",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t4kao5",
@@ -1541,11 +1560,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "행사일 혼잡·요금",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "triz9ln",
@@ -1553,11 +1573,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "박람회일 만차·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tqaify8",
@@ -1565,11 +1586,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·인근 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tbu4x2r",
@@ -1577,11 +1599,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·지하철 연계",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tq2nazz",
@@ -1589,11 +1612,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·인근 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "ts5j7ds",
@@ -1601,11 +1625,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "공연일 요금·인근 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t9z0xer",
@@ -1613,11 +1638,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "행사일 요금·인근 공영",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tuuna6s",
@@ -1625,11 +1651,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "공연일 요금·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t79uzfa",
@@ -1637,11 +1664,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "공연·경기일 요금·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tkc7z9l",
@@ -1649,11 +1677,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·할인 조건·인근 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "txavcvw",
@@ -1661,11 +1690,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·입구 선택·인근 공영",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tczgr8w",
@@ -1673,11 +1703,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "장기주차 요금·예약·대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "th26yko",
@@ -1685,11 +1716,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·장기 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tj25tco",
@@ -1697,11 +1729,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·무료 조건·혼잡",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "t80uky8",
@@ -1709,11 +1742,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·인근 대안",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
     },
     {
       "id": "tec0kwd",
@@ -1721,9 +1755,1126 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금·지점별 차이",
-      "status": "pending",
+      "status": "skipped",
       "slug": null,
       "addedAt": "2026-07-18T01:01:14.428Z",
+      "lastProposedAt": null,
+      "metrics": null,
+      "skipReason": "v2.8-base-retired"
+    },
+    {
+      "id": "t4t8e50",
+      "keyword": "인스파이어 아레나 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "published",
+      "slug": "인스파이어-아레나-주차요금-무료-조건-완벽-가이드-2026",
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": "2026-07-18T08:21:58.787Z",
+      "metrics": null
+    },
+    {
+      "id": "tavludj",
+      "keyword": "대구삼성라이온즈파크 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": "2026-07-18T08:21:58.787Z",
+      "metrics": null
+    },
+    {
+      "id": "t9ic6az",
+      "keyword": "광주기아챔피언스필드 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": "2026-07-18T08:21:58.787Z",
+      "metrics": null
+    },
+    {
+      "id": "tp8oe2w",
+      "keyword": "창원NC파크 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": "2026-07-18T08:21:58.787Z",
+      "metrics": null
+    },
+    {
+      "id": "triyyi0",
+      "keyword": "대전한화생명볼파크 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": "2026-07-18T08:21:58.787Z",
+      "metrics": null
+    },
+    {
+      "id": "t382p1",
+      "keyword": "수원kt위즈파크 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tseq7j",
+      "keyword": "문학경기장 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tjnvg3k",
+      "keyword": "사직야구장 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t2sjwo1",
+      "keyword": "서울월드컵경기장 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t4b5afs",
+      "keyword": "잠실종합운동장 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tdslmdd",
+      "keyword": "잠실실내체육관 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tfq3sun",
+      "keyword": "벡스코 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "trc5y75",
+      "keyword": "엑스코 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tndxa0p",
+      "keyword": "서울아산병원 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "txs55o0",
+      "keyword": "삼성서울병원 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t65m6mh",
+      "keyword": "세브란스병원 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t50rm5f",
+      "keyword": "서울대병원 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tj1dbf6",
+      "keyword": "서울성모병원 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tkuvcwo",
+      "keyword": "수원컨벤션센터 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tk7gj7r",
+      "keyword": "송도컨벤시아 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tu4k5gn",
+      "keyword": "aT센터 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tkct0b0",
+      "keyword": "대전컨벤션센터 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "taibfzz",
+      "keyword": "김대중컨벤션센터 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "th7o0nx",
+      "keyword": "창원컨벤션센터 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t737k5w",
+      "keyword": "블루스퀘어 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t57eaa9",
+      "keyword": "장충체육관 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "ts8itl4",
+      "keyword": "KBS아레나 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tt63iw2",
+      "keyword": "고양체육관 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tcq2l91",
+      "keyword": "롯데월드타워 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tvpr18w",
+      "keyword": "DDP 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tmqh1qc",
+      "keyword": "인천공항 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tck9090",
+      "keyword": "김포공항 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t98uw50",
+      "keyword": "에버랜드 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tvpvg4k",
+      "keyword": "서울랜드 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t57e0zj",
+      "keyword": "아쿠아플라넷 주차요금",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "요금 상세·계산·감면 조건",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t2rcm5r",
+      "keyword": "인스파이어 아레나 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tmam9ze",
+      "keyword": "대구삼성라이온즈파크 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tykl95k",
+      "keyword": "광주기아챔피언스필드 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tozmoat",
+      "keyword": "창원NC파크 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tuzr11x",
+      "keyword": "대전한화생명볼파크 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t4xdew2",
+      "keyword": "수원kt위즈파크 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tcv0hji",
+      "keyword": "문학경기장 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tc6kmpv",
+      "keyword": "사직야구장 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tp2xiw2",
+      "keyword": "서울월드컵경기장 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tbnlzdh",
+      "keyword": "잠실종합운동장 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tg6tlh8",
+      "keyword": "잠실실내체육관 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t7lg1m6",
+      "keyword": "벡스코 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tjswvj6",
+      "keyword": "엑스코 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t399lqt",
+      "keyword": "수원컨벤션센터 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "thkjhdw",
+      "keyword": "송도컨벤시아 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tw10zz8",
+      "keyword": "aT센터 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "ti8bl6x",
+      "keyword": "대전컨벤션센터 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t2hftj0",
+      "keyword": "김대중컨벤션센터 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tin5j1i",
+      "keyword": "창원컨벤션센터 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t3u2gt3",
+      "keyword": "블루스퀘어 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tumkve4",
+      "keyword": "장충체육관 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tbthb7v",
+      "keyword": "KBS아레나 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tzhn673",
+      "keyword": "고양체육관 경기일 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "경기·행사일 만차·대안·입차 시간대",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tz9kbb5",
+      "keyword": "인스파이어 아레나 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tg8a2uc",
+      "keyword": "대구삼성라이온즈파크 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t3yb3o6",
+      "keyword": "광주기아챔피언스필드 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t7il0ul",
+      "keyword": "창원NC파크 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t1igo3h",
+      "keyword": "대전한화생명볼파크 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "trkua9c",
+      "keyword": "수원kt위즈파크 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tjn77lw",
+      "keyword": "문학경기장 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tqcbq3v",
+      "keyword": "사직야구장 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tdfytxo",
+      "keyword": "서울월드컵경기장 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tkulprx",
+      "keyword": "잠실종합운동장 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tgbe3o6",
+      "keyword": "잠실실내체육관 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "towrnj8",
+      "keyword": "벡스코 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tipzhak",
+      "keyword": "엑스코 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tix8r2",
+      "keyword": "서울아산병원 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tvk12jf",
+      "keyword": "삼성서울병원 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t81zlnm",
+      "keyword": "세브란스병원 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tnscfv2",
+      "keyword": "서울대병원 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t1zqe6b",
+      "keyword": "서울성모병원 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tt8y3el",
+      "keyword": "수원컨벤션센터 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "texo7ri",
+      "keyword": "송도컨벤시아 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "th6p66",
+      "keyword": "aT센터 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "te9w3yh",
+      "keyword": "대전컨벤션센터 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tu0rvme",
+      "keyword": "김대중컨벤션센터 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tjvqts8",
+      "keyword": "창원컨벤션센터 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tyotw0n",
+      "keyword": "블루스퀘어 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t1vmtra",
+      "keyword": "장충체육관 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tqpf1lv",
+      "keyword": "KBS아레나 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t2zfh1p",
+      "keyword": "고양체육관 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tvyic5c",
+      "keyword": "롯데월드타워 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tyk6mgr",
+      "keyword": "DDP 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tdsohy1",
+      "keyword": "인천공항 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tpq481b",
+      "keyword": "김포공항 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tz0ey5b",
+      "keyword": "에버랜드 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tiznxdz",
+      "keyword": "서울랜드 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tcipo9i",
+      "keyword": "아쿠아플라넷 근처 주차장",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "인근 대안·거리·요금 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
       "metrics": null
     }
