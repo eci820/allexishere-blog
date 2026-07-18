@@ -9,7 +9,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { loadEnv, loadConfig, requireSecrets, AUTO_DIR, ROOT } from './lib/env.mjs';
-import { getUpdates, sendMessage, sendDocument, answerCallback, inlineButtons } from './lib/telegram.mjs';
+import { getUpdates, sendMessage, sendDocument, answerCallback, inlineButtons, fetchFileBytes } from './lib/telegram.mjs';
+import { parseCapture, isTooThin } from './lib/capture.mjs';
 
 loadEnv();
 requireSecrets(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID']);
@@ -127,6 +128,94 @@ async function drainQueue() {
     }
   }
   genBusy = false;
+}
+
+// ---- 📷 현장 캡처 발행 ----------------------------------------------------
+// "/<주제> <정보>" + 사진 → 초안 → 기존 승인 큐. 게시는 여전히 [✅승인]으로만.
+// 브리핑(v2.8)과는 완전히 별개 경로다 — 재고(topicsPool)를 건드리지 않는다.
+const ALBUM_DEBOUNCE_MS = 2500;
+const albums = new Map(); // media_group_id → 모으는 중인 앨범
+
+// 사진 메시지에서 받을 file_id 하나를 고른다.
+//  · msg.photo 는 해상도별 썸네일 배열 — 마지막이 가장 큰 것.
+//  · '문서로 보내기'로 온 이미지(원본 EXIF 보존)도 받는다. 어차피 EXIF 는 우리가 지운다.
+function pickFileId(msg) {
+  if (Array.isArray(msg.photo) && msg.photo.length) return msg.photo[msg.photo.length - 1].file_id;
+  if (msg.document && /^image\//.test(msg.document.mime_type || '')) return msg.document.file_id;
+  return null;
+}
+const isPhotoMessage = (msg) => !!pickFileId(msg);
+
+// 앨범은 한 덩어리가 아니라 개별 update 로 온다(같은 media_group_id).
+// 마지막 사진 이후 2.5초간 조용하면 확정하고, message_id 순 = 내가 보낸 순서로 정렬한다.
+// 캡션은 앨범의 첫 장에만 붙으므로 전체에서 찾는다.
+function bufferPhoto(msg) {
+  const gid = msg.media_group_id || `single:${msg.message_id}`;
+  let a = albums.get(gid);
+  if (!a) { a = { items: [], caption: '' }; albums.set(gid, a); }
+  a.items.push({ fileId: pickFileId(msg), messageId: msg.message_id });
+  const cap = (msg.caption || '').trim();
+  if (cap && !a.caption) a.caption = cap;
+  clearTimeout(a.timer);
+  a.timer = setTimeout(() => {
+    albums.delete(gid);
+    // 여기서 조용히 죽으면 사진만 보내고 아무 응답도 못 받는다 — 반드시 알린다.
+    // (알림 자체가 실패하는 건 텔레그램이 죽은 경우뿐이라 그때는 로그만 남긴다.)
+    onAlbumReady(a).catch(async (e) => {
+      console.error('[capture] 앨범 처리 오류:', e);
+      try {
+        await sendMessage(ME, `❌ 사진 ${a.items.length}장 처리 중 오류: ${e?.message || e}\n다시 보내주세요.`);
+      } catch (e2) {
+        console.error('[capture] 오류 알림도 실패:', e2?.message || e2);
+      }
+    });
+  }, ALBUM_DEBOUNCE_MS);
+}
+
+async function onAlbumReady(album) {
+  const items = album.items.sort((x, y) => x.messageId - y.messageId); // 보낸 순서 유지
+  const cap = parseCapture(album.caption);
+  if (!cap) {
+    return sendMessage(
+      ME,
+      album.caption
+        ? `📷 사진 ${items.length}장을 받았지만 "${album.caption.slice(0, 30)}"는 캡처 명령이 아닙니다.\n사진 설명에 "/주차 코엑스 주차장"처럼 적어 주세요.`
+        : `📷 사진 ${items.length}장을 받았지만 주제가 없습니다.\n사진 설명(캡션)에 "/주차 코엑스 주차장"처럼 적어서 다시 보내주세요.`
+    );
+  }
+  captureQueue.push({ ...cap, fileIds: items.map((i) => i.fileId) });
+  drainCaptures();
+}
+
+const captureQueue = [];
+let captureBusy = false;
+async function drainCaptures() {
+  if (captureBusy) return;
+  captureBusy = true;
+  while (captureQueue.length) {
+    const job = captureQueue.shift();
+    try {
+      await sendMessage(
+        ME,
+        `⏳ /${job.topic} 초안 생성 중…${job.fileIds.length ? ` (사진 ${job.fileIds.length}장 처리 포함)` : ''}`
+      );
+      const buffers = [];
+      for (let i = 0; i < job.fileIds.length; i++) {
+        try {
+          buffers.push(await fetchFileBytes(job.fileIds[i]));
+        } catch (e) {
+          await sendMessage(ME, `⚠️ ${i + 1}번 사진을 받지 못했습니다: ${e.message}`);
+        }
+      }
+      const { runCapture } = await import('./lib/capture.mjs');
+      const r = await runCapture({ topic: job.topic, info: job.info, photoBuffers: buffers, chatId: ME, config: CFG });
+      if (!r.ok) await sendMessage(ME, `❌ /${job.topic} ${r.error}`);
+    } catch (e) {
+      console.error('[capture] 실패:', e);
+      await sendMessage(ME, `❌ /${job.topic} 오류: ${e.message}`);
+    }
+  }
+  captureBusy = false;
 }
 
 // ---- 초안 수정(발행 전) : [✏️수정] → 답장 지시 → 부분수정 ----
@@ -278,6 +367,16 @@ async function handleCommand(text) {
           '/status — 상태 확인',
           '/delete <슬러그> — 초안 삭제',
           '',
+          '📷 현장 캡처 발행 (수동 입력 — 브리핑과 별개)',
+          '   "/<주제> <정보>" + 사진(여러 장 가능·선택)을 보내면 초안이 승인 큐로 옵니다.',
+          '   예: /주차 코엑스 주차장  ·  /맛집 서초동 김밥천국 가성비 좋음',
+          '       /스포츠용품 아디다스 F50 축구화  ·  /여행 강릉 안목해변',
+          '   주제는 아무거나 됩니다(새 주제도 그대로 사용 가능).',
+          '   사진은 자동으로: EXIF·GPS 제거 → 1200px 축소 → 글 폴더에 저장.',
+          '   🔒 영수증·명함·티켓은 내용만 글에 쓰고 사진은 발행에서 뺍니다.',
+          '   👤 얼굴이 뚜렷하면 보류 — [사진 포함하기]를 눌러야 들어갑니다(초상권).',
+          '   ⚠️ 개인정보(카드·연락처 등)가 본문에 섞이면 자동 제거 후 알려줍니다.',
+          '',
           `엔진: ${CFG.engine} · 모드: ${CFG.mode}`,
           '흐름: 브리핑 → 키워드 탭 → 초안 → (필요시 ✏️수정) → [✅승인] 눌러야만 게시(누르면 바로 게시).',
           '게시 실패 시 사유를 표시하고 멈춥니다 — 초안은 남아 있고 [🔄재발행]으로 재시도.',
@@ -342,8 +441,30 @@ async function handleCommand(text) {
       await sendMessage(ME, `🗑 삭제됨: ${arg}`);
       break;
     }
-    default:
-      await sendMessage(ME, `모르는 명령: ${cmd}\n/help 로 확인하세요.`);
+    default: {
+      // 예약어가 아닌 /명령 = 현장 캡처 주제. 주제를 하드코딩하지 않으므로
+      // /맛집 /여행 /스포츠용품 … 어떤 주제든 코드 수정 없이 바로 쓸 수 있다.
+      const cap = parseCapture(text);
+      if (!cap) {
+        await sendMessage(ME, `모르는 명령: ${cmd}\n/help 로 확인하세요.`);
+        break;
+      }
+      // 오타 가드: 사진도 없고 설명도 5자 미만이면 새 주제로 받지 않는다.
+      // (/맛칩 같은 오타가 엉뚱한 주제 글로 발행되는 것 방지)
+      if (isTooThin({ info: cap.info, photoCount: 0 })) {
+        await sendMessage(
+          ME,
+          `모르는 명령입니다: ${cmd}\n` +
+            `현장 캡처로 쓰려면 설명을 붙이거나 사진을 첨부하세요.\n` +
+            `예: ${cmd} 코엑스 지하주차장 요금 (또는 사진 첨부)\n` +
+            `/help 로 기존 명령을 확인할 수 있습니다.`
+        );
+        break;
+      }
+      captureQueue.push({ ...cap, fileIds: [] });
+      drainCaptures();
+      break;
+    }
   }
 }
 
@@ -362,6 +483,19 @@ async function handleCallback(cb) {
   if (action === 'cancel') {
     await answerCallback(cb.id, '취소됨');
     return sendMessage(ME, '취소했습니다.');
+  }
+
+  // 👤 보류된 사진(얼굴·분류실패) 포함하기 — 기본은 제외, 사람이 눌러야 들어간다.
+  if (action === 'face') {
+    await answerCallback(cb.id, '사진 포함 중…');
+    try {
+      const { includeHeldPhotos } = await import('./lib/capture.mjs');
+      const r = await includeHeldPhotos(id, ME);
+      if (!r.ok) return sendMessage(ME, `❌ ${r.error}`);
+    } catch (e) {
+      return sendMessage(ME, `❌ 사진 포함 오류: ${e.message}`);
+    }
+    return;
   }
 
   // 📂 갱신 진단(즉시 생성 아님) — 무엇이 낡았는지 먼저 보여주고 [갱신 초안 생성] 버튼 제공.
@@ -500,8 +634,22 @@ async function handleCallback(cb) {
   }
 }
 
+// 보류 사진 임시 폴더 정리 — 3일 지난 건 버린다(state/ 는 gitignore 라 저장소엔 안 들어감).
+function sweepCaptureStaging() {
+  const base = path.join(STATE, 'capture');
+  if (!fs.existsSync(base)) return;
+  const cutoff = Date.now() - 3 * 24 * 3600 * 1000;
+  for (const d of fs.readdirSync(base)) {
+    const p = path.join(base, d);
+    try {
+      if (fs.statSync(p).mtimeMs < cutoff) fs.rmSync(p, { recursive: true, force: true });
+    } catch { /* 정리 실패는 무시 */ }
+  }
+}
+
 async function main() {
   writeHeartbeat({ status: 'starting' });
+  sweepCaptureStaging();
   await sendMessage(ME, '🤖 봇 시작됨. /help');
   let offset = 0;
   let lastBeat = 0;
@@ -531,6 +679,9 @@ async function main() {
           if (pending) await handleEdit(pending, msg.text, replyId);
           else if (msg.text.startsWith('/')) await handleCommand(msg.text);
           else await sendMessage(ME, '명령은 /help, 초안 수정은 카드의 [✏️수정]을 누른 뒤 지시하세요.');
+        } else if (msg && isPhotoMessage(msg)) {
+          // 📷 사진(앨범이면 여러 update 로 나뉘어 온다) → 버퍼에 모아 2.5초 후 확정.
+          bufferPhoto(msg);
         } else if (cb) await handleCallback(cb);
       }
     } catch (e) {

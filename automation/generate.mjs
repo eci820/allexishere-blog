@@ -11,6 +11,7 @@ import { ROOT, AUTO_DIR, loadConfig, requireSecrets } from './lib/env.mjs';
 import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
+import { subscriptionEnv } from './lib/claudeCli.mjs';
 
 const execFileP = promisify(execFile);
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
@@ -268,7 +269,7 @@ async function viaCLI(keyword, opts, ctx, config) {
       cwd: os.tmpdir(),
       maxBuffer: 20 * 1024 * 1024,
       timeout: (config.cliTimeoutSeconds || 240) * 1000,
-      env: { ...process.env },
+      env: subscriptionEnv(),
     }));
   } catch (e) {
     const detail = ((e.stderr || '') + ' ' + (e.message || '')).trim();
@@ -380,7 +381,7 @@ export async function generateOne(keyword, opts, config, chatId) {
         `불필요한 반복(물 타기) 없이. frontmatter·코드펜스·설명 없이 수정된 전체 본문 마크다운만 출력.\n\n[현재 본문]\n${d.body}`;
       const ba = ['-p', bp, '--output-format', 'json', '--allowedTools', 'WebSearch'];
       if (config.cliModel) ba.push('--model', config.cliModel);
-      const { stdout } = await execFileP('claude', ba, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env } });
+      const { stdout } = await execFileP('claude', ba, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
       const bj = JSON.parse(stdout);
       if (!bj.is_error && bj.result) {
         const nb = bj.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
@@ -556,7 +557,7 @@ export async function editDraft(slug, instruction, config, chatId) {
   let newBody, costUsd = 0;
   try {
     const { stdout } = await execFileP('claude', args, {
-      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env },
+      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv(),
     });
     const j = JSON.parse(stdout);
     if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
@@ -625,7 +626,7 @@ export async function refreshPublished(slug, config, chatId) {
   if (config.cliModel) args.push('--model', config.cliModel);
   let newBody, costUsd = 0;
   try {
-    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env } });
+    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
     const j = JSON.parse(stdout);
     if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
     newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();

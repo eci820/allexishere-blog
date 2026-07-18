@@ -4,7 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ROOT, AUTO_DIR } from './lib/env.mjs';
-import { markPublished, soakPublished } from './lib/topicsPool.mjs';
+// ⚠️ 네임스페이스로 가져온다(이름별 import 아님). 봇은 24시간 상주 데몬이라
+//    lib 모듈은 프로세스 시작 시점 버전이 메모리에 남고, publish.mjs 는 승인 때
+//    비로소 동적 import 된다. 코드를 고친 뒤 봇을 재시작하지 않으면 '새 publish +
+//    옛 topicsPool' 조합이 생기는데, 이름별 import 는 이때 링크 단계에서
+//    SyntaxError 로 죽어 발행 자체가 막힌다(2026-07-18 실제 사고).
+//    네임스페이스 import 는 없는 함수가 undefined 가 될 뿐이라 발행은 계속된다.
+import * as pool from './lib/topicsPool.mjs';
 import { submitIndexNow } from './lib/indexnow.mjs';
 
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
@@ -86,8 +92,8 @@ export async function publish({ slug, title, keyword }) {
 
     // 축2 소진: 재고 주제를 published + slug 기록. 키워드 알면 직접, 모르면 제목 매칭.
     try {
-      if (keyword) markPublished(keyword, slug);
-      else soakPublished(slug, title || '');
+      if (keyword) pool.markPublished(keyword, slug);
+      else pool.soakPublished(slug, title || '');
     } catch (e) { console.error('[publish] 재고 소진 실패:', e.message); }
 
     const rel = path.relative(ROOT, dir);
@@ -117,6 +123,9 @@ export async function publish({ slug, title, keyword }) {
       return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
 
+    // 방금 발행글이 하나 늘었다 → 중복방어 인덱스 다시 읽게.
+    // ?. 는 봇 재시작 전(옛 topicsPool 메모리 상주) 상황에서도 발행이 멈추지 않게 하는 안전장치.
+    pool.invalidateLive?.();
     const orig = readOriginalPath(raw);
     const url = orig
       ? 'https://allexishere.com' + encodeURI(orig)
@@ -148,6 +157,7 @@ export async function commitUpdate({ slug, title }) {
     } catch (e) {
       return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
+    pool.invalidateLive?.(); // 제목·태그가 바뀌었을 수 있다 → 인덱스 재구축
     const orig = readOriginalPath(fs.readFileSync(f, 'utf8'));
     const url = orig ? 'https://allexishere.com' + encodeURI(orig) : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
     submitIndexNow(url); // 갱신도 동일하게 IndexNow 통보(fire-and-forget)

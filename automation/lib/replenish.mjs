@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { loadPool, savePool, addTopics, pendingCount, eligibleCount, liveIndex, matchLive } from './topicsPool.mjs';
 import { scoreKeyword } from './suitability.mjs';
+import { subscriptionEnv } from './claudeCli.mjs';
 
 const execFileP = promisify(execFile);
 
@@ -58,7 +59,7 @@ export async function replenishIfLow(config, { threshold = 30, want = 20 } = {})
     const args = ['-p', REPLENISH_PROMPT(existing), '--output-format', 'json'];
     if (config.cliModel) args.push('--model', config.cliModel);
     const { stdout } = await execFileP('claude', args, {
-      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: { ...process.env },
+      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv(),
     });
     const j = JSON.parse(stdout);
     if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');

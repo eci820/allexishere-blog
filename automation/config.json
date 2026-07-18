@@ -4,6 +4,8 @@
   "_engineNote": "claude-cli=구독 헤드리스(기본) / anthropic-api=API 직접. claude-cli 실패 시 API키 있으면 자동 폴백.",
   "cliModel": "sonnet",
   "cliTimeoutSeconds": 240,
+  "captureTimeoutSeconds": 600,
+  "_captureTimeoutNote": "📷 현장 캡처 초안 생성 전용 타임아웃(초). 사진이 붙으면 프롬프트·출력이 길어져 일반 초안보다 오래 걸린다(실측: 텍스트만 149초 / 사진 1장 212초). 240초로는 사진 포함 생성이 SIGTERM(코드143)으로 죽었다 — 파일럿3 사고. 사진을 여러 장 붙일수록 늘어나므로 여유 있게 600.",
   "model": "claude-sonnet-5",
   "briefingCount": 12,
   "_briefingCountNote": "하루 제안 12 = 🅿️주차 3 + 나머지 9(신규 7 + 📂갱신 2). 🔥실검은 폐지(tierCounts.trend=0). 신규 7 = 🔬과학2+💪건강2+🌲에버그린1+📅캘린더2. 갱신이 2개 미만인 날은 부족분을 신규(🔬·💪)로 메워 항상 12를 맞춘다.",

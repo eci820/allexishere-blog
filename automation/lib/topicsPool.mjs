@@ -193,6 +193,13 @@ export function liveIndex(force = false) {
   return posts;
 }
 
+// 발행글이 늘어나면 캐시를 버린다. 봇은 24시간 상주 데몬이라 이걸 안 하면
+// _liveCache 가 프로세스 시작 시점에 고정돼, 오늘 발행한 글이 중복방어 인덱스에
+// 안 잡히고 다음 브리핑에 같은 주제가 또 제안된다. publish 성공 시 호출.
+export function invalidateLive() {
+  _liveCache = null;
+}
+
 // 키워드가 발행글과 얼마나 겹치나 → 가장 겹치는 글 {slug,title,score} 또는 null
 export function matchLive(keyword) {
   const kw = tokens(keyword);
