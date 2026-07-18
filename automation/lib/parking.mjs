@@ -4,7 +4,7 @@
 //  · 재고(topics-pool.json)에 tier='parking' 으로 주입 → 기존 3중 방어를 그대로 탄다:
 //    ① matchLive 발행글 강매칭 ② status(pending/published/skipped) ③ 30일 제안 쿨다운.
 //  · config.parkingSlots.until 이 지나면 자동 비활성(원복). briefing.mjs 가 판정.
-import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty } from './topicsPool.mjs';
+import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, matchLive } from './topicsPool.mjs';
 
 // 배열 순서 = 우선순위. pickForBrief 는 별점(미측정=0) → lastProposedAt 오름차순으로
 // 정렬하므로, 지표가 없는 초기에는 이 삽입 순서가 사실상 제안 순서가 된다.
@@ -62,37 +62,94 @@ export const PARKING_TOPICS = [
   { keyword: '아쿠아플라넷 주차', angle: '요금·지점별 차이' },
 ];
 
-// 재고에 주차 주제 주입(멱등). addTopics 가 발행글 강매칭분을 자동 제외한다.
-// 반환: 실제로 추가된 개수.
-export function seedParkingTopics() {
-  const pool = seedPoolIfEmpty() || loadPool();
-  const added = addTopics(
-    pool,
-    PARKING_TOPICS.map((t) => ({ keyword: t.keyword, tier: 'parking', series: 'facility', angle: t.angle }))
-  );
-  if (added) savePool(pool);
-  return added;
+// ── v2.8 모디파이어 매트릭스 ────────────────────────────────────────────
+// 시설을 검색의도별 롱테일로 분화: M1 요금(+계산기)·M4 경기일(이벤트 전용)·M3 근처.
+// 비이벤트(병원·공항·테마파크·몰)는 M4 제외 → M1·M3. 종합가이드 발행 시설은 통째 제외(자기잠식 방지).
+const NON_EVENT = new Set([
+  '서울아산병원', '삼성서울병원', '세브란스병원', '서울대병원', '서울성모병원',
+  '롯데월드타워', 'DDP', '인천공항', '김포공항', '에버랜드', '서울랜드', '아쿠아플라넷',
+]);
+const A_FACILITIES = new Set(PARKING_TOPICS.slice(0, 14).map((t) => t.keyword.replace(/ 주차$/, '')));
+const MODIFIERS = [
+  { id: 'M1', suffix: '주차요금', angle: '요금 상세·계산·감면 조건' },
+  { id: 'M4', suffix: '경기일 주차', angle: '경기·행사일 만차·대안·입차 시간대' },
+  { id: 'M3', suffix: '근처 주차장', angle: '인근 대안·거리·요금 비교' },
+];
+const facilityName = (t) => t.keyword.replace(/ 주차$/, '');
+
+// 결정1/3: 이 시설의 종합 가이드가 이미 발행됐나(= base "○○ 주차"가 발행글과 강매칭 score≥2).
+export function isComprehensivelyPublished(name) {
+  const m = matchLive(`${name} 주차`);
+  return !!(m && m.score >= 2);
 }
 
-// 🅿️ 슬롯이 지금 유효한가 — until(KST) 이 지나면 자동 비활성(원복).
-// 반환: { active, count, reason }
+// M1 '○○ 주차요금' 키워드에서 시설명 추출(계산기 결합 판정용). M1 아니면 null.
+export function m1Facility(keyword) {
+  const m = /^(.+?)\s*주차요금$/.exec(String(keyword || '').trim());
+  return m ? m[1].trim() : null;
+}
+
+// v2.8 확장 주제 목록(라운드 순 M1→M4→M3, A급 먼저). 종합발행 시설은 통째 제외.
+export function expandParkingTopics() {
+  const facilities = PARKING_TOPICS.map((t) => {
+    const name = facilityName(t);
+    return { name, grade: A_FACILITIES.has(name) ? 'A' : 'B', event: !NON_EVENT.has(name) };
+  });
+  const out = [];
+  for (const mod of MODIFIERS) {
+    for (const grade of ['A', 'B']) {
+      for (const f of facilities) {
+        if (f.grade !== grade) continue;
+        if (mod.id === 'M4' && !f.event) continue;
+        if (isComprehensivelyPublished(f.name)) continue; // 통째 제외
+        out.push({ keyword: `${f.name} ${mod.suffix}`, tier: 'parking', series: 'facility', angle: mod.angle });
+      }
+    }
+  }
+  return out;
+}
+
+// 재고 주입(멱등). v2.8: base "○○ 주차" pending 은퇴(skipped) → 모디파이어 주입.
+// version!=='v2.8' 이면 하위호환(base 3개 모드): base 만 주입.
+export function seedParkingTopics(config) {
+  const pool = seedPoolIfEmpty() || loadPool();
+  if (config?.parkingSlots?.version !== 'v2.8') {
+    const added = addTopics(pool, PARKING_TOPICS.map((t) => ({ keyword: t.keyword, tier: 'parking', series: 'facility', angle: t.angle })));
+    if (added) savePool(pool);
+    return { added, retired: 0, mode: 'v2.7-base' };
+  }
+  // v2.8: 아직 발행 안 된 base 만 은퇴(발행된 것은 published 유지)
+  let retired = 0;
+  const baseSet = new Set(PARKING_TOPICS.map((t) => t.keyword));
+  for (const t of pool.topics) {
+    if (t.tier === 'parking' && baseSet.has(t.keyword) && t.status === 'pending') {
+      t.status = 'skipped'; t.skipReason = 'v2.8-base-retired'; retired++;
+    }
+  }
+  const added = addTopics(pool, expandParkingTopics()); // addTopics 가 발행글 강매칭분 자동 제외
+  if (added || retired) savePool(pool);
+  return { added, retired, mode: 'v2.8-modifier' };
+}
+
+// 🅿️ 슬롯 상태 — v2.8 상시 운영(until 없음). enabled=false 면 비활성. (until 남아있으면 하위호환 만료판정)
 export function parkingSlotState(config, now = Date.now()) {
   const p = config?.parkingSlots;
   if (!p || p.enabled !== true) return { active: false, count: 0, reason: 'disabled' };
   if (p.until) {
-    const today = new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10); // KST 날짜
-    if (today >= p.until) return { active: false, count: 0, reason: `expired(${p.until} 도달)` };
+    const today = new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    if (today >= p.until) return { active: false, count: 0, reason: `expired(${p.until})` };
   }
-  return { active: true, count: p.count ?? 3, reason: 'active' };
+  return { active: true, count: p.count ?? 5, reason: 'active' };
 }
 
-// 오늘의 주차 후보 count 개 — 3중 방어를 그대로 태운다(pickForBrief).
+// 오늘의 주차 후보 최대 count 개(있는 만큼만 — 억지 채움·재탕 없음). 3중 방어 그대로.
 export function pickParking(pool, count, exclude = new Set()) {
   return pickForBrief(pool, 'parking', count, exclude).map((p) => ({
-    keyword: p.keyword,
-    source: 'parking',
-    gossip: false,
-    id: p.id,
-    poolAngle: p.angle,
+    keyword: p.keyword, source: 'parking', gossip: false, id: p.id, poolAngle: p.angle,
   }));
+}
+
+// 미발행 주차 주제(pending) 재고 수 — 재고 부족 알림용.
+export function parkingStock(pool) {
+  return pool.topics.filter((t) => t.tier === 'parking' && t.status === 'pending').length;
 }

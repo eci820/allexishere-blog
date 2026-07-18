@@ -425,6 +425,21 @@ export async function generateOne(keyword, opts, config, chatId) {
   const dir = path.join(BLOG, slug);
   fs.mkdirSync(dir, { recursive: true });
   const tags = (d.tags || []).slice(0, 5);
+  // 🅿️ v2.8 [변경6]: M1 '○○ 주차요금' 이고 시설 JSON 있으면 계산기 자동 부착.
+  //    현재 잠실만 JSON 이나 잠실은 확장 제외 → 당분간 미발동(킨텍스 등 JSON 추가 시 발동).
+  let parkingCalcLine = '';
+  try {
+    const { m1Facility } = await import('./lib/parking.mjs');
+    const facility = m1Facility(keyword);
+    if (facility) {
+      const pdir = path.join(ROOT, 'src', 'data', 'parking');
+      const has = fs.existsSync(pdir) && fs.readdirSync(pdir).some((fn) => {
+        if (!fn.endsWith('.json')) return false;
+        try { return JSON.parse(fs.readFileSync(path.join(pdir, fn), 'utf8')).facility === facility; } catch { return false; }
+      });
+      if (has) parkingCalcLine = `parkingCalc: ${dq(facility)}\n`;
+    }
+  } catch (e) { console.error('[generate] parkingCalc 판정 실패:', e.message); }
   const fm =
     '---\n' +
     `title: ${dq(d.title)}\n` +
@@ -432,6 +447,7 @@ export async function generateOne(keyword, opts, config, chatId) {
     `pubDate: ${kstNow()}\n` +
     `category: info\n` +
     (tags.length ? `tags: [${tags.map(dq).join(', ')}]\n` : '') +
+    parkingCalcLine +
     `draft: true\n---\n\n`;
   const riskComment = `\n\n<!-- ⚠️ [사람 검수 필요] 발행 전 확인\n엔진: ${res.engine}\n${(d.riskNotes || '특이사항 없음').trim()}\n-->\n`;
   fs.writeFileSync(path.join(dir, 'index.md'), fm + d.body.trim() + riskComment);

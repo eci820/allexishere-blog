@@ -65,16 +65,24 @@ export async function runBriefing({ chatId, config } = {}) {
   const cal = calendarRadar(2).filter((c) => !exclude.has(c.keyword));
   for (const c of cal) exclude.add(c.keyword); // 주차/에버그린과 중복 방지
 
-  // 1.5) 🅿️ 주차 슬롯(7일 한정 테스트) — 재고 주입 후 오늘치 픽. until 지나면 자동 비활성.
-  const { seedParkingTopics, parkingSlotState, pickParking } = await import('./lib/parking.mjs');
+  // 1.5) 🅿️ 주차 슬롯(v2.8 상시·모디파이어) — 재고 주입 후 오늘치 '최대 count'개 픽(있는 만큼만).
+  //      부족분은 억지로 안 채우고 아래 신규 배분이 12까지 메운다(우아한 폴백).
+  const { seedParkingTopics, parkingSlotState, pickParking, parkingStock } = await import('./lib/parking.mjs');
   const pState = parkingSlotState(config);
   let parking = [];
   if (pState.active) {
     try {
-      seedParkingTopics(); // 멱등 주입(발행글 강매칭분은 addTopics가 자동 제외)
+      seedParkingTopics(config); // v2.8: base 은퇴 + 모디파이어 주입(멱등). 발행글 강매칭분 자동 제외
       const { loadPool } = await import('./lib/topicsPool.mjs');
-      parking = pickParking(loadPool(), pState.count, exclude);
+      const pool = loadPool();
+      parking = pickParking(pool, pState.count, exclude);
       for (const p of parking) exclude.add(p.keyword);
+      // 재고 부족 알림: 미발행 주차 주제가 임계 미만이면 텔레그램으로 새 시설 추가 요청
+      const threshold = config.parkingSlots?.lowStockThreshold ?? 10;
+      const stock = parkingStock(loadPool());
+      if (chatId && stock < threshold) {
+        await sendMessage(chatId, `🔔 주차 재고 부족 — 미발행 주차 주제 ${stock}개(임계 ${threshold}). lib/parking.mjs PARKING_TOPICS 에 새 시설을 추가하세요.`);
+      }
     } catch (e) { console.error('[briefing] 주차 슬롯 실패:', e.message); }
   }
 
@@ -172,8 +180,8 @@ export async function runBriefing({ chatId, config } = {}) {
   fs.writeFileSync(BRIEFED, JSON.stringify(briefed));
 
   const parkNote = pState.active
-    ? `🅿️주차 ${parking.length}칸(테스트 ~${config.parkingSlots?.until || '?'}) `
-    : (config.parkingSlots?.enabled ? `🅿️주차 테스트 종료(원복) ` : '');
+    ? `🅿️주차 ${parking.length}칸${parking.length < pState.count ? '(재고만큼)' : ''} `
+    : (config.parkingSlots?.enabled ? `🅿️주차 만료(원복) ` : '');
   const header =
     `🗞 키워드 브리핑 v2.7 (${source || 'evergreen'}${note ? ', ⚠️' + note : ''})\n` +
     `탭 = 초안 생성(순차). ${parkNote}🔬과학·생활원리 💪건강 📅선점 🌲에버그린 · 지표=검색량·문서수·비율\n` +
