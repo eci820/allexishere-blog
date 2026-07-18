@@ -51,6 +51,9 @@ const blog = defineCollection({
       draft: z.boolean().default(false),
       /** 실험 코호트 태그(검증용). 예: "2026-07-13_conditions_changed" */
       cohort: z.string().optional(),
+      /** 🅿️ 주차요금 계산기 임베드. 값 = src/data/parking/*.json 의 facility 명(예: "잠실야구장").
+       *  설정 시 글 제목 아래에 인터랙티브 계산기가 자동 렌더됩니다. */
+      parkingCalc: z.preprocess(emptyToUndefined, z.string().optional()),
     }),
 });
 

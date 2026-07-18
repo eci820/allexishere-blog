@@ -5,6 +5,7 @@ import { Image } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
+import ParkingCalculator from '../../components/ParkingCalculator.astro';
 import TableOfContents from '../../components/TableOfContents.astro';
 import RelatedPosts from '../../components/RelatedPosts.astro';
 import { SITE, ADSENSE } from '../../consts';
@@ -97,6 +98,9 @@ const jsonLd = faqJsonLd ? [articleJsonLd, faqJsonLd] : articleJsonLd;
         )
       }
     </header>
+
+    <!-- 🅿️ 주차요금 계산기(frontmatter parkingCalc 설정 시 제목 아래에 렌더) -->
+    {post.data.parkingCalc && <ParkingCalculator facility={post.data.parkingCalc} />}
 
     <!-- 대표 이미지(있을 때만) -->
     {

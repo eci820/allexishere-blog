@@ -1,0 +1,204 @@
+---
+// 🅿️ 시설별 주차요금 계산기 — 바닐라 JS 아일랜드(프레임워크 불필요).
+//  · 계산은 100% 브라우저에서 → LLM/AI Overview 가 실행 못 하는 '도구형' 콘텐츠.
+//  · 요금표는 src/data/parking/*.json (시설당 1개). 새 시설 = JSON 하나만 추가하면 자동 인식.
+//  · 핵심 독점 기능: '선불 창(정액 적용 입차 시간대)' 자동 판정 — 정액 vs 후불 미터를 가려준다.
+//  · 계산 로직은 src/lib/parking-calc.js 로 분리(컴포넌트·테스트 공유 → 정확도 보장).
+// 사용: <ParkingCalculator facility="잠실야구장" /> (글 frontmatter parkingCalc 값과 매칭)
+interface Props { facility: string }
+const { facility } = Astro.props;
+
+const modules = import.meta.glob('../data/parking/*.json', { eager: true });
+const all = Object.values(modules).map((m: any) => m.default ?? m);
+const data: any = all.find((d) => d && d.facility === facility);
+if (!data && import.meta.env.DEV) console.warn(`[ParkingCalculator] 요금 데이터 없음: "${facility}"`);
+
+const discounts = data?.profiles?.find((p: any) => p.type === 'metered')?.discounts ?? [];
+---
+
+{data && (
+  <section class="not-prose my-6 rounded-xl border border-[var(--border)] overflow-hidden" data-pcalc>
+    <script type="application/json" data-pdata set:html={JSON.stringify(data)} />
+
+    <div class="bg-[var(--accent)]/10 px-5 py-4 border-b border-[var(--border)]">
+      <h2 class="font-serif text-xl font-extrabold tracking-tight">
+        🅿️ {data.displayName} 주차요금 계산기
+      </h2>
+      <p class="mt-1 text-xs text-[var(--muted)]">
+        입차 시각까지 반영해 <b>정액(선불)인지 후불 미터인지 자동 판정</b>합니다 · 요금 기준 {data.updatedDate}
+      </p>
+    </div>
+
+    <div class="px-5 py-4 space-y-4">
+      <div class="flex gap-2" data-profiles>
+        {data.profiles.map((p: any) => (
+          <button type="button" data-profile={p.id}
+            class="flex-1 rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-semibold transition">
+            {p.type === 'flat' ? '⚾ 경기·행사일' : '📅 평일(후불)'}
+          </button>
+        ))}
+      </div>
+
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-[var(--muted)]">차종</span>
+        <div class="flex gap-2" data-vehicles>
+          {data.vehicles.map((v: string) => (
+            <button type="button" data-vehicle={v}
+              class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">{v}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <label class="text-sm" data-field="game">
+          <span class="block text-[var(--muted)] mb-1">경기 시작</span>
+          <input type="time" value="18:30" data-game
+            class="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-2" />
+        </label>
+        <label class="text-sm">
+          <span class="block text-[var(--muted)] mb-1">입차 예정</span>
+          <input type="time" value="16:00" data-arrive
+            class="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-2" />
+        </label>
+        <label class="text-sm">
+          <span class="block text-[var(--muted)] mb-1">출차 예정</span>
+          <input type="time" value="22:00" data-leave
+            class="w-full rounded-lg border border-[var(--border)] bg-transparent px-3 py-2" />
+        </label>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 text-sm">
+        <label class="flex items-center gap-2" data-field="summer">
+          <input type="checkbox" data-summer />
+          <span>혹서기 경기(7/22~8/31)</span>
+        </label>
+        <label class="flex items-center gap-2" data-field="discount">
+          <span class="text-[var(--muted)]">감면</span>
+          <select data-discount class="rounded-lg border border-[var(--border)] bg-transparent px-2 py-1.5">
+            {discounts.map((d: any) => (<option value={d.rate}>{d.id}</option>))}
+          </select>
+        </label>
+      </div>
+
+      <div class="rounded-lg bg-[var(--accent)]/5 border border-[var(--border)] px-4 py-4">
+        <div class="flex items-baseline gap-2 flex-wrap">
+          <span class="text-sm text-[var(--muted)]">예상 주차요금</span>
+          <span class="text-2xl font-extrabold text-[var(--accent)]" data-result>—</span>
+          <span class="text-sm font-semibold" data-mode></span>
+        </div>
+        <p class="mt-2 text-sm leading-relaxed" data-reason></p>
+        <p class="mt-1 text-sm" data-transit></p>
+        <p class="mt-2 text-xs text-[var(--muted)]" data-note></p>
+      </div>
+
+      <p class="text-[11px] text-[var(--muted)] leading-relaxed">
+        ⓘ 잠실종합운동장 부설주차장은 <b>1일 상한 없음</b> · 정액 주차는 <b>자정(24:00) 이후 후불로 전환</b>됩니다.
+      </p>
+      <p class="text-[11px] text-[var(--muted)] leading-relaxed">
+        ※ 요금 기준일 {data.updatedDate} · 출처: <a href={data.source} target="_blank" rel="noopener" class="underline">{data.sourceName}</a>.
+        실제 요금은 현장 안내가 우선합니다.
+      </p>
+    </div>
+  </section>
+)}
+
+<script>
+  import { computeParking, toMin, durationMin } from '../lib/parking-calc.js';
+
+  const won = (n) => Math.round(n).toLocaleString('ko-KR') + '원';
+  const fmtDur = (min) => {
+    const h = Math.floor(min / 60), m = min % 60;
+    return (h ? h + '시간 ' : '') + (m ? m + '분' : (h ? '' : '0분'));
+  };
+
+  function wire(root) {
+    const pdata = JSON.parse(root.querySelector('script[data-pdata]').textContent);
+    const $ = (s) => root.querySelector(s);
+    const $$ = (s) => Array.from(root.querySelectorAll(s));
+    const profBtns = $$('[data-profile]'), vehBtns = $$('[data-vehicle]');
+    const gameEl = $('[data-game]'), arriveEl = $('[data-arrive]'), leaveEl = $('[data-leave]');
+    const summerEl = $('[data-summer]'), discountEl = $('[data-discount]');
+    const fieldGame = $('[data-field="game"]'), fieldSummer = $('[data-field="summer"]'), fieldDiscount = $('[data-field="discount"]');
+
+    const state = { profile: pdata.defaultProfile || pdata.profiles[0].id, vehicle: pdata.vehicles[0] };
+
+    const paint = (btns, attr, val) => btns.forEach((b) => {
+      const on = b.getAttribute(attr) === val;
+      b.classList.toggle('bg-[var(--accent)]', on);
+      b.classList.toggle('text-white', on);
+      b.classList.toggle('border-[var(--accent)]', on);
+    });
+
+    function transitLine(fee) {
+      const t = pdata.transit && pdata.transit.roundTripWon;
+      if (t == null) return '';
+      const diff = fee - t;
+      if (diff > 500) return `🚇 대중교통 왕복 약 ${won(t)} — 주차보다 ${won(diff)} 저렴합니다. ${pdata.transit.note}`;
+      if (diff < -500) return `🚗 주차가 대중교통 왕복(${won(t)})보다 ${won(-diff)} 저렴합니다.`;
+      return `🚇 대중교통 왕복 약 ${won(t)}로 주차비와 비슷합니다. ${pdata.transit.note}`;
+    }
+
+    function calc() {
+      const meteredProf = pdata.profiles.find((p) => p.type === 'metered');
+      const r = computeParking({
+        data: pdata, profileId: state.profile, vehicle: state.vehicle,
+        gameMin: toMin(gameEl.value), arriveMin: toMin(arriveEl.value), leaveMin: toMin(leaveEl.value),
+        summer: summerEl.checked, discountRate: parseFloat(discountEl.value || '0') || 0,
+      });
+      let modeText = '', reason = '', note = '';
+      const winLabel = (before, after) => `경기 시작 ${Math.floor(before / 60) ? Math.floor(before / 60) + '시간 ' : ''}${before % 60 ? before % 60 + '분 ' : ''}전 ~ 시작 후 ${after}분`;
+
+      if (r.mode === 'flat') {
+        modeText = '(선불 정액)';
+        const beforeGame = toMin(gameEl.value) - toMin(arriveEl.value);
+        reason = `✅ 정액 적용 — 입차가 정액 창(${winLabel(r.before, r.after)}) 안입니다`
+          + (beforeGame >= 0 ? ` (경기 ${fmtDur(beforeGame)} 전 입차).` : '.')
+          + ` 주차 시간과 무관하게 ${won(r.fee)} 정액.`;
+        note = pdata.profiles.find((p) => p.type === 'flat').note || '';
+      } else if (r.mode === 'flat+overnight') {
+        modeText = '(선불 정액 + 자정 후불)';
+        reason = `✅ 정액 적용 후 자정(24:00) 초과 → 후불 전환. `
+          + `자정까지 정액 ${won(r.flatFee)} + 자정 이후 ${fmtDur(r.postMidnightMin)} 후불 ${r.postUnits}×${won(meteredProf.unitWon[state.vehicle].won)} = ${won(r.postFee)} → 합계 ${won(r.fee)}.`;
+        note = pdata.profiles.find((p) => p.type === 'flat').note || '';
+      } else if (r.mode === 'metered-fallback') {
+        modeText = '(후불 미터)';
+        reason = `⚠️ 정액 창(${winLabel(r.before, r.after)}) 밖 입차 → 후불 미터 적용. `
+          + `${fmtDur(r.durationMin)} 주차 · 무료 ${meteredProf.freeMinutes}분 제외 ${r.units}×${won(meteredProf.unitWon[state.vehicle].won)}.`;
+        note = meteredProf.dayCapNote || '';
+      } else {
+        modeText = '(후불 미터)';
+        const rate = parseFloat(discountEl.value || '0') || 0;
+        reason = `${fmtDur(r.durationMin)} 주차 · 무료 ${meteredProf.freeMinutes}분 제외 ${r.units}×${won(meteredProf.unitWon[state.vehicle].won)}`
+          + (rate ? ` · 감면 ${Math.round(rate * 100)}%` : '') + '.';
+        note = meteredProf.dayCapNote || '';
+      }
+
+      $('[data-result]').textContent = won(r.fee);
+      $('[data-mode]').textContent = modeText;
+      $('[data-reason]').textContent = reason;
+      $('[data-transit]').textContent = transitLine(r.fee);
+      $('[data-note]').textContent = note ? 'ℹ️ ' + note : '';
+    }
+
+    function syncFields() {
+      const isFlat = pdata.profiles.find((p) => p.id === state.profile)?.type === 'flat';
+      if (fieldGame) fieldGame.style.display = isFlat ? '' : 'none';
+      if (fieldSummer) fieldSummer.style.display = isFlat ? '' : 'none';
+      if (fieldDiscount) fieldDiscount.style.display = isFlat ? 'none' : '';
+      paint(profBtns, 'data-profile', state.profile);
+      paint(vehBtns, 'data-vehicle', state.vehicle);
+    }
+
+    profBtns.forEach((b) => b.addEventListener('click', () => { state.profile = b.getAttribute('data-profile'); syncFields(); calc(); }));
+    vehBtns.forEach((b) => b.addEventListener('click', () => { state.vehicle = b.getAttribute('data-vehicle'); paint(vehBtns, 'data-vehicle', state.vehicle); calc(); }));
+    [gameEl, arriveEl, leaveEl, summerEl, discountEl].forEach((el) => el && el.addEventListener('input', calc));
+
+    const now = new Date(), md = (now.getMonth() + 1) * 100 + now.getDate();
+    if (md >= 722 && md <= 831) summerEl.checked = true;
+
+    syncFields();
+    calc();
+  }
+
+  document.querySelectorAll('[data-pcalc]').forEach(wire);
+</script>

@@ -1,0 +1,52 @@
+{
+  "facility": "잠실야구장",
+  "displayName": "잠실야구장 (잠실종합운동장 부설주차장)",
+  "source": "https://stadium.seoul.go.kr/about/park-info",
+  "sourceName": "서울시 체육시설관리사업소 — 주차장 이용안내",
+  "updatedDate": "2026-07-18 (사용자 확인)",
+  "effectiveDate": "2023-02-01",
+  "capacity": 876,
+  "transit": {
+    "roundTripWon": 2800,
+    "note": "종합운동장역(2·9호선) 도보 5분 · 왕복 약 2,800원(교통카드)"
+  },
+  "vehicles": ["소형", "대형"],
+  "defaultProfile": "경기·행사일",
+  "profiles": [
+    {
+      "id": "경기·행사일",
+      "type": "flat",
+      "flatWon": { "소형": 6000, "대형": 12000 },
+      "windowBeforeMin": 150,
+      "windowAfterMin": 30,
+      "summerWindowBeforeMin": 90,
+      "summerWindowAfterMin": 60,
+      "summerRangeLabel": "혹서기 7/22~8/31",
+      "fallbackProfile": "평일(후불)",
+      "note": "선불 정액은 감면 미적용. 정액은 자정(24:00)까지이며, 자정 이후는 후불 미터로 전환·가산됩니다(1일 상한 없음). 정액 창 밖 입차는 처음부터 후불 미터."
+    },
+    {
+      "id": "평일(후불)",
+      "type": "metered",
+      "freeMinutes": 15,
+      "unitWon": {
+        "소형": { "minutes": 5, "won": 200 },
+        "대형": { "minutes": 5, "won": 400 }
+      },
+      "dayCapWon": "none",
+      "dayCapNote": "1일 상한 없음 · 자정 이후 후불 전환(사용자 확인 2026-07-18). 5분당 부과가 상한 없이 누적됩니다.",
+      "discounts": [
+        { "id": "감면 없음", "rate": 0 },
+        { "id": "장애인·국가유공자 (80%)", "rate": 0.8 },
+        { "id": "경차·저공해차 (50%)", "rate": 0.5 },
+        { "id": "다둥이 행복카드 (50%)", "rate": 0.5 }
+      ]
+    }
+  ],
+  "nearbyAlternatives": [
+    { "name": "아시아공원 공영주차장", "distance": "도보 약 10분", "fee": "30분 1,500원(시간당 3,000원)", "note": "블로그 기준·요금 확인 필요" },
+    { "name": "탄천 공영주차장", "distance": "도보 약 15분", "fee": "상대적으로 저렴", "note": "블로그 기준·요금 확인 필요" },
+    { "name": "잠실역 공영·롯데월드몰", "distance": "지하철 1정거장", "fee": "몰 이용 시 할인 조건 별도", "note": "확인 필요" }
+  ],
+  "notes": "올림픽주경기장 리모델링으로 주차면 약 680면 감소 중(2026 기준). 경기일 만차가 잦아 대중교통 병행을 권장합니다."
+}
