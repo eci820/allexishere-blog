@@ -165,5 +165,86 @@ export async function commitUpdate({ slug, title }) {
   });
 }
 
+// 🗑 발행 취소(/unpublish): 라이브 글을 저장소에서 제거해 사이트에서 내린다.
+// commitUpdate() 흐름을 그대로 따르되(락 → git → push → IndexNow), 지우는 작업이라
+// 대상 검증을 훨씬 빡세게 한다. 오직 사람이 [⚠️ 내리기]를 눌러야만 도달한다.
+//
+// IndexNow 에는 '삭제' 명령이 따로 없다. 글이 사라진 뒤 같은 URL 을 다시 제출하면
+// 검색엔진이 재방문해 404 를 보고 색인에서 뺀다. submitIndexNow 의 90초 지연이
+// 여기서도 그대로 필요하다 — 재배포 전에 쏘면 아직 살아있는 페이지를 보게 된다.
+export async function unpublishPost({ slug, title }) {
+  return withLock(async () => {
+    // ── 대상 검증: 정확히 그 슬러그 폴더 하나인지 ──────────────────────
+    if (!slug || typeof slug !== 'string') return { ok: false, error: '🚫 슬러그가 없습니다' };
+    // 경로 조작 차단(../ 등으로 블로그 폴더 밖을 가리키지 못하게)
+    if (slug.includes('/') || slug.includes('\\') || slug.includes('..')) {
+      return { ok: false, error: `🚫 잘못된 슬러그 형식 — ${slug}` };
+    }
+    const dir = path.join(BLOG, slug);
+    const resolved = path.resolve(dir);
+    if (path.dirname(resolved) !== path.resolve(BLOG)) {
+      return { ok: false, error: `🚫 블로그 폴더 밖을 가리킵니다 — ${slug}` };
+    }
+    const f = path.join(dir, 'index.md');
+    if (!fs.existsSync(f)) return { ok: false, error: `📄 글 없음 — ${slug}` };
+
+    const raw = fs.readFileSync(f, 'utf8');
+    if (/^draft:\s*true/m.test(raw)) {
+      return { ok: false, error: `📄 발행글이 아닙니다(초안) — ${slug}\n초안은 /delete 로 지우세요.` };
+    }
+
+    const rel = path.relative(ROOT, dir);
+    const git = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'pipe' });
+
+    // git 이 실제로 추적 중인 파일이 이 폴더 안에만 있는지 확인한다.
+    let tracked;
+    try {
+      tracked = git(['ls-files', '--', rel]).toString().trim().split('\n').filter(Boolean);
+    } catch (e) {
+      return { ok: false, error: classify(errText(e), 'git ls-files 실패') };
+    }
+    if (!tracked.length) {
+      return { ok: false, error: `📄 git 에 추적되지 않는 글입니다 — ${slug}\n(발행된 적 없음 → /delete 로 지우세요)` };
+    }
+    const outside = tracked.filter((p) => !p.startsWith(rel + '/'));
+    if (outside.length) {
+      return { ok: false, error: `🚫 대상 폴더 밖 파일이 섞여 있어 중단 — ${outside[0]}` };
+    }
+
+    // URL 은 파일을 지우기 전에 계산해 둔다(지운 뒤엔 originalPath 를 읽을 수 없다).
+    const orig = readOriginalPath(raw);
+    const url = orig
+      ? 'https://allexishere.com' + encodeURI(orig)
+      : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
+
+    // ── 실행: git rm → commit → push ────────────────────────────────
+    const extraAdds = POOL_FILES.filter((p) => fs.existsSync(path.join(ROOT, p)));
+    try {
+      git(['rm', '-r', '-q', '--', rel]); // 정확히 이 폴더만
+      try {
+        git(['add', '--', ...extraAdds]);
+      } catch { /* 재고 파일 없으면 무시 */ }
+      try {
+        git(['commit', '-m', `content: 발행 취소 "${title || slug}"`]);
+      } catch (e) {
+        const out = ((e.stdout || '') + (e.stderr || '')).toString();
+        if (!/nothing to commit/.test(out)) throw e;
+      }
+      try { git(['push']); }
+      catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: classify(errText(e2), 'push 실패') }; } }
+    } catch (e) {
+      return { ok: false, error: classify(errText(e), 'git rm·commit 실패') };
+    }
+
+    pool.invalidateLive?.(); // 발행글이 하나 줄었다 → 중복방어 인덱스 재구축
+    // 재고 되살림: published → pending. 안 하면 그 주제를 영영 다시 못 쓴다.
+    let revived = null;
+    try { revived = pool.restorePending?.(slug) || null; } catch (e) { console.error('[unpublish] 재고 되살림 실패:', e.message); }
+
+    submitIndexNow(url); // 90초 뒤 재제출 → 검색엔진이 404 를 보고 색인에서 제거
+    return { ok: true, url, revived, removed: tracked.length };
+  });
+}
+
 // 테스트 전용 export(프로덕션 경로엔 영향 없음)
 export { errText, classify };

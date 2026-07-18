@@ -1,6 +1,6 @@
 // 상주 텔레그램 봇 데몬 (24시간 롱폴링).
 // - 발신자 화이트리스트(내 chat id만)
-// - 명령: /help /status /draft [키워드] /delete <슬러그>
+// - 명령: /help /status /brief /draft [키워드] /delete <슬러그> /unpublish <슬러그>
 // - 하트비트 기록(워치독이 감시)
 // - [✅승인]/[❌반려] 인라인 버튼 콜백 처리
 // 게시는 오직 승인(→publish)으로만. 자동 게시 경로 없음.
@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { pathToFileURL } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { loadEnv, loadConfig, requireSecrets, AUTO_DIR, ROOT } from './lib/env.mjs';
 import { getUpdates, sendMessage, sendDocument, answerCallback, inlineButtons, fetchFileBytes } from './lib/telegram.mjs';
 import { parseCapture, isTooThin } from './lib/capture.mjs';
@@ -316,6 +317,38 @@ async function handleEdit(pending, instruction, replyId) {
   }
 }
 
+// 슬러그 하나의 상태를 읽는다 — /delete(초안 전용)와 /unpublish(발행글 전용)의 판정 근거.
+// '발행됨' 판정은 두 신호를 모두 본다: draft:false 이고 git 이 추적 중.
+// (draft:false 인데 아직 커밋 안 된 글은 사이트에 없으므로 /unpublish 대상이 아니다.)
+function postState(slug) {
+  const dir = path.join(ROOT, 'src/content/blog', slug);
+  const f = path.join(dir, 'index.md');
+  if (!fs.existsSync(f)) return { exists: false, published: false };
+  const raw = fs.readFileSync(f, 'utf8');
+  const isDraft = /^draft:\s*true/m.test(raw);
+  let tracked = 0;
+  try {
+    const rel = path.relative(ROOT, dir);
+    const out = execFileSync('git', ['ls-files', '--', rel], { cwd: ROOT, stdio: 'pipe' }).toString().trim();
+    tracked = out ? out.split('\n').filter(Boolean).length : 0;
+  } catch { /* git 실패 시 추적 0 으로 간주 */ }
+  const pick = (re) => (raw.match(re) || [])[1] || '';
+  const title = pick(/^title:\s*"?(.*?)"?\s*$/m);
+  const orig = pick(/^originalPath:\s*"?(.*?)"?\s*$/m);
+  const url = orig
+    ? 'https://allexishere.com' + encodeURI(orig)
+    : 'https://allexishere.com/entry/' + encodeURIComponent(slug);
+  let images = 0;
+  try { images = fs.readdirSync(dir).filter((n) => /\.(jpe?g|png|webp|gif)$/i.test(n)).length; } catch {}
+  return {
+    exists: true,
+    published: !isDraft && tracked > 0,
+    isDraft, tracked, title,
+    pubDate: pick(/^pubDate:\s*(.*?)\s*$/m).slice(0, 10),
+    url, images,
+  };
+}
+
 // ---- 상태 ----
 function statusText() {
   let last = '없음';
@@ -365,7 +398,9 @@ async function handleCommand(text) {
           '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
           '/draft — 모드 기본동작(briefing=브리핑 / batch=일괄)',
           '/status — 상태 확인',
-          '/delete <슬러그> — 초안 삭제',
+          '/delete <슬러그> — 초안 삭제(발행글은 거부됨)',
+          '/unpublish <슬러그> — 발행글을 사이트에서 내림 (확인 카드 → [⚠️ 내리기])',
+          '   · 주소가 사라지고 검색 유입도 끊깁니다. 내용이 틀린 거라면 갱신을 권합니다.',
           '',
           '📷 현장 캡처 발행 (수동 입력 — 브리핑과 별개)',
           '   "/<주제> <정보>" + 사진(여러 장 가능·선택)을 보내면 초안이 승인 큐로 옵니다.',
@@ -434,11 +469,55 @@ async function handleCommand(text) {
       }
       break;
     case '/delete': {
-      if (!arg) return sendMessage(ME, '사용법: /delete <슬러그>');
+      if (!arg) return sendMessage(ME, '사용법: /delete <슬러그>  (초안 전용)');
       const dir = path.join(ROOT, 'src/content/blog', arg);
       if (!fs.existsSync(dir)) return sendMessage(ME, `없는 슬러그: ${arg}`);
+      // 🔒 발행글 차단. 예전엔 검사가 없어서 발행글도 지워졌는데, /delete 는 git 을
+      //    건드리지 않으므로 "삭제됨"이라 답하면서 실제로는 사이트에 그대로 남았다.
+      //    게다가 로컬 파일이 사라져 중복방어 인덱스에서 빠지는 부작용까지 있었다.
+      const st = postState(arg);
+      if (st.published) {
+        await sendMessage(
+          ME,
+          `🔒 발행된 글입니다. /delete 는 초안 전용입니다.\n` +
+            `📄 "${st.title || arg}"\n\n` +
+            `내리려면 아래를 쓰세요(확인 단계가 있습니다):\n/unpublish ${arg}`
+        );
+        break;
+      }
       fs.rmSync(dir, { recursive: true, force: true });
-      await sendMessage(ME, `🗑 삭제됨: ${arg}`);
+      await sendMessage(ME, `🗑 초안 삭제됨: ${arg}`);
+      break;
+    }
+    case '/unpublish': {
+      if (!arg) return sendMessage(ME, '사용법: /unpublish <슬러그>  (발행글을 사이트에서 내림)');
+      const st = postState(arg);
+      if (!st.exists) return sendMessage(ME, `없는 슬러그: ${arg}`);
+      if (!st.published) {
+        return sendMessage(ME, `📄 초안입니다(사이트에 없음) — ${arg}\n초안은 /delete 로 지우세요.`);
+      }
+      // 2단계 확인 — 여기서는 절대 지우지 않는다. 카드의 [⚠️ 내리기]를 눌러야만 실행.
+      const id = registerUpdate({ slug: arg, title: st.title, url: st.url });
+      await sendMessage(
+        ME,
+        [
+          `⚠️ 발행된 글을 내립니다 — 확인해 주세요`,
+          ``,
+          `📄 ${st.title || arg}`,
+          `🔗 ${st.url}`,
+          st.pubDate ? `📅 발행 ${st.pubDate}` : '',
+          st.images ? `🖼 첨부 사진 ${st.images}장 함께 삭제` : '',
+          ``,
+          `지우면 이 주소가 사라집니다. 검색 결과에 남아 있던 유입도 끊깁니다.`,
+          `⚠️ 내용이 틀린 거라면 삭제보다 갱신을 권합니다(📂 갱신 트랙 — 주소를 지키면서 고칩니다).`,
+          ``,
+          `[⚠️ 내리기]를 눌러야 실행됩니다.`,
+        ].filter(Boolean).join('\n'),
+        inlineButtons([[
+          { text: '⚠️ 내리기', callback_data: 'unpub:' + id },
+          { text: '❌ 취소', callback_data: 'cancel:x' },
+        ]])
+      );
       break;
     }
     default: {
@@ -483,6 +562,31 @@ async function handleCallback(cb) {
   if (action === 'cancel') {
     await answerCallback(cb.id, '취소됨');
     return sendMessage(ME, '취소했습니다.');
+  }
+
+  // 🗑 발행 취소 확정 — /unpublish 카드의 [⚠️ 내리기] 를 눌렀을 때만 도달한다.
+  if (action === 'unpub') {
+    const u = loadUpdateMap()[id];
+    await answerCallback(cb.id, u ? '내리는 중…' : '만료된 버튼');
+    if (!u) return sendMessage(ME, '만료된 요청입니다(봇 재시작됨). /unpublish 를 다시 실행하세요.');
+    await sendMessage(ME, `⏳ "${(u.title || u.slug).slice(0, 30)}" 내리는 중… (커밋·배포 반영까지 1~3분)`);
+    try {
+      const { unpublishPost } = await import('./publish.mjs');
+      const res = await unpublishPost({ slug: u.slug, title: u.title });
+      if (!res.ok) return sendMessage(ME, `❌ 발행 취소 실패: ${res.error}`);
+      return sendMessage(
+        ME,
+        [
+          `🗑 내려졌습니다 (파일 ${res.removed}개 제거)`,
+          `🔗 ${res.url}`,
+          `→ 재배포가 끝나면 이 주소는 사라집니다(404).`,
+          `🔎 검색엔진에는 90초 뒤 자동 통보 — 색인에서 빠지는 데는 며칠 걸릴 수 있습니다.`,
+          res.revived ? `♻️ 재고 되살림: "${res.revived}" (다시 제안될 수 있음)` : '',
+        ].filter(Boolean).join('\n')
+      );
+    } catch (e) {
+      return sendMessage(ME, `❌ 발행 취소 오류: ${e.message}`);
+    }
   }
 
   // 👤 보류된 사진(얼굴·분류실패) 포함하기 — 기본은 제외, 사람이 눌러야 들어간다.

@@ -305,6 +305,22 @@ export function reviveSkipped(keyword) {
   return false;
 }
 
+// 발행 취소(/unpublish) 되돌림: published → pending. 슬러그로 찾는다.
+// 이걸 안 하면 그 주제가 영영 published 로 묶여 다시는 제안되지 않는다
+// (오발행을 내렸는데 나중에 제대로 쓸 기회까지 사라지는 셈).
+// 반환: 되살린 키워드 | null
+export function restorePending(slug) {
+  const pool = loadPool();
+  if (!pool || !slug) return null;
+  const t = pool.topics.find((x) => x.slug === slug && x.status === 'published');
+  if (!t) return null;
+  t.status = 'pending';
+  t.slug = null;
+  t.lastProposedAt = null; // 쿨다운 초기화 — 바로 다시 후보가 될 수 있게
+  savePool(pool);
+  return t.keyword;
+}
+
 // 보충분 적재(중복 제거). items: [{keyword,tier,series,angle,metrics?,status?}]. 반환: 추가된 수.
 export function addTopics(pool, items) {
   const have = new Set(pool.topics.map((t) => t.keyword));
