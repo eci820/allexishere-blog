@@ -13,6 +13,7 @@ import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { subscriptionEnv } from './lib/claudeCli.mjs';
 import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk } from './lib/titleRules.mjs';
+import { facilityFromTitle, insertMapLink } from './lib/mapLink.mjs';
 
 const execFileP = promisify(execFile);
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
@@ -402,6 +403,27 @@ export async function generateOne(keyword, opts, config, chatId) {
         if (nb.length > d.body.length) { d.body = nb; res.costUsd = (res.costUsd || 0) + (bj.total_cost_usd || 0); }
       }
     } catch { /* 보강 실패 시 원본 유지 */ }
+  }
+
+  // ── 🗺 네이버 지도 검색 링크(주차 글) ──
+  // 🔴 프롬프트로 URL 을 만들게 하지 않는다. 모델이 주소를 한 글자만 틀려도 독자가
+  //    엉뚱한 데로 간다. 시설명은 우리 고정 목록(parking.mjs 36개)에서만 찾고,
+  //    URL 은 코드가 조립한다 — 그래야 틀릴 수가 없다.
+  //    좌표·주소는 쓰지 않는다(위치 판단은 네이버에 위임).
+  {
+    const facility = facilityFromTitle(d.title);
+    if (facility) {
+      const r = insertMapLink(d.body, facility);
+      if (r.inserted) {
+        d.body = r.body;
+        console.log(`[generate] 지도 링크 삽입: ${facility}`);
+      } else {
+        // 못 넣었으면 조용히 넘기지 않고 검수 메모로 남긴다 — 사람이 판단하게.
+        d.riskNotes =
+          (d.riskNotes && !/없음|없습니다/.test(d.riskNotes) ? d.riskNotes + ' / ' : '') +
+          `🗺 지도 링크 미삽입(${r.reason}) — 필요하면 '위치·입구' h2 를 추가하세요`;
+      }
+    }
   }
 
   // ── v2.7 YMYL 가드(💪 건강 계급): 면책 문구 주입 + 단정어/효능 단정 린트 ──

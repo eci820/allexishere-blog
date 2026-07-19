@@ -221,6 +221,7 @@ const dq = (s) => '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replac
 // 브리핑·수동 생성 경로(sendDraftCard)도 같은 점검을 받게 하기 위해서다.
 // 기존 사용처가 깨지지 않게 여기서 다시 내보낸다.
 export { parkingDedupOk } from './titleRules.mjs';
+import { facilityFromTitle, insertMapLink } from './mapLink.mjs';
 
 // 🅿️ 제목에 등장하는 시설의 계산기 JSON 이 있으면 parkingCalc 부착(generate.mjs 와 같은 규칙).
 export function parkingCalcFor(title) {
@@ -360,7 +361,14 @@ export async function runCapture({ topic, info, photoBuffers = [], chatId, confi
     fs.copyFileSync(path.join(stage, p.name), path.join(dir, p.file));
   });
 
-  const body = placePhotos(d.body, pub);
+  let body = placePhotos(d.body, pub);
+  // 🗺 네이버 지도 검색 링크 — generate.mjs 와 같은 방식(코드가 URL 조립, 좌표 안 씀).
+  //    캡처는 현장에서 쓴 글이라 '위치·입구' h2 가 있을 확률이 높다.
+  const mapFacility = facilityFromTitle(d.title);
+  if (mapFacility) {
+    const r = insertMapLink(body, mapFacility);
+    if (r.inserted) body = r.body;
+  }
   const tags = (d.tags || []).slice(0, 5);
   const calc = topic === '주차' ? parkingCalcFor(d.title) : null;
   const cover = pub[0]?.file;
