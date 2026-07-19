@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-19T08:28:39.380Z",
+  "updatedAt": "2026-07-19T11:20:23.056Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -440,8 +440,8 @@
       "tier": "health",
       "series": "E",
       "angle": "감량 칼로리 설정",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "기초대사량-계산-공식별-차이와-다이어트-활용-가이드2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": "2026-07-19T01:57:14.407Z",
       "metrics": null
@@ -2878,6 +2878,32 @@
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
       "metrics": null
+    },
+    {
+      "id": "tw9x2lb",
+      "keyword": "KSPO돔 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "대형 K팝 콘서트·시상식 개최일 주차 혼잡도와 인근 대체 주차장·사전정산 방법 안내",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-19T09:18:29.282Z",
+      "lastProposedAt": null,
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "t13rwuh",
+      "keyword": "예술의전당 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "공연 시작 전 혼잡 시간대와 정산 방식, 인근 대체 주차장을 정리해 저녁 공연 관람객의 주차 스트레스를 줄이는 각도",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-19T09:18:29.282Z",
+      "lastProposedAt": null,
+      "metrics": null,
+      "source": "agent"
     }
   ]
 }
