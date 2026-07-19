@@ -21,6 +21,12 @@ const STATE = path.join(AUTO_DIR, 'state');
 fs.mkdirSync(STATE, { recursive: true });
 const HEARTBEAT = path.join(STATE, 'heartbeat.json');
 const DRAFTS = path.join(STATE, 'drafts.json'); // 콜백 id → 슬러그 매핑
+// 🔴 생성 큐 영속화(2026-07-19 사고).
+//    genQueue 가 순수 메모리라, 워치독이 kickstart -k 로 강제 재시작하면 진행 중이던
+//    생성과 대기 중인 것들이 통째로 사라졌다. 사람에게는 "초안 생성 중…"이라고
+//    말해둔 뒤였는데 취소 통지도 없어서, 조용히 증발한 걸 한참 뒤에 알게 됐다
+//    (카페인 반감기 초안). 무엇이 날아갔는지는 사람에게 반드시 알려야 한다.
+const GENQUEUE = path.join(STATE, 'genqueue.json');
 
 function writeHeartbeat(extra = {}) {
   fs.writeFileSync(
@@ -112,11 +118,33 @@ function alignTable(rows) {
 // 키워드 탭 → 순차 생성 큐(여러 개 탭해도 하나씩 처리)
 const genQueue = [];
 let genBusy = false;
+let genInflight = null; // 지금 생성 중인 항목 — 재시작 시 '무엇이 날아갔나'의 핵심
+
+// 큐 상태를 디스크에 반영. 실패해도 생성은 계속한다(영속화는 보조 장치일 뿐).
+function persistGenQueue() {
+  try {
+    fs.writeFileSync(GENQUEUE, JSON.stringify({
+      inflight: genInflight, pending: genQueue, ts: Date.now(),
+    }, null, 1));
+  } catch (e) { console.error('[bot] 생성 큐 저장 실패:', e.message); }
+}
+const loadGenQueue = () => { try { return JSON.parse(fs.readFileSync(GENQUEUE, 'utf8')); } catch { return null; } };
+const clearGenQueue = () => { try { fs.rmSync(GENQUEUE, { force: true }); } catch {} };
+
+// 🔴 큐에 넣는 곳이 여러 군데라, 넣는 경로를 하나로 모아 영속화를 빠뜨리지 않게 한다.
+function enqueueGen(entry) {
+  genQueue.push(entry);
+  persistGenQueue();
+  drainQueue(); // 백그라운드(await 안 함) — 봇은 계속 응답
+}
+
 async function drainQueue() {
   if (genBusy) return;
   genBusy = true;
   while (genQueue.length) {
     const entry = genQueue.shift();
+    genInflight = entry;
+    persistGenQueue();
     await sendMessage(ME, `⏳ "${entry.keyword}" 초안 생성 중… (남은 대기 ${genQueue.length})`);
     try {
       const r = await genOne(entry);
@@ -127,8 +155,49 @@ async function drainQueue() {
     } catch (e) {
       await sendMessage(ME, `❌ "${entry.keyword}" 오류: ${e.message}`);
     }
+    genInflight = null;
+    persistGenQueue();
   }
   genBusy = false;
+  clearGenQueue(); // 큐가 비었으면 파일을 남기지 않는다
+}
+
+// ── 재시작 후 유실 통지 ───────────────────────────────────────────────
+// 🔴 자동으로 재개하지 않는다. 두 가지 이유다:
+//   ① 생성이 봇을 죽인 경우(행·메모리) 자동 재개는 그대로 재시작 루프가 된다.
+//   ② 이 저장소의 원칙은 '생성은 사람이 버튼을 눌러야'다. 재시작이 그 원칙을
+//      우회하는 경로가 되면 안 된다.
+// 대신 무엇이 취소됐는지 알리고, 한 번만 누르면 되게 [🔄 다시 생성]을 붙인다
+// (기존 gen: 콜백을 그대로 쓴다 — 새 경로를 만들지 않는다).
+async function recoverGenQueue() {
+  const st = loadGenQueue();
+  if (!st) return;
+  const orphans = [...(st.inflight ? [st.inflight] : []), ...(st.pending || [])]
+    .filter((e) => e && e.keyword);
+  if (!orphans.length) { clearGenQueue(); return; }
+
+  const L = ['❌ 생성 취소됨(봇 재시작) — 다시 눌러주세요'];
+  if (st.inflight?.keyword) L.push(`  · 진행 중이던 것: "${st.inflight.keyword}"`);
+  const waiting = (st.pending || []).filter((e) => e?.keyword);
+  if (waiting.length) L.push(`  · 대기 중이던 것 ${waiting.length}개: ${waiting.map((e) => e.keyword).join(', ')}`);
+  L.push('');
+  L.push('자동으로 다시 만들지 않습니다(재시작 루프 방지). 아래를 누르면 큐에 다시 들어갑니다.');
+
+  const rows = orphans.slice(0, 6).map((e) => [
+    { text: `🔄 ${e.keyword.slice(0, 18)}`, callback_data: 'gen:' + registerKw(e) },
+  ]);
+  try {
+    await sendMessage(ME, L.join('\n'), inlineButtons(rows));
+    clearGenQueue(); // 통지에 성공했을 때만 지운다
+  } catch (e) {
+    // 🔴 재시작 직후엔 네트워크가 아직 안 올라와 통지가 실패할 수 있다
+    //    (절전에서 깬 직후가 정확히 그렇다). 그땐 파일을 남겨 다음 기동에 다시 알린다.
+    //    다만 무한 반복은 막는다 — 3회 실패하면 포기하고 로그만 남긴다.
+    const fails = (st.notifyFails || 0) + 1;
+    console.error(`[bot] 유실 통지 실패(${fails}회):`, e.message);
+    if (fails >= 3) { clearGenQueue(); console.error('[bot] 유실 통지 3회 실패 — 포기하고 큐를 비웁니다'); }
+    else { try { fs.writeFileSync(GENQUEUE, JSON.stringify({ ...st, notifyFails: fails }, null, 1)); } catch {} }
+  }
 }
 
 // ---- 📷 현장 캡처 발행 ----------------------------------------------------
@@ -455,8 +524,7 @@ async function handleCommand(text) {
             );
           } else {
             await sendMessage(ME, `⏳ "${arg}" 초안 생성 중…`);
-            genQueue.push({ keyword: arg, source: 'manual', gossip: false });
-            drainQueue();
+            enqueueGen({ keyword: arg, source: 'manual', gossip: false });
           }
         } else if (CFG.mode === 'batch') {
           await sendMessage(ME, '⏳ 일괄(batch) 생성 중…');
@@ -555,8 +623,7 @@ async function handleCallback(cb) {
     const kw = loadKwMap()[id];
     await answerCallback(cb.id, kw ? `대기열 추가: ${kw.keyword.slice(0, 20)}` : '만료된 버튼');
     if (!kw) return;
-    genQueue.push(kw);
-    drainQueue(); // 백그라운드(await 안 함) — 봇은 계속 응답
+    enqueueGen(kw); // 영속화 포함(재시작 시 무엇이 날아갔는지 알리기 위해)
     return;
   }
   if (action === 'cancel') {
@@ -794,6 +861,8 @@ async function main() {
   writeHeartbeat({ status: 'starting', lastPollOk: Date.now(), lastPollError: null, loopFails: 0 });
   sweepCaptureStaging();
   await sendMessage(ME, '🤖 봇 시작됨. /help');
+  // 직전 기동에서 강제 종료로 날아간 생성이 있으면 알린다(자동 재개는 하지 않는다).
+  await recoverGenQueue();
   let offset = 0;
   let lastBeat = 0;
   let loopFails = 0; // 연속 폴링 실패 — 침묵 방지용
@@ -868,3 +937,4 @@ if (runDirectly) {
 
 // 테스트 전용 export
 export { handleCallback, todayPublishCount, bumpPublishCount, doPublish };
+export { persistGenQueue, loadGenQueue, clearGenQueue, enqueueGen, recoverGenQueue, GENQUEUE };
