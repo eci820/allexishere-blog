@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-19T13:29:29.283Z",
+  "updatedAt": "2026-07-19T13:35:47.485Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -392,8 +392,8 @@
       "tier": "health",
       "series": "D",
       "angle": "커피 마시는 시간 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "카페인-반감기-몇-시간일까-오후-커피-끊는-기준-2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": "2026-07-19T01:57:14.406Z",
       "metrics": null
