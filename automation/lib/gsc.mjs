@@ -133,6 +133,65 @@ export async function totals(siteUrl, startDate, endDate, keyPath = KEY_PATH) {
   return { impressions: r.impressions || 0, clicks: r.clicks || 0, ctr: r.ctr || 0, position: r.position ?? null, empty: false };
 }
 
+// ── 사이트맵 상태 ─────────────────────────────────────────────────────
+// ⚠️ contents[].indexed 는 항상 "0" 이다(구글이 폐기한 필드). 색인 수로 쓰면 안 된다.
+//    쓸 수 있는 건 submitted(제출 URL 수)·errors·warnings·lastDownloaded 다.
+export async function sitemaps(siteUrl, keyPath = KEY_PATH) {
+  const data = await call(`${API}/sites/${encodeURIComponent(siteUrl)}/sitemaps`, {}, keyPath);
+  return (data.sitemap || []).map((s) => ({
+    path: s.path,
+    lastSubmitted: s.lastSubmitted || null,
+    lastDownloaded: s.lastDownloaded || null,
+    errors: Number(s.errors || 0),
+    warnings: Number(s.warnings || 0),
+    isPending: !!s.isPending,
+    submitted: Number(s.contents?.[0]?.submitted || 0),
+  }));
+}
+
+// ── URL 색인 상태 검사 ────────────────────────────────────────────────
+// 색인 커버리지 리포트는 API 가 없다. 페이지별 상태를 알려면 이 API 뿐이다.
+// 할당량: 사이트당 하루 2,000회 / 분당 600회. 발행글 150편이면 주 1회 전수 검사가 넉넉히 들어간다.
+//
+// 🔴 inspectionUrl 은 GSC 가 아는 주소와 정확히 같아야 한다. 폴더명으로 조립하면
+//    이관글(originalPath 가 다름)은 "알려지지 않은 URL"로 나온다 — 실제로 겪었다.
+const INSPECT_API = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
+export async function inspectUrl(siteUrl, inspectionUrl, keyPath = KEY_PATH) {
+  const data = await call(INSPECT_API, {
+    method: 'POST',
+    body: JSON.stringify({ inspectionUrl, siteUrl, languageCode: 'ko' }),
+  }, keyPath);
+  const r = data.inspectionResult?.indexStatusResult || {};
+  return {
+    url: inspectionUrl,
+    verdict: r.verdict || 'UNKNOWN',            // PASS | NEUTRAL | FAIL
+    coverageState: r.coverageState || '',        // "제출되고 색인이 생성되었습니다." 등
+    robotsTxtState: r.robotsTxtState || '',
+    indexingState: r.indexingState || '',
+    pageFetchState: r.pageFetchState || '',
+    lastCrawlTime: r.lastCrawlTime || null,
+    googleCanonical: r.googleCanonical || '',
+    userCanonical: r.userCanonical || '',
+  };
+}
+
+// 여러 URL 을 순차·소량 병렬로 검사. 분당 600회 한도를 넉넉히 밑돌게 조절한다.
+// 실측: 1건당 응답이 수 초~수십 초로 느리다(144편 · 동시 4 → 17분).
+// 분당 600회 한도이므로 동시 8은 여유롭다(초당 8건 ≪ 초당 10건).
+export async function inspectMany(siteUrl, urls, { concurrency = 8, onProgress } = {}, keyPath = KEY_PATH) {
+  const out = [];
+  for (let i = 0; i < urls.length; i += concurrency) {
+    const batch = urls.slice(i, i + concurrency);
+    const res = await Promise.all(batch.map((u) =>
+      inspectUrl(siteUrl, u, keyPath).catch((e) => ({ url: u, verdict: 'ERROR', error: e.message }))
+    ));
+    out.push(...res);
+    if (onProgress) onProgress(out.length, urls.length);
+    await new Promise((r) => setTimeout(r, 250)); // 분당 한도 여유
+  }
+  return out;
+}
+
 // KST 기준 날짜 문자열(YYYY-MM-DD). GSC 는 속성 시간대 기준이라 대략치로 충분하다.
 export function kstDaysAgo(n) {
   const d = new Date(Date.now() + 9 * 3600 * 1000 - n * 86400_000);

@@ -36,6 +36,57 @@ const JUDGE_AFTER_DAYS = 7;
 // 🅿️ 주차 파일럿 시작일. 이 이후 발행된 주차 글이 '신규', 그 전이 '대조군'.
 const PARKING_PILOT_START = '2026-07-16';
 
+// ── 🚨 치명 항목 daily 감시 ───────────────────────────────────────────
+// SEO 손상은 조용히 누적되다 늦게 터진다. 주간 감시자(seo-watch)를 기다리면
+// 최악의 경우 7일을 놓친다. 그래서 '크게 잘못됐다'만 매일 본다.
+//
+// 역할 분담(항목이 겹치지 않게):
+//   · daily(여기)   — 이상이 있을 때만 말한다. 정상이면 한 줄도 쓰지 않는다.
+//   · weekly(seo-watch) — 색인 전수 검사·중복·자기잠식·크롤 지연·네이버 리마인더 등
+//                          상태 전반을 정기 보고한다.
+//
+// ⚠️ 정직하게 짚어둘 것: GSC API 는 404 URL 목록을 주지 않는다(색인 커버리지 API 부재).
+//    그래서 여기서 보는 건 '404 가 늘었을 때 함께 움직이는 값싼 대리 지표'다.
+//    페이지별 실제 상태는 주간 URL Inspection 이 확인한다.
+const CRITICAL = {
+  sitemapDropPct: 0.10,   // 사이트맵 제출 URL 이 10% 이상 줄면 — 빌드·배포 사고 신호
+  postDropCount: 3,       // 로컬 발행글이 3편 이상 줄면 — 대량 삭제 사고 신호
+  impressionPagesDropPct: 0.30, // 노출 발생 글 수가 30% 이상 줄면 — 대량 색인 이탈 신호
+};
+
+// 사이트맵 1회 + 로컬 카운트만 본다(추가 비용 사실상 0). 실패해도 리포트를 막지 않는다.
+export async function checkCriticalSeo(SITE, { publishedCount, pagesWithImpressions, prev }) {
+  const alerts = [];
+  let snapshot = { sitemapSubmitted: null, sitemapErrors: null, publishedCount, pagesWithImpressions };
+  try {
+    const maps = await gsc.sitemaps(SITE);
+    const submitted = maps.reduce((s, m) => Math.max(s, m.submitted), 0);
+    const errors = maps.reduce((s, m) => s + m.errors, 0);
+    snapshot.sitemapSubmitted = submitted;
+    snapshot.sitemapErrors = errors;
+
+    if (errors > 0 && (prev?.critical?.sitemapErrors ?? 0) === 0) {
+      alerts.push(`🚨 사이트맵 오류 ${errors}건 발생 (어제 0건)`);
+    }
+    const prevSubmitted = prev?.critical?.sitemapSubmitted;
+    if (prevSubmitted && submitted < prevSubmitted * (1 - CRITICAL.sitemapDropPct)) {
+      alerts.push(`🚨 사이트맵 제출 URL 급감 ${prevSubmitted}→${submitted} (빌드·배포 확인 필요)`);
+    }
+  } catch (e) {
+    console.error('[analyst] 사이트맵 확인 실패(리포트는 계속):', e.message);
+  }
+
+  const prevPosts = prev?.critical?.publishedCount;
+  if (prevPosts && publishedCount <= prevPosts - CRITICAL.postDropCount) {
+    alerts.push(`🚨 발행글 급감 ${prevPosts}→${publishedCount}편 (의도한 삭제인지 확인)`);
+  }
+  const prevPages = prev?.critical?.pagesWithImpressions;
+  if (prevPages && pagesWithImpressions < prevPages * (1 - CRITICAL.impressionPagesDropPct)) {
+    alerts.push(`🚨 노출 발생 글 급감 ${prevPages}→${pagesWithImpressions}편 (대량 색인 이탈 의심)`);
+  }
+  return { alerts, snapshot };
+}
+
 // ── 로컬 글 메타(발행일·제목) ─────────────────────────────────────────
 // URL → 글 정보 매핑. D+N 계산과 주차 분류에 쓴다.
 // URL 규칙은 indexnow-bulk.mjs 와 동일: originalPath 있으면 그대로, 없으면 /entry/<dir>.
@@ -206,10 +257,32 @@ export async function runAnalyst({ dry = false } = {}) {
   // 데이터 구간이 발행일에 도달했는지 — 도달 전엔 노출 0이 '실패'가 아니라 '아직'이다.
   const covered = parkNew.filter((p) => p.pubDate <= end).length;
 
+  // 🚨 치명 항목 감시 — 이상이 있을 때만 리포트 맨 위에 붙는다.
+  const publishedPosts = [...posts.values()].filter((p) => !p.draft);
+  const prevDay = (() => {
+    try {
+      const h = JSON.parse(fs.readFileSync(HISTORY, 'utf8'));
+      const keys = Object.keys(h.days || {}).sort();
+      return keys.length ? h.days[keys[keys.length - 1]] : null;
+    } catch { return null; }
+  })();
+  const critical = await checkCriticalSeo(SITE, {
+    publishedCount: publishedPosts.length,
+    pagesWithImpressions: cur.filter((r) => r.isPost).length,
+    prev: prevDay,
+  });
+
   // ── 리포트 조립 ──
   const L = [];
   L.push(`📊 성과 리포트 ${today.slice(5)}`);
   L.push(`GSC 기준일 ${end} (${lagDays}일 지연 · 이건 정상입니다)`);
+  // 정상일 땐 이 구역이 통째로 없다 — 매일 "이상 없음"을 읽게 만들지 않는다.
+  if (critical.alerts.length) {
+    L.push('');
+    L.push('🚨 즉시 확인 필요');
+    for (const a of critical.alerts) L.push(`  ${a}`);
+    L.push('  (상세 진단은 주간 SEO 감시 리포트에서)');
+  }
   L.push('');
   L.push(`【주간 합계】 ${start.slice(5)}~${end.slice(5)} vs 직전 7일`);
   L.push(`  노출 ${n(curTotals.impressions)} ${delta(curTotals.impressions, prevTotals.impressions)}`);
@@ -274,6 +347,8 @@ export async function runAnalyst({ dry = false } = {}) {
       prevTotals: { impressions: prevTotals.impressions, clicks: prevTotals.clicks },
       pagesWithImpressions: cur.length,
       parking: { newCount: parkNew.length, ready, covered, newImpressions: parkNew.reduce((s, p) => s + p.impressions, 0) },
+      // 다음 실행이 '어제 대비 급변'을 판정할 기준선
+      critical: { ...critical.snapshot, alerts: critical.alerts },
     });
     await sendMessage(process.env.TELEGRAM_CHAT_ID, message);
   }
