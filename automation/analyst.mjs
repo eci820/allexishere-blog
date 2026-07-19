@@ -21,6 +21,7 @@ import path from 'node:path';
 import { loadEnv, ROOT, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage } from './lib/telegram.mjs';
 import * as gsc from './lib/gsc.mjs';
+import { urlKey } from './lib/sitemap.mjs';
 
 loadEnv();
 
@@ -88,10 +89,13 @@ export async function checkCriticalSeo(SITE, { publishedCount, pagesWithImpressi
 }
 
 // ── 로컬 글 메타(발행일·제목) ─────────────────────────────────────────
-// URL → 글 정보 매핑. D+N 계산과 주차 분류에 쓴다.
-// URL 규칙은 indexnow-bulk.mjs 와 동일: originalPath 있으면 그대로, 없으면 /entry/<dir>.
+// GSC 가 준 URL ↔ 로컬 글을 잇는 지도. D+N 계산과 주차 분류에 쓴다.
+//
+// 🔴 키는 urlKey()(디코드+소문자)로 만든다. Astro 가 새 글 슬러그를 소문자로
+//    서빙하는데 폴더명 대문자를 그대로 키로 쓰면 매칭이 어긋나, 그 글들이
+//    '글이 아님'으로 분류돼 순위 목록·주차 추적에서 통째로 빠진다(2026-07-19 사고).
 function loadPosts() {
-  const out = new Map(); // pathname(디코드) → {slug,title,pubDate,draft}
+  const out = new Map(); // urlKey → {slug,title,pubDate,draft}
   if (!fs.existsSync(BLOG)) return out;
   for (const dir of fs.readdirSync(BLOG)) {
     const f = path.join(BLOG, dir, 'index.md');
@@ -100,8 +104,9 @@ function loadPosts() {
     const pick = (re) => (raw.match(re) || [])[1] || '';
     const orig = pick(/^originalPath:\s*"?(.*?)"?\s*$/m);
     const pathname = orig ? (orig.startsWith('/') ? orig : '/' + orig) : '/entry/' + dir;
-    out.set(pathname, {
+    out.set(urlKey(pathname), {
       slug: dir,
+      pathname,
       title: pick(/^title:\s*"?(.*?)"?\s*$/m),
       pubDate: pick(/^pubDate:\s*(.*?)\s*$/m).slice(0, 10),
       draft: /^draft:\s*true/m.test(raw),
@@ -113,13 +118,10 @@ function loadPosts() {
 // ── URL 정규화 ────────────────────────────────────────────────────────
 // 🔴 GSC 는 #앵커가 붙은 주소를 별개 행으로 준다. 킨텍스 글 하나가 5행으로 쪼개져
 //    노출 249로 보였지만 합치면 401이었다 — 합산하지 않으면 글별 성과를 40% 과소평가한다.
+// 대소문자까지 정규화한다(urlKey) — Astro 가 새 글을 소문자로 서빙하므로,
+// 대소문자를 남겨두면 GSC 가 준 URL 과 로컬 글이 매칭되지 않는다.
 export function normalizePage(url) {
-  let u = String(url || '');
-  u = u.split('#')[0].split('?')[0];          // 앵커·쿼리 제거
-  u = u.replace(/^https?:\/\/[^/]+/, '');      // 도메인 제거 → pathname
-  try { u = decodeURIComponent(u); } catch { /* 잘못된 인코딩은 원문 유지 */ }
-  if (u.length > 1) u = u.replace(/\/$/, '');  // 끝 슬래시 제거(루트 제외)
-  return u || '/';
+  return urlKey(url) || '/';
 }
 
 // 같은 글의 여러 행을 하나로 합친다. CTR·순위는 합산 후 다시 계산해야 맞다.

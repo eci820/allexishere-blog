@@ -27,6 +27,7 @@ import path from 'node:path';
 import { loadEnv, ROOT, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage } from './lib/telegram.mjs';
 import * as gsc from './lib/gsc.mjs';
+import { fetchSitemapUrls, resolveUrl } from './lib/sitemap.mjs';
 
 loadEnv();
 
@@ -42,7 +43,10 @@ const NAVER_DIAG = 'https://searchadvisor.naver.com/console/site/diagnosis';
 const INDEX_DROP_ALERT = 0.15;
 
 // ── 로컬 발행글 스캔 ──────────────────────────────────────────────────
-// URL 규칙은 indexnow-bulk.mjs·analyst.mjs 와 동일: originalPath 있으면 그대로, 없으면 /entry/<dir>.
+// 🔴 URL 을 여기서 '만들지' 않는다. pathname 은 로컬 글을 사이트맵과 이어붙이기 위한
+//    후보일 뿐이고, GSC 에 검사시킬 실제 URL 은 attachSitemapUrls() 가 사이트맵에서
+//    가져와 채운다. 폴더명으로 추측했다가 대문자 슬러그 글에서 404 를 검사해
+//    거짓 미색인 판정을 냈던 사고(2026-07-19) 때문이다.
 export function scanPosts() {
   const posts = [];
   if (!fs.existsSync(BLOG)) return posts;
@@ -66,7 +70,8 @@ export function scanPosts() {
 
     posts.push({
       dir, pathname,
-      url: new URL(pathname, ORIGIN).href, // canonical 과 동일 인코딩
+      url: null,          // 사이트맵에서 채운다(attachSitemapUrls)
+      inSitemap: false,   // 사이트맵에 없으면 그 자체가 조사할 신호
       title: pick(/^title:\s*"?(.*?)"?\s*$/m),
       description: pick(/^description:\s*"?(.*?)"?\s*$/m),
       pubDate: pick(/^pubDate:\s*(.*?)\s*$/m).slice(0, 10),
@@ -76,6 +81,18 @@ export function scanPosts() {
     });
   }
   return posts;
+}
+
+// 사이트맵(정본)에서 실제 URL 을 채운다. 못 찾은 글은 url=null 로 남아
+// '사이트맵 누락'으로 보고된다 — 추측으로 메우지 않는다.
+export async function attachSitemapUrls(posts, origin = ORIGIN) {
+  const { byKey, urls } = await fetchSitemapUrls(origin);
+  for (const p of posts) {
+    const real = resolveUrl(byKey, p.pathname);
+    p.url = real;
+    p.inSitemap = !!real;
+  }
+  return { sitemapCount: urls.length };
 }
 
 // ── 자기잠식·중복 탐지 ────────────────────────────────────────────────
@@ -178,9 +195,12 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
     return (Date.now() - new Date(m.lastDownloaded)) / 86400000 > 7;
   });
 
-  // ② 로컬 스캔
+  // ② 로컬 스캔 + 사이트맵에서 실제 URL 해석(추측 금지)
   const all = scanPosts();
+  await attachSitemapUrls(all);
   const published = all.filter((p) => !p.draft);
+  // 사이트맵에 없는 발행글 — 이제 이게 '진짜 누락'이다(대소문자 오탐이 아니라).
+  const notInSitemap = published.filter((p) => !p.inSitemap);
   const drafts = all.filter((p) => p.draft);
   const brokenImages = published.filter((p) => p.broken.length);
   const noDescription = published.filter((p) => !p.description.trim());
@@ -197,7 +217,8 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   // ③ 색인 상태(URL Inspection) — quick 모드에서는 건너뛴다
   let inspected = [], indexedCount = null, notIndexed = [], regressed = [], crawlStale = [];
   if (!quick) {
-    const urls = published.map((p) => p.url);
+    // 사이트맵에서 해석된 URL 만 검사한다. 해석 실패분은 아래에서 따로 보고한다.
+    const urls = published.filter((p) => p.url).map((p) => p.url);
     const t0 = Date.now();
     inspected = await gsc.inspectMany(SITE, urls, {
       concurrency: 8,
@@ -284,6 +305,12 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   L.push('');
   L.push('【글 상태】');
   L.push(`  발행 ${published.length}편 · 초안 ${drafts.length}편`);
+  if (notInSitemap.length) {
+    const l = `사이트맵에 없는 발행글 ${notInSitemap.length}편 (검색에 노출될 수 없음)`;
+    problems.push(l);
+    L.push(`  🚨 ${l}`);
+    for (const p of notInSitemap.slice(0, 5)) L.push(`     • ${p.dir.slice(0, 44)}`);
+  }
   if (dupUrls.length) {
     const l = `🚨 같은 주소를 쓰는 글 ${dupUrls.length}쌍 (빌드 충돌·중복 색인)`;
     L.push('  ' + l); problems.push(l);
