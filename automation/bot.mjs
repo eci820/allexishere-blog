@@ -576,12 +576,15 @@ async function handleCallback(cb) {
       if (!entry) return sendMessage(ME, '만료된 제안입니다(큐레이터를 다시 실행하세요).');
       if (entry.addedAt) return sendMessage(ME, `이미 추가된 제안입니다(${entry.addedAt}).`);
 
-      const { loadPool, savePool, addTopics } = await import('./lib/topicsPool.mjs');
+      // 🔴 addTopics 대신 addVetted 를 쓴다. addTopics 의 matchLive(토큰 2개 겹침)는
+      //    주차 글에서 '콘서트·대구·주차' 같은 흔한 단어로 다른 시설끼리도 걸려,
+      //    카드에 '추가 예정'이라 보여준 것이 실제로는 빠지는 일이 생긴다.
+      //    큐레이터가 이미 시설명 단위로 더 정밀하게 걸렀으므로 그 결과를 그대로 반영한다.
+      const { loadPool, savePool } = await import('./lib/topicsPool.mjs');
+      const { addVetted } = await import('./curator.mjs');
       const pool = loadPool();
       if (!pool) return sendMessage(ME, '❌ 재고를 읽지 못했습니다.');
-      const added = addTopics(pool, entry.proposals.map((p) => ({
-        keyword: p.keyword, tier: p.tier, series: p.series, angle: p.angle, source: 'agent',
-      })));
+      const added = addVetted(pool, entry.proposals);
       if (added) savePool(pool);
 
       entry.addedAt = new Date().toISOString();
@@ -591,7 +594,7 @@ async function handleCallback(cb) {
       const skipped = entry.proposals.length - added;
       return sendMessage(ME, [
         `📥 재고 추가 완료 — ${added}/${entry.proposals.length}개`,
-        skipped ? `  (${skipped}개는 중복·발행글 강매칭으로 자동 제외)` : '',
+        skipped ? `  (${skipped}개는 이미 같은 키워드가 재고에 있어 제외)` : '  카드에 보여드린 그대로 반영됐습니다.',
         '',
         '다음 브리핑부터 후보로 나옵니다. 발행은 여전히 [✅승인]을 눌러야 합니다.',
       ].filter(Boolean).join('\n'));

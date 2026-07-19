@@ -175,23 +175,72 @@ function parseProposals(text) {
 //    표기 변형에는 약하다 — 발행글이 "학여울역 SETEC"인데 제안이 "세텍 주차장"이면
 //    토큰이 하나도 안 겹쳐 그대로 통과한다.
 //    그래서 여기서 한 번 더 거른다: 제안어의 글자 조각이 발행글 제목에 들어있으면 의심.
+// 수식어 — 시설명이 아니다. 이것만 겹치는 건 중복이 아니다.
+// 첫 판에서 '콘서트+주차', '대구+주차' 처럼 주차 글이면 흔히 겹치는 단어 2개로
+// 멀쩡한 새 시설(DGB대구은행파크)이 차단됐다. 시설명 단위로만 본다.
+const MODIFIER = new Set([
+  '주차', '주차장', '주차요금', '요금', '무료', '근처', '경기일', '콘서트', '공연', '행사',
+  '총정리', '가이드', '완벽', '얼마', '기준', '조건', '정리', '방법', '위치', '비교', '최신',
+  '할인', '팁', '꿀팁', '대안', '입구', '시간', '정산', '예약', '만차', '혼잡',
+]);
+// 표기 변형 — 한글↔영문 쌍. 발행글이 "학여울역 SETEC"인데 제안이 "세텍"이면
+// 토큰이 하나도 안 겹쳐 그냥은 못 잡는다.
+const ALIAS = new Map([['세텍', 'setec'], ['코엑스', 'coex'], ['디디피', 'ddp'], ['케이스포돔', 'kspo'], ['케이스포', 'kspo']]);
+
+const facTokens = (s) => String(s || '')
+  .toLowerCase()
+  .replace(/[^가-힣a-z0-9]/g, ' ')
+  .split(/\s+/)
+  .filter((w) => w.length >= 2 && !MODIFIER.has(w) && !/^\d+$/.test(w))
+  .map((w) => ALIAS.get(w) || w);
+
+// 두 제목이 '같은 시설'을 가리키나.
+//  · 시설명은 대개 4자 이상이다(올림픽공원·DGB대구은행파크·전주월드컵경기장).
+//    그래서 4자 이상 토큰이 겹칠 때만 같은 시설로 본다 — '대구'(2자) 같은
+//    지역명이 우연히 겹치는 걸로는 차단하지 않는다.
+//  · 첫 대상어(주제어)가 같아도 같은 시설로 본다.
+export function sameFacility(aTitle, bTitle) {
+  const a = facTokens(aTitle), b = facTokens(bTitle);
+  if (!a.length || !b.length) return null;
+  const shared = a.filter((w) => b.includes(w) && w.length >= 4);
+  if (shared.length) return shared[0];
+  if (a[0] && a[0] === b[0]) return a[0];
+  return null;
+}
+
+// 🔴 프롬프트만 믿지 않는다. 모델은 근거 데이터에 이끌려 '이미 글이 있는 대상'을
+//    제안하는 경향이 있다(실제로 킨텍스·세텍·올림픽공원을 제안했다).
 export function flagOverlaps(proposals, publishedTitles) {
-  const norm = (s) => String(s || '').toLowerCase().replace(/[^가-힣a-z0-9]/g, '');
-  const titles = publishedTitles.map((t) => ({ raw: t, n: norm(t) }));
-  // 표기 변형 대응 — 자주 쓰이는 한글↔영문 쌍만 최소한으로.
-  const ALIAS = [['세텍', 'setec'], ['코엑스', 'coex'], ['디디피', 'ddp'], ['케이스포돔', 'kspo']];
   return proposals.map((p) => {
-    const cands = [norm(p.keyword)];
-    for (const [ko, en] of ALIAS) {
-      const n = norm(p.keyword);
-      if (n.includes(ko)) cands.push(n.replace(ko, en));
-      if (n.includes(en)) cands.push(n.replace(en, ko));
+    for (const t of publishedTitles) {
+      const hit = sameFacility(p.keyword, t);
+      if (hit) return { ...p, overlap: t, overlapOn: hit };
     }
-    // 제안어에서 불용어를 뺀 '대상어'가 발행글 제목에 통째로 들어있으면 중복 의심
-    const core = cands.map((c) => c.replace(/주차장|주차요금|주차|총정리|가이드|요금/g, '')).filter((c) => c.length >= 2);
-    const hit = titles.find((t) => core.some((c) => t.n.includes(c)));
-    return { ...p, overlap: hit ? hit.raw : null };
+    return { ...p, overlap: null, overlapOn: null };
   });
+}
+
+// 승인 시 실제로 재고에 넣을 것들. 카드에 미리 보여준 것과 정확히 같아야 한다.
+//
+// 🔴 addTopics 의 matchLive(토큰 2개 겹침)를 쓰지 않는 이유:
+//    주차 글은 '콘서트·대구·주차' 같은 단어가 흔히 겹쳐 다른 시설끼리도 score 2 가
+//    나온다. 실제로 DGB대구은행파크가 엑스코 때문에, 올림픽공원이 고척스카이돔 때문에
+//    차단됐다 — 둘 다 우연이다. 여기서는 그보다 정밀한 시설명 대조를 쓴다.
+//    (같은 시설 중복은 위 flagOverlaps 가 이미 걸러낸 뒤다.)
+export function addVetted(pool, proposals) {
+  const have = new Set(pool.topics.map((t) => t.keyword));
+  const now = new Date().toISOString();
+  let added = 0;
+  for (const p of proposals) {
+    if (!p.keyword || have.has(p.keyword)) continue; // 완전히 같은 키워드만 중복 처리
+    pool.topics.push({
+      id: 't' + Math.abs([...p.keyword].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)).toString(36),
+      keyword: p.keyword, tier: p.tier || 'evergreen', series: p.series || '', angle: p.angle || '',
+      status: 'pending', slug: null, addedAt: now, lastProposedAt: null, metrics: null, source: 'agent',
+    });
+    have.add(p.keyword); added++;
+  }
+  return added;
 }
 
 function saveProposals(entry) {
@@ -273,23 +322,26 @@ export async function runCurator({ dry = false } = {}) {
   }
 
   L.push('');
+  L.push(`【승인 시 반영될 내용】 추가 예정 ${clean.length}개` + (flagged.length ? ` · 자동 제외 ${flagged.length}개` : ''));
+  L.push('');
   if (clean.length) {
-    L.push(`💡 제안 ${clean.length}개 (상한 ${WEEKLY_CAP})`);
+    L.push(`💡 추가 예정 ${clean.length}개 (상한 ${WEEKLY_CAP})`);
     clean.forEach((p, i) => {
       L.push(`  ${i + 1}. [${p.tier}] ${p.keyword}`);
       if (p.angle) L.push(`     각도: ${p.angle}`);
       if (p.why) L.push(`     근거: ${p.why}`);
     });
     L.push('');
-    L.push('[📥 재고 추가]를 눌러야 재고에 들어갑니다. 추가돼도 발행은 아니고,');
-    L.push('브리핑 후보가 될 뿐이며 기존 중복 방어를 그대로 통과합니다.');
+    L.push(`[📥 재고 추가]를 누르면 위 ${clean.length}개가 그대로 들어갑니다.`);
+    L.push('추가돼도 발행은 아니고 브리핑 후보가 될 뿐이며, 발행은 [✅승인]이 따로 필요합니다.');
   }
   if (flagged.length) {
     L.push('');
-    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 발행글이 있는 대상`);
+    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 같은 시설 글이 있음`);
     for (const p of flagged) {
       L.push(`  · ${p.keyword}`);
-      L.push(`    → 기존: ${p.overlap.slice(0, 40)}`);
+      L.push(`    사유: "${p.overlapOn}" 이 겹침`);
+      L.push(`    기존: ${p.overlap.slice(0, 38)}`);
     }
     L.push('  새로 쓰면 자기잠식입니다. 기존 글 개선은 SEO 감시 쪽에서 다룹니다.');
   } else {
