@@ -106,7 +106,10 @@ export function mapLinkLine(facility) {
 //  · 이미 지도 링크가 있으면 건드리지 않는다(갱신 시 중복 방지).
 //  · 마땅한 h2 가 없으면 넣지 않는다 — 아무 데나 끼우면 글 흐름이 깨진다.
 //    (그 경우 null 을 돌려주므로 호출부가 '삽입 안 됨'을 알 수 있다)
-const LOCATION_H2 = /^##\s+.*(위치|입구|찾아가|오시는|가는\s*길).*$/m;
+// 🔴 h2 만 보면 놓친다. 실측(슬러그 81 SETEC): 본문에 "### 위치: 서울 강남구 남부순환로
+//    3104" 라는 진짜 위치 절이 h3 로 있었는데 h2 만 찾다가 못 보고, 글 맨 앞(제목 h2
+//    보다도 위)에 링크를 넣을 뻔했다. 위치 절은 h3 로도 흔히 쓴다.
+const LOCATION_H2 = /^#{2,3}\s+.*(위치|입구|찾아가|오시는|가는\s*길|주소).*$/m;
 
 export function insertMapLink(body, facility) {
   const line = mapLinkLine(facility);
@@ -138,12 +141,30 @@ export function insertMapLink(body, facility) {
     return s && !s.startsWith('#') && !s.startsWith('!') && !s.startsWith('>') && !s.startsWith('|');
   });
   if (idx === -1) {
-    // 첫 문단을 못 찾으면 첫 h2 바로 앞에 넣는다. 그것도 없으면 맨 앞.
-    const at = firstH2 === -1 ? 0 : firstH2;
+    // 🔴 첫 h2 '앞'에는 넣지 않는다. 글이 h2 로 바로 시작하는 경우(실측: 슬러그 81)
+    //    링크가 글 제목보다 위에 붙어 깨진 것처럼 보인다.
+    //    대신 첫 헤딩 다음의 첫 문단 뒤에 넣는다 — 도입부를 읽은 직후가 자연스럽다.
+    const after = body.slice(firstH2 === -1 ? 0 : firstH2);
+    const lines = after.split('\n');
+    let insertAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      const s = lines[i].trim();
+      if (!s || s.startsWith('#') || s.startsWith('!') || s.startsWith('>') || s.startsWith('|')) continue;
+      // 이 문단이 끝나는 지점(다음 빈 줄)을 찾는다
+      let j = i;
+      while (j < lines.length && lines[j].trim()) j++;
+      insertAt = j;
+      break;
+    }
+    if (insertAt === -1) {
+      return { body, inserted: false, reason: '넣을 자리를 찾지 못함(문단 없음)' };
+    }
+    lines.splice(insertAt, 0, '', line);
+    const base = firstH2 === -1 ? '' : body.slice(0, firstH2);
     return {
-      body: body.slice(0, at) + line + '\n\n' + body.slice(at),
+      body: base + lines.join('\n'),
       inserted: true,
-      where: firstH2 === -1 ? '본문 맨 앞' : '첫 h2 바로 앞',
+      where: '도입부 문단 뒤',
       reason: null,
     };
   }
