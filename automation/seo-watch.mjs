@@ -27,7 +27,7 @@ import path from 'node:path';
 import { loadEnv, ROOT, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage } from './lib/telegram.mjs';
 import * as gsc from './lib/gsc.mjs';
-import { fetchSitemapUrls, resolveUrl } from './lib/sitemap.mjs';
+import { fetchSitemapUrls, resolveUrl, urlKey } from './lib/sitemap.mjs';
 
 loadEnv();
 
@@ -158,6 +158,69 @@ export function findDuplicateDrafts(all) {
   return out;
 }
 
+// ── 🧪 실험 추적 ──────────────────────────────────────────────────────
+// data/seo-experiments.json 에 실험을 추가하기만 하면 매주 자동 추적된다.
+// 개별 실험을 코드에 하드코딩하지 않는다 — 앞으로 C유형 나머지, 갱신 효과 측정 등
+// 무엇을 실험하든 파일에 한 줄 넣으면 이 구역이 알아서 따라간다.
+//
+// status 흐름: running(진행중) → indexed(색인 전환) → closed(판정 완료, 리포트에서 빠짐)
+const EXPERIMENTS = path.join(ROOT, 'data', 'seo-experiments.json');
+
+export function loadExperiments() {
+  try { return JSON.parse(fs.readFileSync(EXPERIMENTS, 'utf8')); }
+  catch { return null; }
+}
+function saveExperiments(data) {
+  data.updatedAt = new Date().toISOString();
+  fs.writeFileSync(EXPERIMENTS, JSON.stringify(data, null, 1));
+}
+
+// 실험별 현재 상태를 판정한다. inspectedByKey: urlKey → 검사결과
+// 반환: { lines, changed } — changed 가 true 면 파일을 저장할 값이 생긴 것.
+export function trackExperiments(data, inspectedByKey, today) {
+  const out = { lines: [], changed: false, active: 0 };
+  if (!data?.experiments?.length) return out;
+  const live = data.experiments.filter((e) => e.status !== 'closed');
+  out.active = live.length;
+  if (!live.length) return out;
+
+  out.lines.push('🧪 진행 중인 실험');
+  for (const e of live) {
+    const ins = e.url ? inspectedByKey.get(urlKey(e.url)) : null;
+    const days = e.startedAt ? Math.round((new Date(today) - new Date(e.startedAt)) / 86400000) : null;
+    const nowState = ins ? (ins.coverageState || ins.verdict) : null;
+    const isIndexed = ins?.verdict === 'PASS';
+    const wasIndexed = !!e.indexedAt;
+
+    // 🔴 색인 전환을 처음 감지한 주 — 사람이 목록을 대조하지 않아도 알게 한다.
+    if (isIndexed && !wasIndexed) {
+      e.indexedAt = today;
+      e.status = 'indexed';
+      out.changed = true;
+    }
+
+    out.lines.push(`  • 슬러그 ${e.slug} (${e.type || '실험'}) — D+${days ?? '?'}`);
+    out.lines.push(`    기준선: ${e.baseline?.coverageState || '-'}`);
+    if (!ins) {
+      out.lines.push(`    현재  : (이번 실행에서 검사되지 않음)`);
+    } else {
+      out.lines.push(`    현재  : ${nowState}`);
+      if (isIndexed && e.indexedAt === today) {
+        out.lines.push(`    ✅✅ 색인 전환! (${e.baseline?.date} → ${today}, ${days}일 소요)`);
+      } else if (isIndexed) {
+        out.lines.push(`    ✅ 색인 유지 중 (전환일 ${e.indexedAt})`);
+      } else if (nowState && nowState !== e.baseline?.coverageState) {
+        out.lines.push(`    🔄 상태 변화 있음 (아직 색인은 아님)`);
+      } else {
+        out.lines.push(`    ⏳ 기준선과 동일 — 아직 변화 없음`);
+      }
+    }
+    if (e.verdictDue) out.lines.push(`    판정일: ${e.verdictDue}`);
+  }
+  out.lines.push('  (판정이 끝난 실험은 status 를 closed 로 바꾸면 이 구역에서 빠집니다)');
+  return out;
+}
+
 // ── 이력 ──────────────────────────────────────────────────────────────
 function loadHistory() {
   try { return JSON.parse(fs.readFileSync(HISTORY, 'utf8')); }
@@ -236,6 +299,10 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
     crawlStale = inspected.filter((r) => r.lastCrawlTime &&
       (Date.now() - new Date(r.lastCrawlTime)) / 86400000 > 60);
   }
+
+  // 실험 추적용 — urlKey 로 찾을 수 있게. quick 모드면 비어 있고, 그 경우
+  // 실험 구역은 "이번 실행에서 검사되지 않음"으로 정직하게 표시된다.
+  const inspectedByKey = new Map(inspected.map((r) => [urlKey(r.url), r]));
 
   // 색인 급감 판정
   const prevIndexed = prev?.indexedCount ?? null;
@@ -344,6 +411,14 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   }
   if (noDescription.length) L.push(`  ℹ️ description 없는 글 ${noDescription.length}편 (본문 앞부분으로 자동 대체되나, 직접 쓰는 편이 낫습니다)`);
 
+  // 🧪 실험 추적 — 파일에 실험을 추가하기만 하면 여기 자동으로 뜬다.
+  const expData = loadExperiments();
+  const exp = trackExperiments(expData, inspectedByKey, today);
+  if (exp.lines.length) {
+    L.push('');
+    L.push(...exp.lines);
+  }
+
   L.push('');
   L.push('【네이버】 ⚠️ 자동 확인 불가');
   L.push('  서치어드바이저는 성과·진단 API 를 제공하지 않습니다(수집요청 API 만 있음).');
@@ -363,6 +438,8 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   const message = L.join('\n');
 
   if (!dry) {
+    // 색인 전환을 감지했으면 실험 파일에 기록한다(다음 주엔 '유지 중'으로 표시).
+    if (exp.changed) { saveExperiments(expData); console.log('[seo-watch] 실험 상태 갱신됨'); }
     saveHistory(history, {
       date: today,
       indexedCount, publishedCount: published.length,
