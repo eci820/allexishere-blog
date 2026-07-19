@@ -1,0 +1,35 @@
+{
+ "_note": "일별 GSC 성과 적재. analyst.mjs 가 매일 갱신.",
+ "days": {
+  "2026-07-19": {
+   "date": "2026-07-19",
+   "gscDate": "2026-07-16",
+   "lagDays": 3,
+   "window": {
+    "start": "2026-07-10",
+    "end": "2026-07-16"
+   },
+   "prevWindow": {
+    "start": "2026-07-03",
+    "end": "2026-07-09"
+   },
+   "totals": {
+    "impressions": 579,
+    "clicks": 12,
+    "position": 9.124352331606218
+   },
+   "prevTotals": {
+    "impressions": 747,
+    "clicks": 21
+   },
+   "pagesWithImpressions": 52,
+   "parking": {
+    "newCount": 6,
+    "ready": 0,
+    "covered": 0,
+    "newImpressions": 0
+   }
+  }
+ },
+ "updatedAt": "2026-07-19T01:56:11.422Z"
+}

@@ -1,53 +1,106 @@
-// 워치독(안전망): 하트비트가 끊기면 봇을 재시작하고, 그래도 죽어 있으면 텔레그램으로 경보.
-// launchd 가 5분마다 이 스크립트를 실행합니다(봇과 독립된 별도 경로).
+// 워치독(안전망). launchd 가 5분마다 실행 — 봇과 독립된 별도 경로.
+//
+// 두 가지 고장을 구분해서 잡는다:
+//  ① 프로세스 죽음      — 하트비트가 아예 안 뛴다 → 재시작 + 텔레그램 경보
+//  ② 살아있지만 먹통    — 하트비트는 뛰는데 폴링이 계속 실패한다 (lastPollOk 가 낡음)
+//
+// ②를 따로 잡는 이유(2026-07-19 실제 사고):
+//   봇 토큰이 폐기돼 getUpdates 가 9시간 동안 전부 Unauthorized 였는데,
+//   하트비트는 정상이라 /status 는 멀쩡해 보였고 워치독도 못 잡았다. 그동안
+//   아침 브리핑이 전송 실패로 사라졌다(재고 10개는 쿨다운으로 소진된 채).
+//
+// 🔴 ②는 텔레그램으로 알릴 수 없다 — 텔레그램이 안 되는 게 고장 원인이기 때문이다.
+//    그래서 대체 경로로 알린다: 전용 로그 파일 + macOS 알림(osascript).
+//    인증 오류일 땐 재시작해도 소용없으므로 재시작하지 않는다(무의미한 반복 방지).
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { loadEnv, loadConfig, requireSecrets, AUTO_DIR } from './lib/env.mjs';
+import { loadEnv, loadConfig, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage } from './lib/telegram.mjs';
 
 loadEnv();
-requireSecrets(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID']);
 const CFG = loadConfig();
 const ME = process.env.TELEGRAM_CHAT_ID;
 const HB = path.join(AUTO_DIR, 'state', 'heartbeat.json');
 const ALERT = path.join(AUTO_DIR, 'state', 'watchdog-alerted.json');
+// 눈에 띄는 전용 로그 — 텔레그램이 죽었을 때 사람이 볼 수 있는 곳.
+const ALARM_LOG = path.join(AUTO_DIR, 'logs', 'ALARM.log');
 
-const alertedRecently = () => {
+// 폴링이 이 시간 이상 성공하지 못하면 '먹통'으로 본다.
+// 롱폴링 1회가 pollTimeoutSeconds(50초)이므로 넉넉히 10분.
+const POLL_STALE_SECONDS = Number(CFG.pollStaleSeconds || 600);
+
+const readHB = () => { try { return JSON.parse(fs.readFileSync(HB, 'utf8')); } catch { return null; } };
+const alertedRecently = (key) => {
   try {
-    return Date.now() - JSON.parse(fs.readFileSync(ALERT, 'utf8')).ts < 3600 * 1000;
-  } catch {
-    return false;
-  }
+    const a = JSON.parse(fs.readFileSync(ALERT, 'utf8'));
+    return a.key === key && Date.now() - a.ts < 3600 * 1000;
+  } catch { return false; }
 };
+const markAlerted = (key) => {
+  fs.mkdirSync(path.dirname(ALERT), { recursive: true });
+  fs.writeFileSync(ALERT, JSON.stringify({ key, ts: Date.now() }));
+};
+const clearAlert = () => { try { fs.rmSync(ALERT, { force: true }); } catch {} };
 
-let ageSec = Infinity;
-try {
-  ageSec = (Date.now() - JSON.parse(fs.readFileSync(HB, 'utf8')).ts) / 1000;
-} catch {}
+// 텔레그램을 못 쓸 때의 대체 알림 경로.
+function alarm(title, body) {
+  const line = `[${new Date().toISOString()}] ${title} — ${body}`;
+  try {
+    fs.mkdirSync(path.dirname(ALARM_LOG), { recursive: true });
+    fs.appendFileSync(ALARM_LOG, line + '\n');
+  } catch {}
+  console.error('[watchdog] ' + line);
+  // macOS 알림 센터. 실패해도 무시(헤드리스·권한 없음 등).
+  try {
+    const esc = (s) => String(s).replace(/["\\]/g, '\\$&').slice(0, 200);
+    execFileSync('osascript', ['-e', `display notification "${esc(body)}" with title "${esc(title)}"`], { stdio: 'pipe', timeout: 5000 });
+  } catch {}
+}
 
-if (ageSec > CFG.watchdogStaleSeconds) {
-  // 1) 재시작 시도 (launchd KeepAlive 가 이미 살렸을 수도 있음)
+const hb = readHB();
+const now = Date.now();
+const beatAge = hb?.ts ? (now - hb.ts) / 1000 : Infinity;
+const pollAge = hb?.lastPollOk ? (now - hb.lastPollOk) / 1000 : null;
+
+// ── ① 프로세스가 죽었나 ────────────────────────────────────────────────
+if (beatAge > CFG.watchdogStaleSeconds) {
   let restarted = false;
   try {
     execFileSync('launchctl', ['kickstart', '-k', `gui/${process.getuid()}/com.allexishere.bot`], { stdio: 'pipe' });
     restarted = true;
   } catch {}
-  // 2) 1시간에 한 번만 경보(스팸 방지)
-  if (!alertedRecently()) {
-    try {
-      await sendMessage(
-        ME,
-        `⚠️ 봇 무응답 (하트비트 ${Math.round(ageSec)}초 전).\n` +
-          (restarted ? '→ 재시작을 시도했습니다.' : '→ 재시작 실패. 맥 상태를 확인하세요.')
-      );
-    } catch {}
-    fs.mkdirSync(path.dirname(ALERT), { recursive: true });
-    fs.writeFileSync(ALERT, JSON.stringify({ ts: Date.now() }));
+  if (!alertedRecently('dead')) {
+    const body = `하트비트 ${Math.round(beatAge)}초 전. ${restarted ? '재시작 시도함' : '재시작 실패'}`;
+    alarm('🤖 봇 무응답', body); // 텔레그램이 될지 모르니 대체 경로에도 남긴다
+    try { await sendMessage(ME, `⚠️ 봇 무응답 (하트비트 ${Math.round(beatAge)}초 전).\n` + (restarted ? '→ 재시작을 시도했습니다.' : '→ 재시작 실패. 맥 상태를 확인하세요.')); } catch {}
+    markAlerted('dead');
   }
-} else {
-  // 살아있으면 경보 상태 해제(다음에 다시 죽으면 즉시 알림 가능)
-  try {
-    fs.rmSync(ALERT, { force: true });
-  } catch {}
+}
+// ── ② 살아있지만 폴링이 먹통인가 ──────────────────────────────────────
+else if (pollAge !== null && pollAge > POLL_STALE_SECONDS) {
+  const err = hb.lastPollError || '(사유 미상)';
+  // 인증 오류는 재시작으로 안 고쳐진다 — 토큰을 사람이 갈아야 한다.
+  const isAuth = /unauthorized|forbidden|invalid token|401|403/i.test(err);
+  if (!alertedRecently('mute')) {
+    const mins = Math.round(pollAge / 60);
+    alarm(
+      isAuth ? '🔐 봇 토큰 문제 — 메시지 수신 불가' : '🔇 봇 폴링 먹통',
+      `${mins}분째 폴링 실패. 사유: ${err}` +
+        (isAuth ? ' / BotFather에서 토큰 확인 후 automation/.env 교체 필요(재시작으로 안 고쳐짐)' : '')
+    );
+    // 텔레그램도 시도는 한다 — 네트워크 일시 장애였다면 이건 도착한다.
+    if (!isAuth) {
+      try { await sendMessage(ME, `⚠️ 봇이 ${mins}분째 메시지를 받지 못하고 있습니다.\n사유: ${err}`); } catch {}
+    }
+    markAlerted('mute');
+  }
+  // 인증 문제가 아니면(네트워크 등) 재시작이 도움이 될 수 있다.
+  if (!isAuth) {
+    try { execFileSync('launchctl', ['kickstart', '-k', `gui/${process.getuid()}/com.allexishere.bot`], { stdio: 'pipe' }); } catch {}
+  }
+}
+// ── 정상 ──────────────────────────────────────────────────────────────
+else {
+  clearAlert(); // 다음에 죽으면 즉시 알릴 수 있게 해제
 }

@@ -752,16 +752,24 @@ function sweepCaptureStaging() {
 }
 
 async function main() {
-  writeHeartbeat({ status: 'starting' });
+  writeHeartbeat({ status: 'starting', lastPollOk: Date.now(), lastPollError: null, loopFails: 0 });
   sweepCaptureStaging();
   await sendMessage(ME, '🤖 봇 시작됨. /help');
   let offset = 0;
   let lastBeat = 0;
   let loopFails = 0; // 연속 폴링 실패 — 침묵 방지용
+  // 🔴 폴링이 '마지막으로 성공한' 시각. 하트비트가 뛰는 것과 폴링이 되는 것은 별개다.
+  //    2026-07-19: 토큰이 폐기돼 9시간 동안 getUpdates 가 전부 실패했는데도
+  //    하트비트는 정상이라 /status 는 멀쩡해 보였고 워치독도 못 잡았다.
+  //    워치독이 이 값을 보게 해서 '살아는 있지만 아무것도 못 받는' 상태를 잡는다.
+  let lastPollOk = Date.now();
+  let lastPollError = null;
   for (;;) {
     try {
       const updates = await getUpdates(offset, CFG.pollTimeoutSeconds);
       loopFails = 0;
+      lastPollOk = Date.now();
+      lastPollError = null;
       for (const u of updates) {
         offset = u.update_id + 1;
         const msg = u.message;
@@ -792,6 +800,9 @@ async function main() {
       // 네트워크 오류 등 → 잠깐 쉬고 계속(데몬은 죽지 않음). 삼키더라도 흔적은 남긴다.
       console.error('[bot] 폴링 오류:', e?.message || e);
       loopFails++;
+      lastPollError = String(e?.message || e).slice(0, 200);
+      // 실패 중에도 하트비트는 갱신한다 — 대신 lastPollOk 가 낡아가므로 워치독이 알아챈다.
+      writeHeartbeat({ status: 'poll-failing', offset, lastPollOk, lastPollError, loopFails });
       // 연속 실패가 길어지면 침묵하지 않고 1회 알린다(복구 시 loopFails 리셋 → 재발 시 다시 알림).
       if (loopFails === 20) {
         try { await sendMessage(ME, `⚠️ 봇 폴링 연속 실패 ${loopFails}회: ${e?.message || e}\n네트워크·토큰을 확인하세요(봇은 계속 재시도 중).`); } catch {}
@@ -800,7 +811,7 @@ async function main() {
     }
 
     if (Date.now() - lastBeat > CFG.heartbeatSeconds * 1000) {
-      writeHeartbeat({ status: 'polling', offset });
+      writeHeartbeat({ status: 'polling', offset, lastPollOk, lastPollError, loopFails });
       lastBeat = Date.now();
     }
   }
