@@ -217,12 +217,10 @@ const dq = (s) => '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replac
 // 🅿️ 자기잠식 방지 점검 — topicsPool.matchLive 와 같은 방식으로 제목을 토큰화한다.
 // 발행 후 이 글이 "○○ 주차 종합가이드 있음"으로 인식되려면 제목에 '주차'가
 // 독립 단어로 있어야 한다('주차장'·'주차요금'은 다른 토큰이라 인식 안 됨).
-export function parkingDedupOk(title) {
-  const toks = new Set(
-    String(title).replace(/[^가-힣a-zA-Z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length >= 2)
-  );
-  return toks.has('주차');
-}
+// lib/titleRules.mjs 로 옮겼다 — 제목 규칙은 한 곳에 모으고, 캡처뿐 아니라
+// 브리핑·수동 생성 경로(sendDraftCard)도 같은 점검을 받게 하기 위해서다.
+// 기존 사용처가 깨지지 않게 여기서 다시 내보낸다.
+export { parkingDedupOk } from './titleRules.mjs';
 
 // 🅿️ 제목에 등장하는 시설의 계산기 JSON 이 있으면 parkingCalc 부착(generate.mjs 와 같은 규칙).
 export function parkingCalcFor(title) {

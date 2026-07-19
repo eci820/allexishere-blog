@@ -52,6 +52,7 @@ import { scanPosts, attachSitemapUrls, loadExperiments } from './seo-watch.mjs';
 import { sameFacility } from './curator.mjs';
 import { loadCooldown } from './lib/updateTrack.mjs';
 import { classifyIndex, CLASS_LABEL } from './lib/indexState.mjs';
+import { titleIsGeneric, PAIN_AXES } from './lib/titleRules.mjs';
 
 loadEnv();
 
@@ -249,8 +250,22 @@ export function explainNotIndexed(m) {
 }
 
 // ── 진단: 왜 노출만 나고 클릭이 없나 ──────────────────────────────────
-export function explainNoClicks(m, im, row) {
+export function explainNoClicks(m, im, row, tier) {
   const signals = [];
+  // 🔴 제목이 일반적인가 — 캠페인 대신 상시 감시(2026-07-19 설계 판단).
+  //    발행글 74편이 이 규칙에 걸리지만 그중 61편은 노출이 0이라 제목을 고쳐도
+  //    볼 사람이 없다. 그래서 '일괄 갱신'은 하지 않고, 여기서만 본다 —
+  //    노출이 실제로 나는데 클릭이 0인 글에 한해서다. 그 조건을 만족하는 글이
+  //    생기면 자동으로 후보가 되고, 노출이 늘면 후보도 자동으로 늘어난다.
+  const generic = titleIsGeneric(m.title, tier);
+  if (generic) {
+    const axes = PAIN_AXES[tier]?.axes;
+    signals.push({
+      w: 3,
+      s: `제목이 일반적 — ${generic.reason}` +
+        (axes ? `\n      축: ${axes.join(' · ')} 중 2~3개를 제목에 나열` : ''),
+    });
+  }
   if (im.coverage !== null && im.coverage < 0.5) {
     signals.push({ w: 3, s: `노출의 ${Math.round((1 - im.coverage) * 100)}% 가 제목과 안 맞는 검색어에서 발생` });
   }
@@ -305,6 +320,17 @@ const prevRun = (h) => {
 
 const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
 
+// 슬러그 → 계급. 제목 축을 계급별로 제안하기 위해 재고에서 찾는다.
+// 재고에 없는 이관글은 제목으로 주차만 추정하고, 나머지는 null(전 계급 공통 판정).
+function tierLookup() {
+  let map = new Map();
+  try {
+    const pool = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'topics-pool.json'), 'utf8'));
+    map = new Map(pool.topics.filter((t) => t.slug).map((t) => [t.slug, t.tier]));
+  } catch { /* 재고를 못 읽어도 진단은 계속한다 */ }
+  return (p) => map.get(p.dir) || (/주차/.test(p.title) ? 'parking' : null);
+}
+
 // ── 본체 ──────────────────────────────────────────────────────────────
 export async function runQualityReview({ dry = false, quick = false } = {}) {
   const today = gsc.kstDaysAgo(0);
@@ -322,6 +348,7 @@ export async function runQualityReview({ dry = false, quick = false } = {}) {
 
   // 90일 쿨다운 중인 글은 제외한다 — 갱신 트랙(5번)이 이미 손댄 글이다.
   const cd = loadCooldown();
+  const tierOf = tierLookup();
   const inCooldown = (slug) => {
     const t = cd.slugs?.[slug];
     return t && Date.now() - Date.parse(t) < 90 * 86400000;
@@ -413,7 +440,8 @@ export async function runQualityReview({ dry = false, quick = false } = {}) {
     if (!m) continue;
     const qs = queriesByPage.get(urlKey(p.pathname)) || [];
     const im = intentMatch(p.title, qs);
-    clickDiag.push({ slug: p.dir, title: p.title, url: p.url, m, row, im, signals: explainNoClicks(m, im, row) });
+    const tier = tierOf(p);
+    clickDiag.push({ slug: p.dir, title: p.title, url: p.url, m, row, im, tier, signals: explainNoClicks(m, im, row, tier) });
   }
 
   // ── 리포트 ──

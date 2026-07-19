@@ -12,7 +12,7 @@ import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { subscriptionEnv } from './lib/claudeCli.mjs';
-import { titleGuideFor, titleIsGeneric, titleBodyMismatch } from './lib/titleRules.mjs';
+import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk } from './lib/titleRules.mjs';
 
 const execFileP = promisify(execFile);
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
@@ -52,8 +52,11 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 3) 🔴 그 뒤에 **독자 pain point 를 2~3개 구체적으로 나열**하고, 끝에 가이드/정리/안내 +
    시의성(2026, 필요 시 7월). 25~40자.
    ❌ "잠실야구장 주차 총정리"      ← 일반적. 사실상 검색어 하나만 잡는다.
-   ✅ "잠실야구장 주차요금·주차장 위치·혼잡 대비 가이드 (2026)"  ← 세 검색 의도를 잡는다.
+   ✅ "잠실야구장 주차 요금·입구 위치·혼잡 대비 가이드 (2026)"  ← 세 검색 의도를 잡는다.
    독자는 "총정리"를 검색하지 않습니다. 구체적 니즈를 각각 검색합니다.
+   🅿️ 주차 글은 '주차'를 반드시 **띄어쓴 독립 단어로** 두세요. 나열하느라 "주차요금·위치"
+      처럼 붙이면 중복방어가 깨져 같은 시설 글이 또 생성됩니다(자기잠식).
+      ❌ "○○ 주차요금·위치·만차 가이드"  →  ✅ "○○ 주차 요금·위치·만차 가이드"
 4) 낚시 금지 — 제목이 약속한 내용을 본문이 100% 이행. 미확인 단정 금지.
    🔴 제목에 나열한 pain point 는 **본문 h2 섹션으로 그대로 이행**하세요(순서도 맞춤).
       제목이 "권장량·시간·과다"면 본문 h2 도 그 세 가지여야 합니다.
@@ -508,6 +511,12 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   const generic = titleIsGeneric(title, opts.source);
   // 제목이 약속한 축이 본문 h2 에 실제로 있는지 — '지어내기 금지'의 제목판.
   const promised = titleBodyMismatch(title, toc, opts.source);
+  // 🅿️ 자기잠식 방지 — 캡처 경로에만 있던 점검을 여기로 올렸다(2026-07-19).
+  //    실측: pain point 나열 규칙을 넣자 모델이 "주차요금·위치·만차" 로 압축해
+  //    '주차'가 독립 단어가 아니게 됐는데, 브리핑·수동 경로엔 경고가 없어 그냥 통과했다.
+  //    세 경로(브리핑·수동·캡처)가 전부 이 카드를 쓰므로 여기가 맞는 자리다.
+  const isParking = /주차/.test(title) || opts.source === 'parking';
+  const parkingDedupBad = isParking && !parkingDedupOk(title);
   const msg =
     `📝 ${title}\n` +
     (opts.context ? `🧭 ${opts.context}\n` : '') +
@@ -523,6 +532,11 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
       : '') +
     (promised.length
       ? `⚠️ 제목이 약속한 '${promised.join('·')}'가 본문 섹션에 없습니다 (낚시가 됩니다)\n`
+      : '') +
+    (parkingDedupBad
+      ? `⚠️ 제목에 '주차'가 독립 단어로 없습니다 — 발행해도 브리핑이 같은 시설을 또 제안합니다\n` +
+        `   → '주차요금'처럼 붙이지 말고 띄우세요. [✏️수정]으로 "제목: ..." 입력\n` +
+        `   예) "○○ 주차요금·위치·만차 가이드" → "○○ 주차 요금·위치·만차 가이드"\n`
       : '') +
     (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
     (opts.note ? `${opts.note}\n` : '') +

@@ -72,24 +72,42 @@ const ALL_KEYS = [...new Set(Object.values(PAIN_AXES).flatMap((v) => v.keys))];
 
 const norm = (s) => String(s || '').normalize('NFC');
 
-// 제목이 담고 있는 pain point 축의 개수.
+// 제목이 담고 있는 pain point 축의 개수(어휘 기준).
 export function countPainPoints(title, source) {
   const t = norm(title);
   const keys = PAIN_AXES[source]?.keys || ALL_KEYS;
   return keys.filter((k) => t.includes(k)).length;
 }
 
-// ⚠️ 경고 대상인가 — '약속어는 있는데 구체 축이 2개 미만'.
-// 🔴 차단이 아니라 경고다. 제목은 사람이 판단할 영역이고, 규칙이 안 맞는 좋은 제목도
+// 🔴 나열 '구조'를 따로 센다(2026-07-19 실측으로 추가).
+//    어휘 목록만으로 판정했더니 발행글 29편이 오탐이었다:
+//      "랜드로버 디스커버리 성능·가격·공간·트림 비교 분석"  ← 4개 나열인데 '일반적' 판정
+//      "국회의원 보좌관 역할·연봉·업무·자격 총정리"          ← 4개 나열인데 '일반적' 판정
+//    축 목록에 없는 어휘(성능·공간·트림·연봉·업무…)를 못 세기 때문이다.
+//    어휘를 무한정 늘리는 건 답이 아니다 — 나열했다는 '형태'를 보면 된다.
+//    약속어 앞부분을 구분자로 쪼개 조각 수를 센다.
+const SPLIT = /[·•,\/]/;
+export function countEnumSegments(title) {
+  const t = norm(title)
+    .replace(/\([^)]*\)/g, ' ')  // (2026) 같은 괄호는 나열이 아니다
+    .replace(/\d{4}/g, ' ');     // 연도도 제외
+  const head = PROMISE.reduce((s, p) => s.split(p)[0], t); // 약속어 앞부분만
+  return head.split(SPLIT).map((s) => s.trim()).filter((s) => s.length >= 2).length;
+}
+
+// ⚠️ 경고 대상인가 — 어휘로도, 형태로도 구체적이지 않을 때만.
+// 🔴 차단이 아니라 경고다. 제목은 사람이 판단할 영역이고, 규칙에 안 맞는 좋은 제목도
 //    있다("삼성서울병원 주차요금 얼마? 무료 조건 확인 방법"처럼 의문형 등).
+//    그래서 판정을 좁게 잡는다 — 오탐이 쌓이면 경고 자체가 무시된다.
 export function titleIsGeneric(title, source) {
   const t = norm(title);
   const hasPromise = PROMISE.some((p) => t.includes(p));
   const points = countPainPoints(t, source);
-  if (points >= 2) return null;
+  const segs = countEnumSegments(t);
+  // 축 어휘 2개 이상 '또는' 나열 조각 3개 이상이면 구체적으로 본다.
+  if (points >= 2 || segs >= 3) return null;
   return {
-    points,
-    hasPromise,
+    points, segs, hasPromise,
     reason: hasPromise
       ? `'${PROMISE.find((p) => t.includes(p))}'만 있고 구체적 pain point 나열이 없습니다`
       : '구체적 pain point 나열이 없습니다',
@@ -105,6 +123,18 @@ export function titleBodyMismatch(title, toc, source) {
   if (!sections) return []; // h2 를 못 뽑았으면 판정하지 않는다(오탐 방지)
   const keys = PAIN_AXES[source]?.keys || ALL_KEYS;
   return keys.filter((k) => t.includes(k) && !sections.includes(k));
+}
+
+// 🅿️ 자기잠식 방지 — 제목에 '주차'가 독립 단어로 있는가.
+//    topicsPool.matchLive 가 제목 단어로 중복을 판정하므로, '주차장'·'주차요금'처럼
+//    붙여 쓰면 '주차'로 인식되지 않아 같은 시설 글이 또 생성된다(SKILL.md §3).
+//    원래 lib/capture.mjs 에 있었는데, 제목 규칙이므로 여기로 모았다 — 캡처 경로뿐
+//    아니라 브리핑·수동 생성 경로도 이 점검을 받아야 하기 때문이다.
+export function parkingDedupOk(title) {
+  const toks = new Set(
+    norm(title).replace(/[^가-힣a-zA-Z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length >= 2)
+  );
+  return toks.has('주차');
 }
 
 // 생성 프롬프트에 넣을 계급별 제목 지침.
