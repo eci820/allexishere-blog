@@ -29,6 +29,25 @@ const ORIGIN = 'https://map.naver.com/p/search/';
 //   '시설명': '보정된 검색어',
 export const QUERY_OVERRIDE = {};
 
+// ── 링크 전용 시설 목록 ───────────────────────────────────────────────
+// 🔴 PARKING_TOPICS 와 목적이 다르다. 섞으면 안 된다.
+//    · PARKING_TOPICS  = '무엇을 새로 쓸까' — 이미 글이 있는 곳은 자기잠식 방지로 빠져 있다.
+//    · 여기            = '무엇을 링크할까' — 이미 글이 있는 곳이 오히려 대상이다.
+//    실측(2026-07-19): 클릭이 나는 주차 글 상위 4편(킨텍스·고양종합운동장·SETEC·코엑스)이
+//    전부 PARKING_TOPICS 에 없었다. 성과가 좋은 글일수록 목록에 없다 — 이미 썼으니까.
+//    이걸 parking.mjs 에 추가하면 봇이 킨텍스 글을 '또 쓰자'고 제안하게 된다(자기잠식).
+//
+// 🔴 등재 조건: 브라우저로 첫 결과가 그 시설 본체인지 확인한 것만 넣는다.
+//    HTTP 200 은 증거가 아니다 — map.naver.com 은 SPA 라 헛된 검색어에도 200 을 준다.
+//    표기는 검증한 그대로 쓴다(네이버 검색은 한글 속 영문 대소문자를 구분한다).
+export const LINKABLE_FACILITIES = [
+  // 시설명            검증일         첫 결과(브라우저 확인)
+  '킨텍스',        // 2026-07-19 · 킨텍스컨벤션센터
+  'SETEC',        // 2026-07-19 · SETEC컨벤션센터 (서울 강남구 대치동)
+  '코엑스',        // 2026-07-19 · 코엑스컨벤션센터
+  '고양종합운동장',  // 2026-07-19 · 고양종합운동장
+];
+
 // 시설명 → 검색어.
 export function mapQuery(facility) {
   const f = String(facility || '').trim();
@@ -56,8 +75,13 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function facilityFromTitle(title) {
   const t = String(title || '').normalize('NFC');
   let best = null;
-  for (const topic of PARKING_TOPICS) {
-    const name = topic.keyword.replace(/\s*주차\s*$/, '').trim();
+  // 두 목록을 함께 본다: 새로 쓸 시설(PARKING_TOPICS) + 이미 쓴 시설(LINKABLE_FACILITIES).
+  const names = [
+    ...PARKING_TOPICS.map((x) => x.keyword),
+    ...LINKABLE_FACILITIES,
+  ];
+  for (const raw of names) {
+    const name = raw.replace(/\s*주차\s*$/, '').trim();
     if (!name) continue;
     // 글자 사이 공백을 허용하고 대소문자를 무시해 찾되, 매칭된 '원문'을 취한다.
     const pattern = name.replace(/\s+/g, '').split('').map(escapeRe).join('\\s*');
@@ -90,13 +114,44 @@ export function insertMapLink(body, facility) {
   if (body.includes('map.naver.com')) return { body, inserted: false, reason: '이미 지도 링크 있음' };
 
   const m = body.match(LOCATION_H2);
-  if (!m) return { body, inserted: false, reason: '위치·입구 h2 없음' };
+  if (m) {
+    const at = m.index + m[0].length;
+    const next = body.slice(at);
+    return {
+      body: body.slice(0, at) + '\n\n' + line + next.replace(/^\n+/, '\n\n'),
+      inserted: true,
+      where: '위치·입구 h2 아래',
+      reason: null,
+    };
+  }
 
-  const at = m.index + m[0].length;
-  const next = body.slice(at);
+  // 🔴 위치 h2 가 없을 때(기존 글 19편 중 11편) — 없는 절을 지어내지 않는다.
+  //    첫 문단 뒤에 한 줄만 넣는다. 본문을 건드리지 않고, 내용을 만들지 않으며,
+  //    독자는 오히려 위에서 먼저 본다. LLM 을 쓰지 않으므로 비용도 0이다.
+  //    (전면 재작성 refreshPublished 는 '지도 링크만 넣는다'는 목적에 과하다.)
+  const firstH2 = body.search(/^##\s+/m);
+  const head = firstH2 === -1 ? body : body.slice(0, firstH2);
+  // 첫 문단 = 앞부분에서 빈 줄로 끊기는 첫 덩어리(제목·이미지·인용 줄은 건너뛴다)
+  const paras = head.split(/\n{2,}/);
+  let idx = paras.findIndex((p) => {
+    const s = p.trim();
+    return s && !s.startsWith('#') && !s.startsWith('!') && !s.startsWith('>') && !s.startsWith('|');
+  });
+  if (idx === -1) {
+    // 첫 문단을 못 찾으면 첫 h2 바로 앞에 넣는다. 그것도 없으면 맨 앞.
+    const at = firstH2 === -1 ? 0 : firstH2;
+    return {
+      body: body.slice(0, at) + line + '\n\n' + body.slice(at),
+      inserted: true,
+      where: firstH2 === -1 ? '본문 맨 앞' : '첫 h2 바로 앞',
+      reason: null,
+    };
+  }
+  paras.splice(idx + 1, 0, line);
   return {
-    body: body.slice(0, at) + '\n\n' + line + next.replace(/^\n+/, '\n\n'),
+    body: paras.join('\n\n') + (firstH2 === -1 ? '' : body.slice(firstH2)),
     inserted: true,
+    where: '첫 문단 뒤(위치 h2 없음)',
     reason: null,
   };
 }
