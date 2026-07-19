@@ -12,6 +12,7 @@ import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { subscriptionEnv } from './lib/claudeCli.mjs';
+import { titleGuideFor, titleIsGeneric, titleBodyMismatch } from './lib/titleRules.mjs';
 
 const execFileP = promisify(execFile);
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
@@ -46,10 +47,18 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 
 [제목 설계 — SEO 4단계]
 1) (WebSearch로) 이 키워드가 '왜 지금 검색되는지 / 사람들이 뭘 궁금해하는지'를 먼저 파악하세요.
-2) 핵심 키워드 + 검색량 높은 보조어(근황·이유·일정·방법·총정리 등)를 제목 '앞부분'에 배치.
-3) 약속어(총정리·N가지·방법·기준 중 1개) + 시의성(2026, 필요 시 7월)을 넣어 25~35자.
+   여기서 파악한 '사람들이 뭘 궁금해하는지'가 곧 제목에 나열할 pain point 입니다.
+2) 핵심 키워드를 제목 '앞부분'에 배치.
+3) 🔴 그 뒤에 **독자 pain point 를 2~3개 구체적으로 나열**하고, 끝에 가이드/정리/안내 +
+   시의성(2026, 필요 시 7월). 25~40자.
+   ❌ "잠실야구장 주차 총정리"      ← 일반적. 사실상 검색어 하나만 잡는다.
+   ✅ "잠실야구장 주차요금·주차장 위치·혼잡 대비 가이드 (2026)"  ← 세 검색 의도를 잡는다.
+   독자는 "총정리"를 검색하지 않습니다. 구체적 니즈를 각각 검색합니다.
 4) 낚시 금지 — 제목이 약속한 내용을 본문이 100% 이행. 미확인 단정 금지.
-   예) "이휘재"(X) → "이휘재 ○○ 논란 사실관계 총정리 (2026)"(O)
+   🔴 제목에 나열한 pain point 는 **본문 h2 섹션으로 그대로 이행**하세요(순서도 맞춤).
+      제목이 "권장량·시간·과다"면 본문 h2 도 그 세 가지여야 합니다.
+   🔴 확인 못 한 항목은 제목에 넣지 마세요. 제목에 "요금"을 넣고 본문에 요금이 없으면 낚시입니다.
+   예) "이휘재"(X) → "이휘재 ○○ 논란 사실관계·해명 내용 정리 (2026)"(O)
 
 [SEO 구조]
 - 첫 문단: 두괄식 — 독자가 가장 궁금한 핵심 답 먼저.
@@ -172,6 +181,8 @@ function task(keyword, opts, ctx) {
     `키워드: ${keyword}\n오늘 날짜: ${kstDate()}` + hintTxt + rot + '\n' +
     (related ? `관련 글(본문에 링크 1개로 자연스럽게): [${related.title}](${related.url})\n` : '') +
     (opts.gossip ? `주의: 연예/가십성일 수 있음 — 정보성으로 우회하고 안전규칙 특히 엄수.\n` : '') +
+    // 계급별 pain point 축 — 축 목록은 lib/titleRules.mjs 한 곳에만 있다(검증과 공유).
+    titleGuideFor(opts && opts.source) +
     tierGuide(opts)
   );
 }
@@ -470,7 +481,8 @@ export async function generateOne(keyword, opts, config, chatId) {
 
   // 텔레그램 초안 카드
   if (chatId) {
-    await sendDraftCard(chatId, slug, d.title, { context: d.context, keyword, riskNotes: d.riskNotes, costLine });
+    // source(계급)를 넘겨야 카드가 그 계급의 pain point 축으로 제목을 점검한다.
+    await sendDraftCard(chatId, slug, d.title, { context: d.context, keyword, riskNotes: d.riskNotes, costLine, source: opts && opts.source });
   }
   fs.writeFileSync(path.join(STATE, 'last-run.json'), JSON.stringify({ ts: Date.now() }));
   return { ok: true, slug };
@@ -489,6 +501,13 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   const badge = hasExistingPost(opts.keyword || title);
   const richLine = [feats.hasTable ? '표 포함' : '', feats.hasList ? '목록 포함' : ''].filter(Boolean).join(' · ');
   const rn = opts.riskNotes;
+
+  // ── 제목 점검(경고만 — 차단하지 않는다) ──
+  // 🔴 여기가 모든 초안 경로의 관문이다(브리핑·수동·캡처 전부 이 카드를 쓴다).
+  //    규칙에 안 맞아도 좋은 제목이 있으므로 사람이 판단하게 두고 알리기만 한다.
+  const generic = titleIsGeneric(title, opts.source);
+  // 제목이 약속한 축이 본문 h2 에 실제로 있는지 — '지어내기 금지'의 제목판.
+  const promised = titleBodyMismatch(title, toc, opts.source);
   const msg =
     `📝 ${title}\n` +
     (opts.context ? `🧭 ${opts.context}\n` : '') +
@@ -497,6 +516,14 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
     (toc.length ? `📑 목차: ${toc.join(' · ')}\n` : '') +
     (richLine ? `🧩 ${richLine}\n` : '') +
     (tissues.length ? `⚠️ 표 문법 점검: ${tissues.join(', ')}\n` : '') +
+    (generic
+      ? `⚠️ 제목이 일반적입니다 — ${generic.reason}\n` +
+        `   → pain point 2~3개를 구체적으로 나열하세요. [✏️수정]으로 "제목: ..." 입력\n` +
+        `   예) "○○ 주차 총정리" → "○○ 주차요금·주차장 위치·혼잡 대비 가이드"\n`
+      : '') +
+    (promised.length
+      ? `⚠️ 제목이 약속한 '${promised.join('·')}'가 본문 섹션에 없습니다 (낚시가 됩니다)\n`
+      : '') +
     (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
     (opts.note ? `${opts.note}\n` : '') +
     (opts.costLine ? `💰 ${opts.costLine}\n` : '') +
