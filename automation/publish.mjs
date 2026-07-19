@@ -12,6 +12,46 @@ import { ROOT, AUTO_DIR } from './lib/env.mjs';
 //    네임스페이스 import 는 없는 함수가 undefined 가 될 뿐이라 발행은 계속된다.
 import * as pool from './lib/topicsPool.mjs';
 import { submitIndexNow } from './lib/indexnow.mjs';
+// 위와 같은 이유로 네임스페이스 import — 상주 봇 메모리에 옛 모듈이 남아도 발행이 막히지 않게.
+import * as tg from './lib/telegram.mjs';
+
+// ── 📦 함께 실려 나간 코드 커밋 통지 ──────────────────────────────────
+// 🔴 봇은 글만 커밋하지만(git add -- <그 글만>), push 는 브랜치 단위다.
+//    그래서 main 에 검토가 끝나지 않은 코드 커밋이 있으면, 사람이 발행을 승인한
+//    순간 그 코드까지 원격에 나간다. 실제로 2026-07-19 에 코드 커밋 3개가
+//    글 발행·갱신 push 3번에 각각 딸려 나갔다(a6842ec·6fa87de·b1d414c).
+//
+//    git 특성상 '이 커밋만 빼고 push'는 불가능하다 — 조상 커밋은 반드시 따라간다.
+//    그래서 막는 대신 '모르게 나가지는 않게' 한다. 발행을 멈추면 운영이 끊기고,
+//    push 는 revert 로 되돌릴 수 있으니 통지가 균형점이다.
+const CONTENT_MSG = /^\S+\s+(content:|갱신:)/;
+
+// push 직전 스냅샷 — 이번 push 로 함께 나갈 '글이 아닌' 커밋들.
+function pendingCodeCommits(git) {
+  try {
+    const out = git(['log', '--format=%h %s', '@{u}..HEAD']).toString().trim();
+    if (!out) return [];
+    return out.split('\n').filter((l) => l && !CONTENT_MSG.test(l));
+  } catch {
+    return []; // 업스트림이 없거나 조회 실패 — 통지는 보조 기능이라 조용히 포기
+  }
+}
+
+// fire-and-forget. 통지 실패가 발행 결과를 바꾸면 안 된다.
+function noticeRidingCommits(list) {
+  if (!list?.length) return;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!chat) return;
+  const L = [
+    `📦 참고: 글과 함께 코드 커밋 ${list.length}개도 원격에 올라갔습니다.`,
+    ...list.slice(0, 6).map((l) => '  · ' + l.slice(0, 58)),
+    list.length > 6 ? `  … 외 ${list.length - 6}개` : '',
+    '',
+    '봇은 글만 커밋하지만 push 는 브랜치 전체를 올립니다(조상 커밋은 분리 불가).',
+    '검토가 끝나지 않은 코드였다면: git revert <해시>',
+  ].filter(Boolean);
+  try { Promise.resolve(tg.sendMessage?.(chat, L.join('\n'))).catch(() => {}); } catch {}
+}
 
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
 const LOCK = path.join(AUTO_DIR, 'state', 'publish.lock');
@@ -108,6 +148,7 @@ export async function publish({ slug, title, keyword }) {
         const out = ((e.stdout || '') + (e.stderr || '')).toString();
         if (!/nothing to commit/.test(out)) throw e; // 변경 없으면 그냥 진행
       }
+      const riding = pendingCodeCommits(git); // push 직전 스냅샷
       try {
         git(['push']);
       } catch {
@@ -119,6 +160,7 @@ export async function publish({ slug, title, keyword }) {
           return { ok: false, error: classify(errText(e2), 'push 실패') };
         }
       }
+      noticeRidingCommits(riding);
     } catch (e) {
       return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
@@ -152,8 +194,10 @@ export async function commitUpdate({ slug, title }) {
         const out = ((e.stdout || '') + (e.stderr || '')).toString();
         if (!/nothing to commit/.test(out)) throw e;
       }
+      const riding = pendingCodeCommits(git);
       try { git(['push']); }
       catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: classify(errText(e2), 'push 실패') }; } }
+      noticeRidingCommits(riding);
     } catch (e) {
       return { ok: false, error: classify(errText(e), 'git add·commit 실패') };
     }
@@ -230,8 +274,10 @@ export async function unpublishPost({ slug, title }) {
         const out = ((e.stdout || '') + (e.stderr || '')).toString();
         if (!/nothing to commit/.test(out)) throw e;
       }
+      const riding = pendingCodeCommits(git);
       try { git(['push']); }
       catch { try { git(['pull', '--rebase']); git(['push']); } catch (e2) { return { ok: false, error: classify(errText(e2), 'push 실패') }; } }
+      noticeRidingCommits(riding);
     } catch (e) {
       return { ok: false, error: classify(errText(e), 'git rm·commit 실패') };
     }
