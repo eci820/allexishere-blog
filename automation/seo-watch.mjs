@@ -28,6 +28,7 @@ import { loadEnv, ROOT, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage } from './lib/telegram.mjs';
 import * as gsc from './lib/gsc.mjs';
 import { fetchSitemapUrls, resolveUrl, urlKey } from './lib/sitemap.mjs';
+import { classifyIndex, CLASS_LABEL, CLASS_ACTION, INDEX_GRACE_DAYS, UNKNOWN_ALERT_DAYS } from './lib/indexState.mjs';
 
 loadEnv();
 
@@ -41,6 +42,22 @@ const NAVER_DIAG = 'https://searchadvisor.naver.com/console/site/diagnosis';
 
 // 색인 수가 직전 대비 이 비율 이상 줄면 급감으로 본다.
 const INDEX_DROP_ALERT = 0.15;
+
+// ── 🔎 '미발견' 감시 기준(2026-07-19 전수 조사로 정한 값) ─────────────
+// 🔴 미발견 '편수'를 그대로 리포트에 싣지 않는다.
+//    실측: 미발견 16편 중 14편이 D+0~12 로 정상 색인 대기였다. 원시 개수를 매주
+//    올리면 사람이 대부분 정상인 숫자를 계속 보게 되고, 그러다 진짜 신호를 놓친다
+//    (계약 §4 — 오탐이 쌓이면 경보 자체가 무력해진다).
+//    게다가 이 상태는 빠르게 움직인다: 같은 글 3편이 45분 만에 미발견→발견됨으로
+//    바뀌었다. 주간 스냅샷의 절대값은 애초에 큰 의미가 없다.
+// 그래서 '이상 신호'만 올린다:
+//    · D+14 미만          → 보고하지 않음(정상 대기)
+//    · D+14 이상          → 조용한 카운터(추세만, 경보 아님)
+//    · D+30 이상          → ⚠️ 경보(발견 경로 의심)
+//    · 성숙 미발견 급증    → 🚨 경보(배포·사이트맵 사고 의심)
+const UNKNOWN_SURGE_DELTA = 3; // D+14 이상 미발견이 직전 대비 이만큼 늘면 급증
+
+const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
 
 // ── 로컬 발행글 스캔 ──────────────────────────────────────────────────
 // 🔴 URL 을 여기서 '만들지' 않는다. pathname 은 로컬 글을 사이트맵과 이어붙이기 위한
@@ -279,6 +296,8 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
 
   // ③ 색인 상태(URL Inspection) — quick 모드에서는 건너뛴다
   let inspected = [], indexedCount = null, notIndexed = [], regressed = [], crawlStale = [];
+  // 미발견 감시 집계. --quick 이면 null 로 남아 '검사되지 않음'으로 표시된다.
+  let unknownStats = null;
   if (!quick) {
     // 사이트맵에서 해석된 URL 만 검사한다. 해석 실패분은 아래에서 따로 보고한다.
     const urls = published.filter((p) => p.url).map((p) => p.url);
@@ -291,7 +310,13 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
     indexedCount = inspected.filter((r) => r.verdict === 'PASS').length;
     notIndexed = published
       .map((p) => ({ ...p, ins: byUrlIns.get(p.url) }))
-      .filter((p) => p.ins && p.ins.verdict !== 'PASS');
+      .filter((p) => p.ins && p.ins.verdict !== 'PASS')
+      // 상태를 뭉뚱그리지 않는다 — 세 갈래는 처방이 정반대다(lib/indexState.mjs).
+      .map((p) => ({
+        ...p,
+        cls: classifyIndex(p.ins.coverageState || p.ins.verdict),
+        age: p.pubDate ? daysBetween(p.pubDate, today) : null,
+      }));
     // 🔴 색인됨 → 제외됨 회귀: 지난 실행에 PASS 였는데 지금 아닌 글
     const prevPass = new Set(prev?.passUrls || []);
     regressed = inspected.filter((r) => r.verdict !== 'PASS' && prevPass.has(r.url));
@@ -336,22 +361,72 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
       }
     }
     if (notIndexed.length) {
-      // 미색인은 '검색에 아예 안 나오는 글'이라 가장 실질적인 손실이다. 반드시 조치 후보에 넣는다.
+      // 미색인은 '검색에 아예 안 나오는 글'이라 가장 실질적인 손실이다.
+      // 다만 상태별로 처방이 정반대라 뭉뚱그리지 않고 갈라서 보여준다.
       const pct = Math.round((notIndexed.length / published.length) * 100);
       const l = `미색인 ${notIndexed.length}편 (${pct}%)`;
       problems.push(l);
-      L.push(`  ${pct >= 20 ? '🚨' : '⚠️'} ${l}:`);
-      for (const p of notIndexed.slice(0, 6)) {
-        const age = p.pubDate ? Math.round((Date.now() - new Date(p.pubDate)) / 86400000) : '?';
-        L.push(`     • ${p.title.slice(0, 26)} (D+${age})`);
-        L.push(`       ${(p.ins.coverageState || p.ins.verdict).slice(0, 40)}`);
+      L.push(`  ${pct >= 20 ? '🚨' : '⚠️'} ${l} — 상태별로 처방이 다릅니다:`);
+      for (const cls of ['rejected', 'discovered', 'unknown', 'other']) {
+        const set = notIndexed.filter((p) => p.cls === cls);
+        if (!set.length) continue;
+        L.push(`     ▸ ${CLASS_LABEL[cls]} ${set.length}편 — ${CLASS_ACTION[cls]}`);
+        for (const p of set.slice(0, 3)) {
+          L.push(`        • ${p.title.slice(0, 24)} (D+${p.age ?? '?'})`);
+        }
+        if (set.length > 3) L.push(`        … 외 ${set.length - 3}편`);
       }
-      if (notIndexed.length > 6) L.push(`     … 외 ${notIndexed.length - 6}편`);
     }
     if (crawlStale.length) {
       const l = `60일 넘게 재크롤 안 된 글 ${crawlStale.length}편`;
       problems.push(l);
       L.push(`  ⏳ ${l}`);
+    }
+
+    // ── 🔎 미발견 감시 — 이상 신호만 ──
+    // 원시 개수는 올리지 않는다. D+14 미만은 정상 대기라 아예 언급하지 않는다.
+    const unknownAll = notIndexed.filter((p) => p.cls === 'unknown');
+    const unknownMature = unknownAll.filter((p) => (p.age ?? 0) >= INDEX_GRACE_DAYS);
+    const unknownAged = unknownAll.filter((p) => (p.age ?? 0) >= UNKNOWN_ALERT_DAYS);
+    const prevMature = prev?.unknownMature ?? null;
+
+    unknownStats = {
+      total: unknownAll.length,
+      mature: unknownMature.length,
+      aged: unknownAged.length,
+      matureSlugs: unknownMature.map((p) => p.dir),
+    };
+
+    L.push('');
+    L.push('  🔎 미발견(구글이 주소를 모름) 감시');
+    // 조용한 카운터 — 경보가 아니라 추세다. D+14 미만은 세지 않는다.
+    L.push(`     D+${INDEX_GRACE_DAYS} 이상 미발견 ${unknownMature.length}편` +
+      (prevMature !== null ? ` (직전 ${prevMature})` : '') +
+      ` · D+${INDEX_GRACE_DAYS} 미만은 정상 대기라 세지 않습니다`);
+
+    // ⚠️ 오래된 미발견 — 단순 대기로 보기 어려운 구간
+    if (unknownAged.length) {
+      const l = `D+${UNKNOWN_ALERT_DAYS} 넘게 미발견 ${unknownAged.length}편 (발견 경로 의심)`;
+      problems.push(l);
+      L.push(`     ⚠️ ${l}`);
+      for (const p of unknownAged.slice(0, 4)) L.push(`        • ${p.title.slice(0, 24)} (D+${p.age})`);
+      L.push(`        → 사이트맵에 있고 200 이면 대개 시간이 해결합니다. 반복되면 색인 요청을 검토하세요.`);
+    }
+
+    // 🚨 급증 — 배포·사이트맵 사고 신호
+    if (prevMature !== null && unknownMature.length >= prevMature + UNKNOWN_SURGE_DELTA) {
+      const l = `🚨 성숙 글 미발견 급증 ${prevMature}→${unknownMature.length}편 (배포·사이트맵 사고 의심)`;
+      problems.push(l);
+      L.push(`     ${l}`);
+    }
+
+    // 🚨 미발견 + 사이트맵 없음은 여기서 관측할 수 없다 — 정직하게 밝혀둔다.
+    //    사이트맵에서 URL 을 못 찾은 글은 애초에 검사 대상에서 빠지므로(url=null),
+    //    'unknown' 버킷에 나타날 수 없다. 그 경우는 아래 【글 상태】의
+    //    '사이트맵에 없는 발행글' 경보가 이미 잡고 있다. 여기서 중복해 세지 않는다.
+    if (notInSitemap.length) {
+      L.push(`     ※ 사이트맵에 없는 발행글 ${notInSitemap.length}편은 검사 대상에서 빠집니다`);
+      L.push(`        → 그건 아래 【글 상태】의 사이트맵 경보가 담당합니다(여기서 중복 계상 안 함).`);
     }
   }
 
@@ -446,6 +521,18 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
       submitted, mapErrors, mapWarnings,
       brokenImages: brokenImages.length, dupUrls: dupUrls.length,
       cannibal: cannibal.length, notIndexed: notIndexed.length,
+      // 상태별 내역 — 다음 실행이 '무엇이 늘었나'를 상태 단위로 비교할 수 있게.
+      byClass: quick ? (prev?.byClass ?? null) : {
+        rejected: notIndexed.filter((p) => p.cls === 'rejected').length,
+        discovered: notIndexed.filter((p) => p.cls === 'discovered').length,
+        unknown: notIndexed.filter((p) => p.cls === 'unknown').length,
+        other: notIndexed.filter((p) => p.cls === 'other').length,
+      },
+      // 🔴 급증 판정의 기준선. --quick 이면 이번 회차에 안 쟀으므로 직전 값을 그대로
+      //    물려준다 — 0 으로 덮으면 다음 주에 가짜 급증이 뜬다.
+      unknownMature: quick ? (prev?.unknownMature ?? null) : unknownStats?.mature ?? null,
+      unknownAged: quick ? (prev?.unknownAged ?? null) : unknownStats?.aged ?? null,
+      unknownMatureSlugs: quick ? (prev?.unknownMatureSlugs ?? []) : (unknownStats?.matureSlugs ?? []),
       // 다음 실행에서 '색인됨→제외됨' 을 판정하기 위한 스냅샷
       passUrls: quick ? (prev?.passUrls || []) : inspected.filter((r) => r.verdict === 'PASS').map((r) => r.url),
       problems,

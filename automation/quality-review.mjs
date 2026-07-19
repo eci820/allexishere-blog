@@ -51,6 +51,7 @@ import { urlKey } from './lib/sitemap.mjs';
 import { scanPosts, attachSitemapUrls, loadExperiments } from './seo-watch.mjs';
 import { sameFacility } from './curator.mjs';
 import { loadCooldown } from './lib/updateTrack.mjs';
+import { classifyIndex, CLASS_LABEL } from './lib/indexState.mjs';
 
 loadEnv();
 
@@ -218,33 +219,10 @@ export function experimentGate(expData, { type = 'C유형' } = {}) {
   return { state: 'unknown', allowBulk: false, exp, reason: `실험 상태를 해석하지 못했습니다(status=${exp.status}).` };
 }
 
-// ── 미색인의 세 갈래 ──────────────────────────────────────────────────
-// 🔴 실측(2026-07-19 전수 검사): 미색인 20편은 한 덩어리가 아니었다. 세 종류였고
-//    처방이 정반대다. 뭉뚱그리면 사람이 13편을 헛고치게 된다.
-//
-//   ① rejected   "크롤링됨 - 현재 색인이 생성되지 않음"
-//      → 구글이 본문을 읽고 나서 색인을 만들지 않았다. 품질이 설명이 될 수 있는
-//        유일한 경우다. 슬러그 9 실험이 겨냥한 것도 이 부류(C유형)다.
-//   ② discovered "발견됨 - 현재 색인이 생성되지 않음"
-//      → 구글이 주소만 알고 아직 크롤조차 안 했다. 본문을 아무리 고쳐도 소용없다.
-//        읽지 않은 글을 고쳐 봐야 읽지 않은 글일 뿐이다. 내부 링크·색인 요청 문제다.
-//   ③ unknown    "Google에는 아직 알려지지 않은 URL입니다"
-//      → 발견조차 안 됐다. 사이트맵·내부 링크 문제지 품질 문제가 아니다.
-//
-// 그래서 품질 진단(explainNotIndexed)과 갱신 제안은 ① 에만 적용한다.
-export function classifyIndex(coverageState) {
-  const s = String(coverageState || '');
-  if (/크롤링됨/.test(s)) return 'rejected';
-  if (/발견됨/.test(s)) return 'discovered';
-  if (/알려지지 않은|not known|unknown/i.test(s)) return 'unknown';
-  return 'other';
-}
-const CLASS_LABEL = {
-  rejected: '크롤 후 색인 거절(C유형)',
-  discovered: '발견됐으나 크롤 안 됨',
-  unknown: '구글이 주소를 모름',
-  other: '기타',
-};
+// 색인 상태 분류는 lib/indexState.mjs 로 옮겼다 — seo-watch 도 같은 기준으로
+// 판정해야 두 리포트가 어긋나지 않는다. 여기서 재-export 해 기존 사용처를 유지한다.
+// 품질 진단(explainNotIndexed)과 갱신 제안은 'rejected'(크롤 후 거절)에만 적용한다.
+export { classifyIndex };
 
 // ── 진단: 왜 색인이 거절됐나 ──────────────────────────────────────────
 // 🔴 여기서 내는 건 '설명 후보'지 원인 확정이 아니다. 구글은 색인 거절 사유를
