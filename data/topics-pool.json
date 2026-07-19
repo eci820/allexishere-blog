@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-19T13:35:47.485Z",
+  "updatedAt": "2026-07-19T15:00:31.269Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -1829,8 +1829,8 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금 상세·계산·감면 조건",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "수원KT위즈파크-주차요금위치만차-대비-예약-가이드-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": "2026-07-19T01:00:04.111Z",
       "metrics": null
