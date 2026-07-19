@@ -3,7 +3,7 @@
  "runs": {
   "2026-07-19": {
    "date": "2026-07-19",
-   "indexedCount": 102,
+   "indexedCount": 103,
    "publishedCount": 144,
    "submitted": 151,
    "mapErrors": 0,
@@ -11,7 +11,7 @@
    "brokenImages": 0,
    "dupUrls": 0,
    "cannibal": 11,
-   "notIndexed": 42,
+   "notIndexed": 41,
    "passUrls": [
     "https://allexishere.com/entry/%EB%A9%80%ED%8B%B0%ED%83%9C%EC%8A%A4%ED%82%B9%EC%9D%B4-%EC%96%B4%EB%A0%B5%EB%8B%A4%EA%B3%A0-%EC%9D%B4-%EA%B8%80-%ED%95%98%EB%82%98%EB%A1%9C-%EA%B3%A0%EB%AF%BC-%EB%81%9D",
     "https://allexishere.com/entry/%EA%B4%84%EC%82%AC-%EC%A3%BC%EB%A8%B9%EB%A7%8C%ED%95%9C-%EC%96%BC%EA%B5%B4-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EA%B7%B8%EA%B2%8C-%EB%AD%94%EA%B0%80%EC%9A%94",
@@ -104,6 +104,7 @@
     "https://allexishere.com/entry/%EC%98%A8%EC%97%B4%EC%A7%88%ED%99%98-%EC%98%88%EB%B0%A9-%EC%97%AC%EB%A6%84%EC%B2%A0-%EC%95%88%EC%A0%84%ED%95%98%EA%B2%8C-%EC%A7%80%EB%82%B4%EB%8A%94-%EB%B0%A9%EB%B2%95-%EC%A0%95%EB%A6%AC",
     "https://allexishere.com/entry/%EC%9C%84%EB%82%B4%EC%8B%9C%EA%B2%BD-%EC%A3%BC%EA%B8%B0-2026%EB%85%84-%EB%82%98%EC%9D%B4%EC%9C%84%ED%97%98%EA%B5%B0%EB%B3%84-%EA%B2%80%EC%A7%84-%EA%B8%B0%EC%A4%80-%EA%B0%80%EC%9D%B4%EB%93%9C",
     "https://allexishere.com/entry/%EC%9D%B8%EB%8D%95%EC%85%98-%ED%95%98%EC%9D%B4%EB%9D%BC%EC%9D%B4%ED%8A%B8-%EC%B0%A8%EC%9D%B4-%EC%A0%84%EA%B8%B0%EC%9A%94%EA%B8%88%EA%B9%8C%EC%A7%80-%EB%B9%84%EA%B5%90-%EA%B0%80%EC%9D%B4%EB%93%9C-2026",
+    "https://allexishere.com/entry/%EC%9D%B8%EC%8A%A4%ED%8C%8C%EC%9D%B4%EC%96%B4-%EC%95%84%EB%A0%88%EB%82%98-%EC%A3%BC%EC%B0%A8%EC%9A%94%EA%B8%88-%EB%AC%B4%EB%A3%8C-%EC%A1%B0%EA%B1%B4-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4%EB%93%9C-2026",
     "https://allexishere.com/entry/%EC%9D%BC%EC%8B%9D-%EC%9B%94%EC%8B%9D-%EC%B0%A8%EC%9D%B4-%EC%9B%90%EB%A6%AC%EC%99%80-2026%EB%85%84-%EA%B0%9C%EA%B8%B0%EC%9B%94%EC%8B%9D-%EA%B4%80%EC%B8%A1-%EA%B0%80%EC%9D%B4%EB%93%9C",
     "https://allexishere.com/entry/%EC%9E%90%EB%8F%99%EC%B0%A8%EC%84%B8-%EC%97%B0%EB%82%A9-%EB%B0%A9%EB%B2%95-%EB%9C%BB%EB%B6%80%ED%84%B0-%ED%95%A0%EC%9D%B8%EC%9C%A8%EA%B9%8C%EC%A7%80-2026%EB%85%84-%EC%B4%9D%EC%A0%95%EB%A6%AC",
     "https://allexishere.com/entry/%EC%9E%A0%EC%8B%A4%EC%95%BC%EA%B5%AC%EC%9E%A5-%EC%A3%BC%EC%B0%A8-%EB%B0%A9%EB%B2%95%EA%B3%BC-%EC%9A%94%EA%B8%88-%EC%B4%9D%EC%A0%95%EB%A6%AC-2026%EB%85%84-7%EC%9B%94",
@@ -117,9 +118,11 @@
     "https://allexishere.com/entry/%ED%98%B8%EB%82%A8-%EB%B0%98%EB%8F%84%EC%B2%B4-%ED%81%B4%EB%9F%AC%EC%8A%A4%ED%84%B0-%EA%B4%91%EC%A3%BC%EA%B3%B5%ED%95%AD-%EB%B6%80%EC%A7%80-%ED%99%95%EC%A0%95-2026%EB%85%84-%EC%A0%84%EB%A7%9D"
    ],
    "problems": [
+    "미색인 41편 (28%)",
+    "60일 넘게 재크롤 안 된 글 11편",
     "⚠️ 중복 초안 9건 (발행 전에 정리하면 자기잠식을 막습니다)"
    ]
   }
  },
- "updatedAt": "2026-07-19T02:52:58.950Z"
+ "updatedAt": "2026-07-19T04:00:23.437Z"
 }
