@@ -593,7 +593,12 @@ export async function editDraft(slug, instruction, config, chatId) {
 
 // ── 📂 갱신(축2 [4]): 발행글을 '갱신 표준'으로 제자리 최신화. 백업 후 본문 교체(주소·draft:false 유지). ──
 // 커밋(=발행 반영)은 하지 않음 — bot 이 승인 카드([✅갱신 반영]) 받은 뒤에만 커밋. 취소 시 백업 복원.
-export async function refreshPublished(slug, config, chatId) {
+// opts.brief — 이 갱신에만 적용할 추가 지시(구조 재편·확인된 출처 수치 주입 등).
+//   기본 프롬프트는 '낡은 부분만 최신화·구조 보존'이라, 구조를 갈아엎거나 특정
+//   기관 수치를 정확히 넣어야 하는 갱신에는 부족하다. 특히 YMYL 글은 확인된 수치를
+//   프롬프트에 직접 주지 않으면 모델이 그럴듯한 숫자를 지어낼 위험이 있다.
+// opts.timeoutSeconds — 전면 재작성은 일반 갱신보다 오래 걸린다.
+export async function refreshPublished(slug, config, chatId, opts = {}) {
   config = config || loadConfig();
   const f = path.join(BLOG, slug, 'index.md');
   if (!fs.existsSync(f)) return { ok: false, error: '발행글 없음: ' + slug };
@@ -621,12 +626,13 @@ export async function refreshPublished(slug, config, chatId) {
     `- 공식·공공기관 출처 우선, 기준일 병기. 종료·변경된 제도는 과거 시제로 표기하고 후속 제도로 안내([D]가드).\n` +
     `- 자주 묻는 질문(FAQ) 2~3개를 신설 또는 보강.\n` +
     `- YMYL(건강·세금) 단정어 금지("무조건/100%/반드시 ~됩니다" → 완화).\n` +
+    (opts.brief ? `\n[이 갱신에만 적용할 지시 — 위 표준보다 우선]\n${opts.brief}\n` : '') +
     `frontmatter·코드펜스·설명 없이 '갱신된 전체 본문 마크다운'만 출력.\n\n[현재 본문]\n${body}`;
   const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
   if (config.cliModel) args.push('--model', config.cliModel);
   let newBody, costUsd = 0;
   try {
-    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
+    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (opts.timeoutSeconds || config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
     const j = JSON.parse(stdout);
     if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
     newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
