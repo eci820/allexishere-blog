@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-19T07:22:58.764Z",
+  "updatedAt": "2026-07-19T08:28:39.380Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -1937,8 +1937,8 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금 상세·계산·감면 조건",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "삼성서울병원-주차요금-얼마-무료-조건-확인-방법-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": "2026-07-19T01:57:14.391Z",
       "metrics": null
