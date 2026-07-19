@@ -40,3 +40,10 @@ automation/state/
 automation/logs/
 # 템플릿은 추적(전역 gitignore의 .env.* 규칙을 이 저장소에서만 해제)
 !automation/.env.example
+
+# 서비스 계정 키 등 비밀 파일 (GSC API 등) — 절대 커밋 금지.
+# 폴더째 제외하고, 혹시 다른 경로에 놓이더라도 잡히도록 파일명 패턴도 함께 막는다.
+automation/secrets/
+*gsc-key*.json
+*-service-account*.json
+*.iam.gserviceaccount.com.json
