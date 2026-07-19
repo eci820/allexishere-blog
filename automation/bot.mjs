@@ -564,6 +564,42 @@ async function handleCallback(cb) {
     return sendMessage(ME, '취소했습니다.');
   }
 
+  // 📥 큐레이터 제안을 재고에 추가 — [📥 재고 추가] 를 눌렀을 때만 도달한다.
+  // 발행이 아니라 '브리핑 후보'로 넣는 것뿐이고, addTopics 가 발행글 강매칭·중복을
+  // 그대로 걸러낸다. source:'agent' 로 표시해 나중에 사람이 낸 주제와 구분할 수 있게 한다.
+  if (action === 'curate') {
+    await answerCallback(cb.id, '재고에 추가 중…');
+    try {
+      const f = path.join(STATE, 'curator-proposals.json');
+      const map = JSON.parse(fs.readFileSync(f, 'utf8'));
+      const entry = map[id];
+      if (!entry) return sendMessage(ME, '만료된 제안입니다(큐레이터를 다시 실행하세요).');
+      if (entry.addedAt) return sendMessage(ME, `이미 추가된 제안입니다(${entry.addedAt}).`);
+
+      const { loadPool, savePool, addTopics } = await import('./lib/topicsPool.mjs');
+      const pool = loadPool();
+      if (!pool) return sendMessage(ME, '❌ 재고를 읽지 못했습니다.');
+      const added = addTopics(pool, entry.proposals.map((p) => ({
+        keyword: p.keyword, tier: p.tier, series: p.series, angle: p.angle, source: 'agent',
+      })));
+      if (added) savePool(pool);
+
+      entry.addedAt = new Date().toISOString();
+      entry.addedCount = added;
+      fs.writeFileSync(f, JSON.stringify(map, null, 1));
+
+      const skipped = entry.proposals.length - added;
+      return sendMessage(ME, [
+        `📥 재고 추가 완료 — ${added}/${entry.proposals.length}개`,
+        skipped ? `  (${skipped}개는 중복·발행글 강매칭으로 자동 제외)` : '',
+        '',
+        '다음 브리핑부터 후보로 나옵니다. 발행은 여전히 [✅승인]을 눌러야 합니다.',
+      ].filter(Boolean).join('\n'));
+    } catch (e) {
+      return sendMessage(ME, `❌ 재고 추가 오류: ${e.message}`);
+    }
+  }
+
   // 🗑 발행 취소 확정 — /unpublish 카드의 [⚠️ 내리기] 를 눌렀을 때만 도달한다.
   if (action === 'unpub') {
     const u = loadUpdateMap()[id];
