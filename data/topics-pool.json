@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-20T06:01:33.067Z",
+  "updatedAt": "2026-07-21T02:20:27.511Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2132,7 +2132,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T01:05:32.081Z",
       "metrics": null
     },
     {
@@ -2144,7 +2144,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T01:05:32.081Z",
       "metrics": null
     },
     {
@@ -2156,7 +2156,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T01:05:32.081Z",
       "metrics": null
     },
     {
@@ -2168,7 +2168,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T01:05:32.081Z",
       "metrics": null
     },
     {
@@ -2180,7 +2180,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T01:05:32.081Z",
       "metrics": null
     },
     {
@@ -2189,11 +2189,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "인스파이어-아레나-주차요금-무료-조건-완벽-가이드-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tmam9ze",
@@ -2204,7 +2205,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
     },
     {
@@ -2213,11 +2214,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "광주기아챔피언스필드-주차-요금위치만차-대비-안내-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tozmoat",
@@ -2225,11 +2227,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "창원NC파크-주차요금-무료시간대체주차장-가이드2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tuzr11x",
@@ -2240,7 +2243,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
     },
     {
@@ -2252,7 +2255,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
     },
     {
@@ -2264,7 +2267,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
     },
     {
@@ -2276,7 +2279,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
     },
     {
