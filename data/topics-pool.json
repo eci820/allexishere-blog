@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-21T02:20:27.511Z",
+  "updatedAt": "2026-07-21T02:45:54.366Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2202,8 +2202,8 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-위치만차무료-셔틀-가이드-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": "2026-07-21T02:20:27.510Z",
       "metrics": null
