@@ -2,30 +2,56 @@
 const API = (method) =>
   `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`;
 
-async function call(method, params = {}) {
-  const res = await fetch(API(method), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(`Telegram ${method} 실패: ${data.description}`);
-  return data.result;
+// 네트워크성 오류만 판별한다(DNS·타임아웃·연결 리셋 등). API 오류(!data.ok, 예: 401
+// Unauthorized·400)는 재시도해도 낫지 않으므로 여기서 걸러 즉시 던지게 한다.
+const NET_RE = /fetch failed|ENOTFOUND|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|EHOSTUNREACH|Connect Timeout|socket hang up|network/i;
+function isNetworkError(e) {
+  const s = `${e?.message || e} | ${e?.cause?.code || ''} | ${e?.cause?.message || ''}`;
+  return NET_RE.test(s);
 }
 
-// 4096자 제한 대응: 길면 나눠 보냄
+// retries: 네트워크 오류 시 추가 재시도 횟수(기본 0 = 재시도 안 함). getUpdates·answerCallback
+// 처럼 폴링 루프가 자체 주기로 재시도하는 경로는 0 그대로 둔다 — 여기서 막으면 폴링이 멈춘다.
+// 전송(sendMessage·sendDocument)만 켠다. API 오류는 retries 와 무관하게 첫 시도에서 던진다.
+async function call(method, params = {}, { retries = 0, retryGapMs = 30000 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(API(method), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(`Telegram ${method} 실패: ${data.description}`);
+      return data.result;
+    } catch (e) {
+      if (attempt < retries && isNetworkError(e)) {
+        console.error(`[telegram] ${method} 네트워크 실패 — ${Math.round(retryGapMs / 1000)}s 후 재시도(${attempt + 1}/${retries}): ${e.message}`);
+        await new Promise((r) => setTimeout(r, retryGapMs));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+// 4096자 제한 대응: 길면 나눠 보냄.
+// opts 에 retries·retryGapMs 를 넣으면 네트워크 오류 시 재시도한다(기본 3회·30초).
+// 나머지 opts(reply_markup 등)는 그대로 텔레그램 파라미터로 전달.
 export async function sendMessage(chatId, text, opts = {}) {
+  const { retries = 3, retryGapMs = 30000, ...msgOpts } = opts;
+  const send = (params) => call('sendMessage', params, { retries, retryGapMs });
   const CHUNK = 3800;
   if (text.length <= CHUNK) {
-    return call('sendMessage', { chat_id: chatId, text, ...opts });
+    return send({ chat_id: chatId, text, ...msgOpts });
   }
   let last;
   for (let i = 0; i < text.length; i += CHUNK) {
-    last = await call('sendMessage', {
+    last = await send({
       chat_id: chatId,
       text: text.slice(i, i + CHUNK),
       // 버튼(reply_markup)은 마지막 조각에만
-      ...(i + CHUNK >= text.length ? opts : {}),
+      ...(i + CHUNK >= text.length ? msgOpts : {}),
     });
   }
   return last;

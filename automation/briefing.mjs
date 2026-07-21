@@ -13,6 +13,7 @@ import { scoreKeyword, starBar, WARN_LABEL } from './lib/suitability.mjs';
 import { hasExistingPost } from './lib/topics.mjs';
 import { updateCandidates } from './lib/updateTrack.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
+import { stashPending, flushPending } from './lib/briefing-outbox.mjs';
 
 const STATE = path.join(AUTO_DIR, 'state');
 const BRIEFED = path.join(STATE, 'briefed.json'); // keyword -> ts (30일 보관)
@@ -46,6 +47,15 @@ export function distributeNewTier(need, base) {
 export async function runBriefing({ chatId, config } = {}) {
   config = config || loadConfig();
   fs.mkdirSync(STATE, { recursive: true });
+
+  // 0') 지난 실행에서 전송 못 한 카드가 있으면 먼저 재전송한다(오늘 카드로 kwmap 을
+  //     덮어쓰기 전에 — 지난 카드의 버튼 id 가 아직 kwmap 에 유효할 때).
+  if (chatId) {
+    try {
+      const f = await flushPending(chatId);
+      if (f.sent) console.log(`[briefing] 미전송 카드 ${f.sent}건 재전송 성공`);
+    } catch (e) { console.error('[briefing] 재전송 확인 실패:', e.message); }
+  }
 
   const briefed = load(BRIEFED);
   const cut = Date.now() - 30 * 864e5;
@@ -188,7 +198,15 @@ export async function runBriefing({ chatId, config } = {}) {
     `★적합도 = 경쟁·비율·의도·수명·단가 종합(★5 적합↔★1 비추천). 게시는 사람 승인만.\n` +
     `✍️ 각도 = 원리 → 돈 드는 판단(선택·비용·시기)으로 연결.` +
     (upCount ? ` 📂갱신 = 탭하면 '갱신 진단' 먼저(즉시 생성 아님).\n` : `\n`);
-  await sendMessage(chatId, header + '\n' + lines.join('\n\n'), inlineButtons(rows));
+  // 선정·kwmap 은 위에서 이미 persist 됐다. 전송만 실패하면 카드를 대기열에 남겨
+  // 다음 실행/봇 기동에서 재전송한다 — 크래시하지 않는다(선정 결과를 지키기 위해).
+  const cardText = header + '\n' + lines.join('\n\n');
+  try {
+    await sendMessage(chatId, cardText, inlineButtons(rows));
+  } catch (e) {
+    const id = stashPending({ text: cardText, rows });
+    console.error(`[briefing] 최종 전송 실패 — 재전송 대기에 저장(${id}): ${e.message}`);
+  }
   return ordered.length + upCount;
 }
 

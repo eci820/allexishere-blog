@@ -863,6 +863,12 @@ async function main() {
   await sendMessage(ME, '🤖 봇 시작됨. /help');
   // 직전 기동에서 강제 종료로 날아간 생성이 있으면 알린다(자동 재개는 하지 않는다).
   await recoverGenQueue();
+  // 전송 못 하고 대기 중인 브리핑 카드가 있으면 재전송한다(절전에서 깬 직후 등).
+  try {
+    const { flushPending } = await import('./lib/briefing-outbox.mjs');
+    const f = await flushPending(ME);
+    if (f.sent) console.log(`[bot] 미전송 브리핑 ${f.sent}건 재전송`);
+  } catch (e) { console.error('[bot] 브리핑 재전송 확인 실패:', e.message); }
   let offset = 0;
   let lastBeat = 0;
   let loopFails = 0; // 연속 폴링 실패 — 침묵 방지용
