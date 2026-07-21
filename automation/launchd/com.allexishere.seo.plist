@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.allexishere.seo</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/seo-watch.mjs</string></array>
+  <key>WorkingDirectory</key><string>/Users/jeonghunoh/Projects/allexishere-blog</string>
+  <!-- 매주 월요일 09:00. 성과 리포트(08:00)와 1시간 간격 —
+       SEO 감시는 URL Inspection 144회로 ~17분 걸리므로 겹치지 않게 뒤에 둔다. -->
+  <key>StartCalendarInterval</key><array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin</string></dict>
+  <key>StandardOutPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/seo.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/seo.err.log</string>
+</dict></plist>

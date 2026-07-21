@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.allexishere.curator</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/curator.mjs</string></array>
+  <key>WorkingDirectory</key><string>/Users/jeonghunoh/Projects/allexishere-blog</string>
+  <!-- 매주 월요일 10:30. 성과 08:00 · SEO 09:00 · 브리핑 10:00 뒤에 둬 겹치지 않게.
+       큐레이터는 '무엇을 새로 쓸까'(생성 후보) — 주간 1회, LLM 1호출. 게시는 사람 승인만. -->
+  <key>StartCalendarInterval</key><array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>30</integer></dict>
+  </array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin</string></dict>
+  <key>StandardOutPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/curator.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/curator.err.log</string>
+</dict></plist>
