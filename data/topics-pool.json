@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-21T02:45:54.366Z",
+  "updatedAt": "2026-07-21T23:49:09.120Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2288,11 +2288,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tbnlzdh",
@@ -2300,11 +2301,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tg6tlh8",
@@ -2312,11 +2314,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t7lg1m6",
@@ -2324,11 +2327,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tjswvj6",
@@ -2336,11 +2340,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t399lqt",
@@ -2348,11 +2353,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "thkjhdw",
@@ -2360,11 +2366,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tw10zz8",
@@ -2372,11 +2379,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "ti8bl6x",
@@ -2384,11 +2392,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t2hftj0",
@@ -2396,11 +2405,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tin5j1i",
@@ -2408,11 +2418,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t3u2gt3",
@@ -2420,11 +2431,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tumkve4",
@@ -2432,11 +2444,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tbthb7v",
@@ -2444,11 +2457,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tzhn673",
@@ -2456,11 +2470,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "경기·행사일 만차·대안·입차 시간대",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tz9kbb5",
@@ -2468,11 +2483,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "인스파이어-아레나-주차요금-무료-조건-완벽-가이드-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tg8a2uc",
@@ -2483,7 +2499,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T23:49:09.119Z",
       "metrics": null
     },
     {
@@ -2492,11 +2508,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "광주기아챔피언스필드-주차요금-무료인지-총정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t7il0ul",
@@ -2504,11 +2521,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "창원NC파크-주차요금-무료시간대체주차장-가이드2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t1igo3h",
@@ -2519,7 +2537,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T23:49:09.119Z",
       "metrics": null
     },
     {
@@ -2531,7 +2549,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T23:49:09.119Z",
       "metrics": null
     },
     {
@@ -2543,7 +2561,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T23:49:09.119Z",
       "metrics": null
     },
     {
@@ -2555,7 +2573,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-21T23:49:09.119Z",
       "metrics": null
     },
     {
