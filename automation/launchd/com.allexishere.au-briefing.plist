@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.allexishere.au-briefing</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/au/au-briefing.mjs</string><string>--send</string></array>
+  <key>WorkingDirectory</key><string>/Users/jeonghunoh/Projects/allexishere-blog</string>
+  <key>StartCalendarInterval</key><array>
+    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin</string></dict>
+  <key>StandardOutPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/au-briefing.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/jeonghunoh/Projects/allexishere-blog/automation/logs/au-briefing.err.log</string>
+</dict></plist>
