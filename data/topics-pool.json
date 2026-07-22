@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-21T23:49:09.120Z",
+  "updatedAt": "2026-07-22T02:26:17.896Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2582,10 +2582,10 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "서울월드컵경기장-근처-주차장-요금위치혼잡-대비-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-22T01:00:03.958Z",
       "metrics": null
     },
     {
@@ -2597,7 +2597,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-22T01:00:03.958Z",
       "metrics": null
     },
     {
@@ -2609,7 +2609,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-22T01:00:03.958Z",
       "metrics": null
     },
     {
@@ -2621,7 +2621,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-22T01:00:03.958Z",
       "metrics": null
     },
     {
@@ -2630,11 +2630,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "엑스코-주차요금-얼마-기본요금부터-할인-조건-비교-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tix8r2",
@@ -2645,7 +2646,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-22T01:00:03.958Z",
       "metrics": null
     },
     {
