@@ -113,14 +113,16 @@ async function sendDraftCard(chatId, cardId, r) {
   if (r.checks?.titleBodyMismatch?.length) warn.push(`⚠️ title axes not in body: ${r.checks.titleBodyMismatch.join(', ')}`);
   if (r.checks?.gmapUnknown?.length) warn.push(`⚠️ unregistered map ids (no link): ${r.checks.gmapUnknown.join(', ')}`);
   if (r.checks?.unverifiedSources?.length) warn.push(`⚠️ ${r.checks.unverifiedSources.length} source(s) unverified — facts marked "unverified"`);
-  const text = [
+  const lc = r.checks?.linkCandidates || [];
+  const parts = [
     `🇦🇺 *Draft ready* — ${r.title}`,
     `slug: \`${r.slug}\``,
-    `sources used: ${r.sufficientCount}/${r.sources.length} · pain points in title: ${r.checks?.painPoints ?? '?'}`,
+    `sources used: ${r.sufficientCount}/${r.sources.length} · pain points: ${r.checks?.painPoints ?? '?'} · map links: ${r.checks?.gmapUsed?.length ?? 0}`,
     warn.length ? warn.join('\n') : '✅ checks clean',
-    ``,
-    `Review the draft locally, then choose:`,
-  ].join('\n');
+  ];
+  if (lc.length) parts.push(`🗺 link candidates (need verification — add to PLACES):\n${lc.map((x) => '• ' + x).join('\n')}`);
+  parts.push('', `Review the draft locally, then choose:`);
+  const text = parts.join('\n');
   const rows = [
     [
       { text: '👁 View full draft', callback_data: `auview:${cardId}` },

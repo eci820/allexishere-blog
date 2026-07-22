@@ -78,7 +78,7 @@ async function loadPlaces() {
 }
 
 // ── 프롬프트 ──────────────────────────────────────────────────────────────
-function buildPrompt(candidate, sources, validGmapIds) {
+function buildPrompt(candidate, sources, allPlaceIds) {
   const sufficient = sources.filter((s) => s.sufficient);
   const sourceBlock = sufficient.length
     ? sufficient.map((s) => `SOURCE (${s.url}):\n${s.text.slice(0, 6000)}`).join('\n\n')
@@ -99,12 +99,19 @@ function buildPrompt(candidate, sources, validGmapIds) {
     ``,
     `🔴 ZERO-CLICK DEFENCE: lead with judgment/comparison the official sites don't give. Use tables and ranked options. Include a short FAQ (2–3 Q&A) and a "Sources & last updated" list at the end.`,
     ``,
-    `🗺 MAP LINKS: to link a place, write a normal markdown link with target gmap:<id> — e.g. [📍 View on Google Maps](gmap:${validGmapIds[0] || 'the-gabba'}). ONLY use these verified ids: ${validGmapIds.length ? validGmapIds.join(', ') : '(none — do not add map links)'}. Never invent a gmap id.`,
+    `🗺 MAP LINKS — link the real places you mention (stadiums, stations, landmarks, shopping strips, car parks).`,
+    `- To link a place, write a markdown link to gmap:<id> — e.g. [📍 View on Google Maps](gmap:mcg).`,
+    `- 🔴 ONLY use ids from this registry: ${allPlaceIds.join(', ')}.`,
+    `- 🔴 If you mention a real place that is NOT in the registry, DO NOT link it and DO NOT invent an id.`,
+    `  Instead list its exact name at the very end under "LINK CANDIDATES:" (one per line) for a human to verify.`,
+    `- Link generously — a reader should be able to open every venue/station/landmark on a map — but registry ids only.`,
     ``,
-    `OUTPUT FORMAT — output these two parts and nothing else:`,
+    `OUTPUT FORMAT — output exactly these parts and nothing else:`,
     `DESCRIPTION: <one sentence meta description, Australian English>`,
     `---BODY---`,
-    `<the article body in markdown: an intro paragraph, ## H2 sections (one per pain point promised in the title), tables where useful, a ## FAQ, and a ## Sources & last updated list>`,
+    `<article body in markdown: intro paragraph, ## H2 sections (one per pain point in the title), tables where useful, a ## FAQ, and a ## Sources & last updated list. Add gmap:<id> links to registry places you mention.>`,
+    `LINK CANDIDATES:`,
+    `<real places you mentioned that are NOT in the registry — one exact name per line, or "none">`,
     ``,
     `SOURCE MATERIAL (the only facts you may state):`,
     sourceBlock,
@@ -114,11 +121,18 @@ function buildPrompt(candidate, sources, validGmapIds) {
 // ── 파싱 / 검증 / 쓰기 ────────────────────────────────────────────────────
 function parseOutput(result) {
   const descM = result.match(/DESCRIPTION:\s*([\s\S]*?)\n-{3}BODY-{3}/i);
-  const bodyM = result.split(/-{3}BODY-{3}/i)[1];
-  return {
-    description: (descM ? descM[1] : '').trim().replace(/\s+/g, ' '),
-    body: (bodyM || result).trim(),
-  };
+  let body = (result.split(/-{3}BODY-{3}/i)[1] || result).trim();
+  // 🔴 LINK CANDIDATES: 블록을 본문에서 떼어낸다 — 발행 본문엔 안 들어가고 사람 검증용 메모로만 쓴다.
+  let linkCandidates = [];
+  const lcM = body.match(/\n?LINK CANDIDATES:\s*([\s\S]*)$/i);
+  if (lcM) {
+    body = body.slice(0, lcM.index).trim();
+    linkCandidates = lcM[1]
+      .split('\n')
+      .map((s) => s.replace(/^[-*•\s]+/, '').trim())
+      .filter((s) => s && !/^none\.?$/i.test(s));
+  }
+  return { description: (descM ? descM[1] : '').trim().replace(/\s+/g, ' '), body, linkCandidates };
 }
 
 function slugify(title) {
@@ -172,6 +186,7 @@ function frontmatter(candidate, description) {
 // 메인: 후보 하나로 초안 생성. dryRun 이면 fetch·검증·가드까지만(전송·쓰기·CLI 없음).
 export async function generateDraft(candidate, { dryRun = false } = {}) {
   const places = await loadPlaces();
+  const allPlaceIds = Object.keys(places); // 🔴 전체 등재 장소를 프롬프트에 노출(경기장·역·랜드마크 등)
   const validGmapIds = (candidate.gmapIds || []).filter((id) => places[id]);
   const droppedGmap = (candidate.gmapIds || []).filter((id) => !places[id]);
 
@@ -180,7 +195,7 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   const sources = fetched.map((f) => assessSufficiency(f, kws));
   const sufficient = sources.filter((s) => s.sufficient);
 
-  const prompt = buildPrompt(candidate, sources, validGmapIds);
+  const prompt = buildPrompt(candidate, sources, allPlaceIds);
   const intendedSlug = uniqueSlug(slugify(candidate.title));
   const intendedPath = path.join(AU_BLOG, `${intendedSlug}.md`);
   guardAuRealpath(intendedPath); // 🔴 쓰기 대상이 AU 안·한국 밖인지 (dryRun 이어도 검증)
@@ -201,7 +216,7 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   // 실제 생성 — CLI 1회(구독). 실패는 fail-loud(throw, 호출부가 카드로 통지).
   const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 240000 });
   const { result, costUsd } = unwrapClaudeJSON(stdout);
-  const { description, body } = parseOutput(result);
+  const { description, body, linkCandidates } = parseOutput(result);
 
   const gmap = checkGmap(body, places);
   const missingAxes = titleBodyMismatch(candidate.title, h2sOf(body), candidate.cls);
@@ -220,7 +235,9 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
     checks: {
       painPoints,
       titleBodyMismatch: missingAxes, // 비어야 좋음
+      gmapUsed: gmap.used, // 실제로 붙은 지도 링크(등재 장소)
       gmapUnknown: gmap.unknown, // 비어야 좋음(있으면 링크 안 붙음)
+      linkCandidates, // 🔴 미등재 장소 후보 — 사람이 검증 후 PLACES 에 등재
       unverifiedSources: sources.filter((s) => !s.sufficient).map((s) => s.url),
     },
   };
