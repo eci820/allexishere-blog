@@ -17,7 +17,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STATE_DIR = path.resolve(HERE, '..', 'state', 'au');
 const DRAFTS = path.join(STATE_DIR, 'drafts.json'); // { cardId: {slug,title} }
 const KWMAP = path.join(STATE_DIR, 'kwmap.json'); // { cardId: candidateId }  (브리핑 augen 용)
+const UPDMAP = path.join(STATE_DIR, 'updates.json'); // { updId: {slug,title,reasons} }  (auupd 용)
 const GENQ = path.join(STATE_DIR, 'genqueue.json'); // [candidateId,…]  (재시작 복구용)
+const PUBDAYS = path.join(STATE_DIR, 'publish-days.json'); // { 'YYYY-MM-DD': count }  발행 하드캡
+const PUBLISH_CAP_PER_DAY = 2; // 🔴 발행 상한(하드캡) — 승인 흐름과 별개의 마지막 방어선
 
 function loadJson(p, dflt) {
   try {
@@ -38,6 +41,18 @@ function shortId(s) {
 
 let queue = []; // [{candidate, chatId}]
 let busy = false;
+
+const todayKey = () => new Date().toISOString().slice(0, 10);
+function checkPublishCap() {
+  const days = loadJson(PUBDAYS, {});
+  const count = days[todayKey()] || 0;
+  return { ok: count < PUBLISH_CAP_PER_DAY, count };
+}
+function recordPublish() {
+  const days = loadJson(PUBDAYS, {});
+  days[todayKey()] = (days[todayKey()] || 0) + 1;
+  saveJson(PUBDAYS, days);
+}
 
 function log(msg) {
   console.log(`[au-bot] ${msg}`);
@@ -106,26 +121,29 @@ async function sendDraftCard(chatId, cardId, r) {
     ``,
     `Review the draft locally, then choose:`,
   ].join('\n');
-  const rows = [[
-    { text: '✅ Publish', callback_data: `auok:${cardId}` },
-    { text: '✏️ Edit', callback_data: `auedit:${cardId}` },
-    { text: '❌ Reject', callback_data: `auno:${cardId}` },
-  ]];
+  const rows = [
+    [
+      { text: '👁 View full draft', callback_data: `auview:${cardId}` },
+      { text: '✏️ Edit', callback_data: `auedit:${cardId}` },
+    ],
+    [
+      { text: '✅ Publish', callback_data: `auok:${cardId}` },
+      { text: '❌ Reject', callback_data: `auno:${cardId}` },
+    ],
+  ];
   return sendMessage(chatId, text, { parse_mode: 'Markdown', ...inlineButtons(rows) });
 }
 
 // ── /au <query> : 수동 생성 ───────────────────────────────────────────────
 export async function handleCommand(arg, chatId) {
-  const pool = buildPool();
   const q = String(arg || '').trim().toLowerCase();
   if (!q) {
-    const lines = pool.candidates.slice(0, 8).map((c, i) => `${i + 1}. \`${c.id}\` — ${c.title}`);
-    return sendMessage(
-      chatId,
-      `🇦🇺 Usage: \`/au <keyword or id>\`\n\nTop candidates:\n${lines.join('\n')}\n\n(${pool.counts.available} available)`,
-      { parse_mode: 'Markdown' }
-    );
+    // 🔴 주 사용 흐름 = 클릭. 인자 없으면 브리핑 카드(주제 제안 + [✍️ Generate] 버튼)를 보낸다.
+    //    (수동 조회는 /au <query> 로 특정 주제를 바로 생성.)
+    const { sendBriefingCard } = await import('./au-briefing.mjs');
+    return sendBriefingCard(chatId);
   }
+  const pool = buildPool();
   let match = pool.candidates.find((c) => c.id === q);
   if (!match) {
     const hits = pool.candidates.filter((c) => c.id.includes(q) || c.title.toLowerCase().includes(q) || c.subject.includes(q));
@@ -155,13 +173,45 @@ export async function handleCallback(action, id, cb) {
     return;
   }
 
+  if (action === 'auupd') {
+    // 갱신 리뷰 — 즉시 생성하지 않고 진단(무엇이 낡았는지)부터. 한국과 동일 철학.
+    const upd = loadJson(UPDMAP, {})[id];
+    if (!upd) return answerCallback(cb.id, 'Update target not found');
+    await answerCallback(cb.id, 'Diagnosing…');
+    const { diagnose } = await import('./au-update.mjs');
+    const dg = diagnose(upd.slug);
+    const txt = dg.ok
+      ? `🇦🇺 📋 *Update review* — ${dg.title}\nscore ${dg.score} · last updated: ${dg.lastUpdated || 'never'}\n${dg.reasons.map((r) => '• ' + r).join('\n')}\n\n(Refresh generation is wired when a real candidate first appears — none yet, so this is diagnosis only.)`
+      : `🇦🇺 diagnose failed: ${dg.error}`;
+    await sendMessage(chatId, txt, { parse_mode: 'Markdown' });
+    return;
+  }
+
   const drafts = loadJson(DRAFTS, {});
   const d = drafts[id];
   if (!d) return answerCallback(cb.id, 'Draft not found (expired?)');
 
+  if (action === 'auview') {
+    // 전문 보기 — 초안 md 를 텍스트로 전송(자동 분할). 한국과 동일(문서첨부 아님).
+    const file = path.join(AU_BLOG, `${d.slug}.md`);
+    if (!fs.existsSync(file)) {
+      await sendMessage(chatId, `🇦🇺 file not found: ${d.slug}`);
+      return answerCallback(cb.id, 'not found');
+    }
+    await answerCallback(cb.id, 'Sending full draft…');
+    const md = fs.readFileSync(file, 'utf8');
+    await sendMessage(chatId, `📖 ${d.title}\n\n${md}`); // sendMessage 가 3800자에서 자동 분할
+    return;
+  }
   if (action === 'auok') {
+    const cap = checkPublishCap();
+    if (!cap.ok) {
+      await sendMessage(chatId, `🇦🇺 ⛔ Daily publish cap reached (${cap.count}/${PUBLISH_CAP_PER_DAY}). Try again tomorrow.`);
+      return answerCallback(cb.id, 'Cap reached');
+    }
     try {
       const { url } = auPublish(d.slug);
+      recordPublish();
       await sendMessage(chatId, `🇦🇺 ✅ Published: ${url}`);
     } catch (e) {
       await sendMessage(chatId, `🇦🇺 ❌ Publish failed — ${d.slug}\n${e.message}`);
