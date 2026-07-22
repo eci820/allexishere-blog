@@ -7,6 +7,7 @@
 //
 // 두 저장소 root 는 '이 모듈 파일 위치'에서 파생한다(한국 lib/env.mjs 와 같은 방식).
 // 하드코딩 절대경로를 쓰지 않으므로 폴더를 옮겨도 상대관계가 유지된다.
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,9 +49,61 @@ export function assertNotKr(p) {
   return abs;
 }
 
-/** 두 가드를 함께 — AU 안 + 한국 밖. 모든 AU 파일 쓰기·git cwd 검증에 쓴다. */
+/** 두 가드를 함께 — AU 안 + 한국 밖. (순수 문자열 판정 — 값싼 조기거부) */
 export function guardAuPath(p) {
   const abs = assertInsideAu(p);
   assertNotKr(abs);
+  return abs;
+}
+
+// 존재하는 가장 깊은 조상 경로를 찾는다. (새 글 경로는 아직 없을 수 있으므로,
+// 그 위에서 실재하는 지점을 realpath 대상으로 삼는다. AU_ROOT 는 항상 존재해 바닥이 된다.)
+function deepestExisting(abs) {
+  let cur = abs;
+  while (!fs.existsSync(cur)) {
+    const parent = path.dirname(cur);
+    if (parent === cur) break; // 파일시스템 루트 도달
+    cur = parent;
+  }
+  return cur;
+}
+
+/**
+ * 🔴 실제 파일 쓰기/디렉토리 생성/ git cwd 직전에 쓰는 강화 가드.
+ *
+ * lexical 가드(guardAuPath)는 심볼릭 링크를 따라가지 않는다 — AU 안에 한국을 가리키는
+ * 링크가 있으면 문자열상 통과하고도 한국에 쓰일 수 있다. 그래서 '존재하는 가장 깊은 조상'을
+ * fs.realpathSync 로 실제 경로로 해제한 뒤, 그 실경로가 AU 안 + 한국 밖인지 다시 본다.
+ *
+ * 한계(정직): 검사 직후~쓰기 직전에 링크를 바꿔치기하는 TOCTOU 는 막지 않는다. 그건
+ * 공격자가 있어야 성립하며(여긴 단일 사용자 로컬) O_NOFOLLOW 까지 다는 건 과하다 — 안 한다.
+ */
+export function guardAuRealpath(p) {
+  const abs = guardAuPath(p); // ① 값싼 문자열 조기거부 먼저
+  const anchor = deepestExisting(abs); // ② 실재하는 가장 깊은 조상
+  let real;
+  try {
+    real = fs.realpathSync(anchor);
+  } catch (e) {
+    throw new Error(`[au-guard] realpath 실패 — 쓰기 거부: ${anchor} (${e.message})`);
+  }
+  // ③ 두 root 도 실경로로 (root 자체가 링크여도 real-vs-real 비교가 되도록)
+  const auReal = fs.realpathSync(AU_ROOT);
+  let krReal;
+  try {
+    krReal = fs.realpathSync(KR_ROOT);
+  } catch {
+    krReal = KR_ROOT;
+  }
+  if (!isInside(auReal, real)) {
+    throw new Error(
+      `[au-guard] 🔴 심볼릭 링크가 AU 저장소 밖(실경로=${real})을 가리킵니다 — 쓰기 거부.\n           lexical=${abs}`
+    );
+  }
+  if (isInside(krReal, real)) {
+    throw new Error(
+      `[au-guard] 🔴 심볼릭 링크가 한국 저장소(실경로=${real})를 가리킵니다 — 즉시 중단.\n           lexical=${abs}`
+    );
+  }
   return abs;
 }

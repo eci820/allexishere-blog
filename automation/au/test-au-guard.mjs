@@ -3,6 +3,7 @@
 // 가드가 실제로 throw 하는지 확인한다. 하나라도 어긋나면 exit 1.
 //
 // 실행: node automation/au/test-au-guard.mjs
+import fs from 'node:fs';
 import path from 'node:path';
 import {
   AU_ROOT,
@@ -11,6 +12,7 @@ import {
   assertInsideAu,
   assertNotKr,
   guardAuPath,
+  guardAuRealpath,
 } from './au-guard.mjs';
 
 let pass = 0;
@@ -72,6 +74,39 @@ console.log('\n[guardAuPath] 결합(AU 안 + 한국 밖):');
 ok('AU 글 통과', nothrows(() => guardAuPath(auPost)));
 ok('🔴 한국 글 차단(throw)', throws(() => guardAuPath(krPost)));
 ok('🔴 .. 트래버설 차단(throw)', throws(() => guardAuPath(traversal)));
+
+console.log('\n[guardAuRealpath] 🔴 실제 심볼릭 링크(AU→KR)로 쓰기 시도:');
+// AU 안에 한국을 가리키는 진짜 심볼릭 링크를 만들어, 쓰기 직전 가드가 잡는지 증명한다.
+// (테스트 후 반드시 제거 — finally)
+const linkPath = path.join(AU_ROOT, '.guardtest-symlink-tmp');
+try {
+  try {
+    fs.unlinkSync(linkPath);
+  } catch {}
+  fs.symlinkSync(KR_ROOT, linkPath); // .guardtest-symlink-tmp → allexishere-blog
+  const through = path.join(linkPath, 'src', 'content', 'blog', 'evil.md');
+  ok(
+    'lexical 가드는 이 링크를 통과시킨다 (= realpath 가 필요한 이유)',
+    nothrows(() => guardAuPath(through))
+  );
+  ok(
+    '🔴 realpath 가드가 AU→KR 심볼릭 링크를 차단(throw)',
+    throws(() => guardAuRealpath(through))
+  );
+  ok(
+    '정상 AU 경로는 realpath 가드도 통과',
+    nothrows(() => guardAuRealpath(path.join(AU_BLOG, 'ok-post.md')))
+  );
+} catch (e) {
+  fail++;
+  console.log(`  ❌ 심볼릭 테스트 셋업 실패: ${e.message}`);
+} finally {
+  try {
+    fs.unlinkSync(linkPath); // 🔴 링크 반드시 제거 (링크만 지움 — 대상 KR 은 안 건드림)
+  } catch {}
+}
+const leftover = fs.existsSync(linkPath);
+ok('테스트용 심볼릭 링크 정리됨', !leftover);
 
 console.log(`\n결과: ${pass} pass / ${fail} fail`);
 if (fail === 0) {
