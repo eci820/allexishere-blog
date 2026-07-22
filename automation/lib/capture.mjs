@@ -22,7 +22,7 @@ const CAPTURES = path.join(STATE, 'captures.json');
 
 // ── 명령 파싱 ────────────────────────────────────────────────────────
 // 기존 봇 명령. 이 목록에 있으면 캡처가 아니라 원래 기능으로 간다.
-export const RESERVED = new Set(['/start', '/help', '/status', '/brief', '/draft', '/delete']);
+export const RESERVED = new Set(['/start', '/help', '/status', '/brief', '/draft', '/delete', '/au']);
 
 // "/주차 코엑스 주차장" → { topic:'주차', info:'코엑스 주차장' }
 // 예약어이거나 형식이 아니면 null.

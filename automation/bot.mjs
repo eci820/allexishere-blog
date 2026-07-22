@@ -18,6 +18,10 @@ requireSecrets(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID']);
 const CFG = loadConfig();
 const ME = String(process.env.TELEGRAM_CHAT_ID);
 const STATE = path.join(AUTO_DIR, 'state');
+
+// 🇦🇺 AU(호주 사이트) 통합 핸들 — bot.mjs 는 이것을 통해서만 AU 를 부른다.
+// null 이면 AU 비활성(로드 실패·repo 부재). 한국 경로는 이 값과 무관하게 동작한다.
+let AU = null;
 fs.mkdirSync(STATE, { recursive: true });
 const HEARTBEAT = path.join(STATE, 'heartbeat.json');
 const DRAFTS = path.join(STATE, 'drafts.json'); // 콜백 id → 슬러그 매핑
@@ -588,6 +592,13 @@ async function handleCommand(text) {
       );
       break;
     }
+    case '/au': {
+      // 🇦🇺 호주 사이트 수동 생성. AU 비활성이면 안내만. 예외는 격리(한국 흐름 무영향).
+      if (!AU) { await sendMessage(ME, '🇦🇺 AU is disabled (module not loaded).'); break; }
+      try { await AU.handleCommand(arg, ME); }
+      catch (e) { await sendMessage(ME, `🇦🇺 /au failed: ${e.message}`); }
+      break;
+    }
     default: {
       // 예약어가 아닌 /명령 = 현장 캡처 주제. 주제를 하드코딩하지 않으므로
       // /맛집 /여행 /스포츠용품 … 어떤 주제든 코드 수정 없이 바로 쓸 수 있다.
@@ -617,6 +628,15 @@ async function handleCommand(text) {
 
 async function handleCallback(cb) {
   const [action, id] = (cb.data || '').split(':');
+
+  // 🇦🇺 au* 콜백(augen/auok/auedit/auno)은 AU 통합으로. 한국 콜백보다 먼저 가로채
+  //    return 하므로 아래 한국 분기는 절대 안 탄다. 예외는 격리(폴링 루프 안 죽임).
+  if (action && action.startsWith('au')) {
+    if (!AU) { await answerCallback(cb.id, 'AU disabled'); return; }
+    try { await AU.handleCallback(action, id, cb); }
+    catch (e) { console.error('[bot] 🇦🇺 au callback error:', e.message); await answerCallback(cb.id, 'AU error'); }
+    return;
+  }
 
   // 키워드 브리핑/재시도/계속 버튼 탭 → 생성 큐에 추가(순차 처리)
   if (action === 'gen') {
@@ -869,6 +889,17 @@ async function main() {
     const f = await flushPending(ME);
     if (f.sent) console.log(`[bot] 미전송 브리핑 ${f.sent}건 재전송`);
   } catch (e) { console.error('[bot] 브리핑 재전송 확인 실패:', e.message); }
+
+  // 🇦🇺 AU 통합 로드 — 동적 import + try/catch 로 격리. 여기서 무슨 일이 나도(임포트
+  //    에러·init 실패) 한국 봇은 정상 가동한다(AU 만 비활성). 한국 경로는 AU 를 안 거친다.
+  try {
+    AU = await import('./au/au-bot.mjs');
+    await AU.init();
+  } catch (e) {
+    AU = null;
+    console.error('[bot] 🇦🇺 AU disabled:', e.message);
+  }
+
   let offset = 0;
   let lastBeat = 0;
   let loopFails = 0; // 연속 폴링 실패 — 침묵 방지용
