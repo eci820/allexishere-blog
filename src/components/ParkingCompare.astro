@@ -1,0 +1,115 @@
+---
+// 🅿️ 주차장 요금·거리 비교표 — 바닐라 JS 아일랜드(프레임워크·외부 라이브러리 0).
+//  · 데이터는 src/data/parking-compare/*.json (시설당 1개). 값은 '해당 글 본문에 이미 실린 수치'만.
+//  · 인터랙티브: 요금 낮은순 / 거리 가까운순 정렬(모바일 우선 카드형).
+//  · 색은 전역 토큰(--accent/--accent-ink/--border/--muted)만. 옅은 틴트·얇은 선만 사용
+//    (애드센스 정책: 콘텐츠가 광고·CTA처럼 보이면 안 됨).
+// 사용: <ParkingCompare id="setec" /> (글 frontmatter parkingCompare 값과 매칭)
+interface Props { id: string }
+const { id } = Astro.props;
+
+const modules = import.meta.glob('../data/parking-compare/*.json', { eager: true });
+const all = Object.values(modules).map((m: any) => m.default ?? m);
+const data: any = all.find((d) => d && d.id === id);
+if (!data && import.meta.env.DEV) console.warn(`[ParkingCompare] 비교 데이터 없음: "${id}"`);
+
+const sortable: string[] = data?.sortable ?? [];
+const distLabel: string = data?.distLabel ?? '거리';
+---
+
+{data && (
+  <section class="not-prose my-6 rounded-xl border border-[var(--border)] overflow-hidden" data-pcompare>
+    <script type="application/json" data-cdata set:html={JSON.stringify(data)} />
+
+    <div class="bg-[var(--accent)]/10 px-5 py-4 border-b border-[var(--border)]">
+      <h2 class="font-serif text-xl font-extrabold tracking-tight">🅿️ {data.title}</h2>
+      {data.subtitle && <p class="mt-1 text-xs text-[var(--muted)]">{data.subtitle}</p>}
+    </div>
+
+    {sortable.length > 0 && (
+      <div class="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-[var(--border)] text-sm">
+        <span class="text-[var(--muted)] text-xs">정렬</span>
+        <button type="button" data-sort="default"
+          class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">기본순</button>
+        {sortable.includes('fee') && (
+          <button type="button" data-sort="fee"
+            class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">요금 낮은순</button>
+        )}
+        {sortable.includes('dist') && (
+          <button type="button" data-sort="dist"
+            class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">{distLabel} 가까운순</button>
+        )}
+      </div>
+    )}
+
+    <ul data-lots class="divide-y divide-[var(--border)]">
+      {data.lots.map((lot: any, i: number) => (
+        <li class="px-5 py-4" data-lot data-i={i}
+          data-sortfee={lot.sortFee ?? ''} data-sortdist={lot.sortDist ?? ''}>
+          <div class="flex items-start justify-between gap-3">
+            <span class="font-semibold">{lot.name}</span>
+            {lot.dist && (
+              <span class="shrink-0 rounded-full bg-[var(--accent)]/10 border border-[var(--border)] px-2.5 py-0.5 text-xs text-[var(--accent-ink)]">
+                {lot.dist}
+              </span>
+            )}
+          </div>
+          {lot.fee && <p class="mt-1.5 text-sm">{lot.fee}</p>}
+          {lot.memo && <p class="mt-1 text-xs text-[var(--muted)] leading-relaxed">{lot.memo}</p>}
+        </li>
+      ))}
+    </ul>
+
+    {data.sourceNote && (
+      <p class="px-5 py-3 border-t border-[var(--border)] text-[11px] text-[var(--muted)] leading-relaxed">
+        ※ {data.sourceNote}
+      </p>
+    )}
+  </section>
+)}
+
+<script>
+  function wire(root) {
+    const list = root.querySelector('[data-lots]');
+    if (!list) return;
+    const items = Array.from(list.querySelectorAll('[data-lot]'));
+    const sortBtns = Array.from(root.querySelectorAll('[data-sort]'));
+    const num = (el, attr) => {
+      const v = el.getAttribute(attr);
+      return v === '' || v == null ? null : Number(v);
+    };
+
+    function paint(active) {
+      sortBtns.forEach((b) => {
+        const on = b.getAttribute('data-sort') === active;
+        // 옅은 틴트 + accent-ink 텍스트(채도 높은 채움·CTA 회피)
+        b.classList.toggle('bg-[var(--accent)]/10', on);
+        b.classList.toggle('border-[var(--accent)]', on);
+        b.classList.toggle('text-[var(--accent-ink)]', on);
+      });
+    }
+
+    function sortBy(key) {
+      let arr = items.slice();
+      if (key === 'fee' || key === 'dist') {
+        const attr = key === 'fee' ? 'data-sortfee' : 'data-sortdist';
+        arr.sort((a, b) => {
+          const va = num(a, attr), vb = num(b, attr);
+          if (va == null && vb == null) return 0;
+          if (va == null) return 1; // 값 없는 항목은 뒤로
+          if (vb == null) return -1;
+          return va - vb;
+        });
+      } else {
+        arr.sort((a, b) => Number(a.getAttribute('data-i')) - Number(b.getAttribute('data-i')));
+      }
+      arr.forEach((el) => list.appendChild(el));
+      paint(key);
+    }
+
+    sortBtns.forEach((b) => b.addEventListener('click', () => sortBy(b.getAttribute('data-sort'))));
+    paint('default');
+  }
+
+  document.querySelectorAll('[data-pcompare]').forEach(wire);
+</script>

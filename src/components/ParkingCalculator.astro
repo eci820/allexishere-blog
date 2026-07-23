@@ -14,6 +14,7 @@ const data: any = all.find((d) => d && d.facility === facility);
 if (!data && import.meta.env.DEV) console.warn(`[ParkingCalculator] 요금 데이터 없음: "${facility}"`);
 
 const discounts = data?.profiles?.find((p: any) => p.type === 'metered')?.discounts ?? [];
+const hasFlat = !!data?.profiles?.some((p: any) => p.type === 'flat');
 ---
 
 {data && (
@@ -24,30 +25,40 @@ const discounts = data?.profiles?.find((p: any) => p.type === 'metered')?.discou
       <h2 class="font-serif text-xl font-extrabold tracking-tight">
         🅿️ {data.displayName} 주차요금 계산기
       </h2>
-      <p class="mt-1 text-xs text-[var(--muted)]">
-        입차 시각까지 반영해 <b>정액(선불)인지 후불 미터인지 자동 판정</b>합니다 · 요금 기준 {data.updatedDate}
-      </p>
+      {hasFlat ? (
+        <p class="mt-1 text-xs text-[var(--muted)]">
+          입차 시각까지 반영해 <b>정액(선불)인지 후불 미터인지 자동 판정</b>합니다 · 요금 기준 {data.updatedDate}
+        </p>
+      ) : (
+        <p class="mt-1 text-xs text-[var(--muted)]">
+          입차·출차 시각으로 <b>예상 주차요금을 계산</b>합니다 · 요금 기준 {data.updatedDate}
+        </p>
+      )}
     </div>
 
     <div class="px-5 py-4 space-y-4">
-      <div class="flex gap-2" data-profiles>
-        {data.profiles.map((p: any) => (
-          <button type="button" data-profile={p.id}
-            class="flex-1 rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-semibold transition">
-            {p.type === 'flat' ? '⚾ 경기·행사일' : '📅 평일(후불)'}
-          </button>
-        ))}
-      </div>
-
-      <div class="flex items-center gap-2 text-sm">
-        <span class="text-[var(--muted)]">차종</span>
-        <div class="flex gap-2" data-vehicles>
-          {data.vehicles.map((v: string) => (
-            <button type="button" data-vehicle={v}
-              class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">{v}</button>
+      {data.profiles.length > 1 && (
+        <div class="flex gap-2" data-profiles>
+          {data.profiles.map((p: any) => (
+            <button type="button" data-profile={p.id}
+              class="flex-1 rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-semibold transition">
+              {p.type === 'flat' ? '⚾ 경기·행사일' : '📅 평일(후불)'}
+            </button>
           ))}
         </div>
-      </div>
+      )}
+
+      {data.vehicles.length > 1 && (
+        <div class="flex items-center gap-2 text-sm">
+          <span class="text-[var(--muted)]">차종</span>
+          <div class="flex gap-2" data-vehicles>
+            {data.vehicles.map((v: string) => (
+              <button type="button" data-vehicle={v}
+                class="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm font-semibold transition">{v}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <label class="text-sm" data-field="game">
@@ -91,9 +102,7 @@ const discounts = data?.profiles?.find((p: any) => p.type === 'metered')?.discou
         <p class="mt-2 text-xs text-[var(--muted)]" data-note></p>
       </div>
 
-      <p class="text-[11px] text-[var(--muted)] leading-relaxed">
-        ⓘ 잠실종합운동장 부설주차장은 <b>1일 상한 없음</b> · 정액 주차는 <b>자정(24:00) 이후 후불로 전환</b>됩니다.
-      </p>
+      {data.footnote && <p class="text-[11px] text-[var(--muted)] leading-relaxed" set:html={data.footnote} />}
       <p class="text-[11px] text-[var(--muted)] leading-relaxed">
         ※ 요금 기준일 {data.updatedDate} · 출처: <a href={data.source} target="_blank" rel="noopener" class="underline">{data.sourceName}</a>.
         실제 요금은 현장 안내가 우선합니다.
@@ -168,8 +177,16 @@ const discounts = data?.profiles?.find((p: any) => p.type === 'metered')?.discou
       } else {
         modeText = '(후불 미터)';
         const rate = parseFloat(discountEl.value || '0') || 0;
-        reason = `${fmtDur(r.durationMin)} 주차 · 무료 ${meteredProf.freeMinutes}분 제외 ${r.units}×${won(meteredProf.unitWon[state.vehicle].won)}`
-          + (rate ? ` · 감면 ${Math.round(rate * 100)}%` : '') + '.';
+        const unit = meteredProf.unitWon[state.vehicle];
+        if (meteredProf.baseMinutes) {
+          const bw = (meteredProf.baseWon && typeof meteredProf.baseWon === 'object') ? meteredProf.baseWon[state.vehicle] : meteredProf.baseWon;
+          reason = `${fmtDur(r.durationMin)} 주차 · 기본 ${meteredProf.baseMinutes}분 ${won(bw)}`
+            + (r.units ? ` + 추가 ${r.units}×${won(unit.won)}(${unit.minutes}분당)` : '')
+            + (rate ? ` · 감면 ${Math.round(rate * 100)}%` : '') + '.';
+        } else {
+          reason = `${fmtDur(r.durationMin)} 주차 · 무료 ${meteredProf.freeMinutes}분 제외 ${r.units}×${won(unit.won)}`
+            + (rate ? ` · 감면 ${Math.round(rate * 100)}%` : '') + '.';
+        }
         note = meteredProf.dayCapNote || '';
       }
 

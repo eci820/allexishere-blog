@@ -5,6 +5,7 @@ category: info
 cover: "./img.jpg"
 coverAlt: "삼성역 스타필드 코엑스 주차 요금, 할인, 가까운 입구 총정리"
 originalPath: "/entry/삼성역-코엑스-주차장-완벽-가이드"
+parkingCompare: "coex"
 ---
 ## 삼성역 코엑스 주차장 완벽 가이드 - 호텔·백화점·공항터미널 주차 혼동 없이 주차하는 법
 

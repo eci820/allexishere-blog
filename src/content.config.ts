@@ -54,6 +54,9 @@ const blog = defineCollection({
       /** 🅿️ 주차요금 계산기 임베드. 값 = src/data/parking/*.json 의 facility 명(예: "잠실야구장").
        *  설정 시 글 제목 아래에 인터랙티브 계산기가 자동 렌더됩니다. */
       parkingCalc: z.preprocess(emptyToUndefined, z.string().optional()),
+      /** 🅿️ 주차장 요금·거리 비교표 임베드. 값 = src/data/parking-compare/*.json 의 id(예: "setec").
+       *  설정 시 글 제목 아래에 인터랙티브 비교표가 자동 렌더됩니다. 본문에 이미 실린 수치만 사용합니다. */
+      parkingCompare: z.preprocess(emptyToUndefined, z.string().optional()),
     }),
 });
 

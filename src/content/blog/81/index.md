@@ -5,6 +5,7 @@ category: info
 cover: "./img_5.png"
 coverAlt: "학여울역 SETEC 주차 요금•위치, 외부 주차장(은마상가 주차 꿀팁)"
 originalPath: "/entry/🅿️-학여울역-SETEC-주차-요금•위치-외부-주차장은마상가-꿀팁"
+parkingCompare: "setec"
 ---
 ## 학여울역 SETEC 주차 총정리
 
