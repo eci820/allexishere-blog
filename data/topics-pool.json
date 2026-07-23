@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-23T05:12:11.440Z",
+  "updatedAt": "2026-07-23T05:51:14.743Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2954,8 +2954,8 @@
       "tier": "health",
       "series": "A",
       "angle": "국가검진 미포함 항목의 비급여 검사 필요성 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "전립선-PSA-검사비용-급여기준정상수치검사주기-가이드2026",
       "addedAt": "2026-07-23T04:56:11.970Z",
       "lastProposedAt": "2026-07-23T04:56:13.180Z",
       "metrics": {
