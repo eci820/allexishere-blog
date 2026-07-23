@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-23T02:01:58.097Z",
+  "updatedAt": "2026-07-23T02:31:48.028Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2941,8 +2941,8 @@
       "tier": "parking",
       "series": "",
       "angle": "공연 시작 전 혼잡 시간대와 정산 방식, 인근 대체 주차장을 정리해 저녁 공연 관람객의 주차 스트레스를 줄이는 각도",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "예술의전당-주차-요금입구-위치혼잡-시간대-안내-2026",
       "addedAt": "2026-07-19T09:18:29.282Z",
       "lastProposedAt": "2026-07-23T01:00:05.131Z",
       "metrics": null,
