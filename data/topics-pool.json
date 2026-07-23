@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-22T16:47:39.154Z",
+  "updatedAt": "2026-07-23T02:01:58.097Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2655,11 +2655,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t81zlnm",
@@ -2667,11 +2668,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tnscfv2",
@@ -2679,11 +2681,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t1zqe6b",
@@ -2691,11 +2694,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tt8y3el",
@@ -2703,11 +2707,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "texo7ri",
@@ -2715,11 +2720,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "th6p66",
@@ -2727,11 +2733,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "te9w3yh",
@@ -2739,11 +2746,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tu0rvme",
@@ -2751,11 +2759,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tjvqts8",
@@ -2763,11 +2772,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tyotw0n",
@@ -2775,11 +2785,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t1vmtra",
@@ -2787,11 +2798,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tqpf1lv",
@@ -2799,11 +2811,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t2zfh1p",
@@ -2811,11 +2824,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tvyic5c",
@@ -2823,11 +2837,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tyk6mgr",
@@ -2835,11 +2850,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tdsohy1",
@@ -2847,11 +2863,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tpq481b",
@@ -2859,11 +2876,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tz0ey5b",
@@ -2871,11 +2889,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tiznxdz",
@@ -2883,11 +2902,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tcipo9i",
@@ -2895,11 +2915,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "인근 대안·거리·요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tw9x2lb",
@@ -2907,10 +2928,10 @@
       "tier": "parking",
       "series": "",
       "angle": "대형 K팝 콘서트·시상식 개최일 주차 혼잡도와 인근 대체 주차장·사전정산 방법 안내",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "KSPO돔-주차-요금입구-위치혼잡-대비-가이드-2026",
       "addedAt": "2026-07-19T09:18:29.282Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-23T01:00:05.131Z",
       "metrics": null,
       "source": "agent"
     },
@@ -2923,7 +2944,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-19T09:18:29.282Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-23T01:00:05.131Z",
       "metrics": null,
       "source": "agent"
     }
