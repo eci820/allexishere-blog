@@ -87,8 +87,13 @@ async function drain() {
       const { candidate, chatId } = queue[0];
       try {
         const r = await generateDraft(candidate, { dryRun: false });
-        const cardId = registerDraft(r);
-        await sendDraftCard(chatId, cardId, r);
+        if (r.held) {
+          // 🔴 A-1: 출처 불충분 → 생성 보류. 초안·CLI 없이 사유만 카드로 통지(발행 버튼 없음).
+          await sendHeldCard(chatId, r);
+        } else {
+          const cardId = registerDraft(r);
+          await sendDraftCard(chatId, cardId, r);
+        }
       } catch (e) {
         await sendMessage(chatId, `🇦🇺 ❌ Generation failed — ${candidate.title}\n${e.message}`);
       }
@@ -108,10 +113,28 @@ function registerDraft(r) {
   return cardId;
 }
 
+// 🔴 A-1: 출처 불충분으로 생성이 보류됐을 때. 초안이 없으므로 발행/뷰 버튼도 없다 —
+//    사람에게 '무엇이/왜' 막혔는지 사유만 보여준다(fail-loud). CLI 비용도 들지 않았다.
+async function sendHeldCard(chatId, r) {
+  const lines = (r.sources || []).map(
+    (s) => `${s.sufficient ? '✅' : '⚠️'} ${s.url}\n   ${s.chars}c · ${s.reason}`
+  );
+  const text = [
+    `🇦🇺 ⏸ *Generation held (source insufficient)* — ${r.title}`,
+    `No official source actually covers this topic (${r.sufficientCount}/${r.sources.length} sufficient). No draft written, no CLI spent.`,
+    '',
+    lines.join('\n'),
+    '',
+    `Fix: add a topic-specific official subpage to au-pool.mjs, or drop the topic.`,
+  ].join('\n');
+  return sendMessage(chatId, text, { parse_mode: 'Markdown' });
+}
+
 async function sendDraftCard(chatId, cardId, r) {
   const warn = [];
   if (r.checks?.titleBodyMismatch?.length) warn.push(`⚠️ title axes not in body: ${r.checks.titleBodyMismatch.join(', ')}`);
   if (r.checks?.gmapUnknown?.length) warn.push(`⚠️ unregistered map ids (no link): ${r.checks.gmapUnknown.join(', ')}`);
+  if (r.checks?.gmapSubjectMissing) warn.push(`⚠️ subject not map-linked (A-3): expected gmap:${r.checks.gmapSubjectMissing} in body`);
   if (r.checks?.unverifiedSources?.length) warn.push(`⚠️ ${r.checks.unverifiedSources.length} source(s) unverified — facts marked "unverified"`);
   const lc = r.checks?.linkCandidates || [];
   const parts = [

@@ -11,9 +11,29 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { AU_ROOT, AU_BLOG, guardAuRealpath } from './au-guard.mjs';
 import { titleGuideFor, titleBodyMismatch, countPainPoints } from './au-title-rules.mjs';
+import { publishedPosts } from './au-pool.mjs';
 import { runClaude, unwrapClaudeJSON } from '../lib/claudeCli.mjs';
 
 const MIN_SOURCE_CHARS = 600; // 이 미만이면 'JS 렌더링/빈 본문' 의심 → 내용 미확보
+
+// 🔴 A-5: 유료도로 글에 도시/주 태그를 더한다(관련글 클러스터 고아화 방지 — toll 태그만으론
+//    시드니·멜번·브리즈번 글이 한 덩어리로 안 묶인다). subject 에서 지역 토큰을 뽑는다.
+function geoTagForToll(subject) {
+  const s = String(subject || '').toLowerCase();
+  for (const g of ['sydney', 'melbourne', 'brisbane', 'perth', 'adelaide', 'nsw', 'vic', 'qld', 'wa', 'sa']) {
+    if (s.includes(g)) return g;
+  }
+  return null;
+}
+
+// 오늘 날짜 — iso(frontmatter)·dd/mm/yyyy(accessed) 두 형태.
+function todayParts() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return { iso: `${yyyy}-${mm}-${dd}`, au: `${dd}/${mm}/${yyyy}` };
+}
 
 // ── fetch + 추출 ──────────────────────────────────────────────────────────
 function stripHtml(html) {
@@ -62,13 +82,29 @@ export function assessSufficiency(fetched, keywords = []) {
   return { ...fetched, sufficient: true, reason: 'ok' };
 }
 
-// 후보에서 fetch 검증용 키워드를 뽑는다(엉뚱한 페이지 방지).
+// 🔴 A-1: fetch 한 페이지가 '그 주제를 실제로 다루는가' 판정 키워드.
+//    핵심 변경 — 시설'이름'이 아니라 '주제어'로 본다. 예전엔 홈페이지에 "the Gabba" 만
+//    있어도 통과됐다(이름만 있고 알맹이 없는 페이지). 주제어(seat/roof/parking/toll…)를
+//    요구하면 좌석 서브페이지·주차 서브페이지처럼 알맹이 있는 페이지만 '충분'으로 본다.
+//    modifierGroup 단위로 매핑(단일 소스 — au-pool 의 group 과 짝).
+// 🔴 값은 au-pool.sourcesForGroup 이 실제로 fetch 하는 페이지 기준으로 맞춘다(2026-07-23 실측).
+//    seating/firsttimer 는 전용 정적 좌석페이지가 드물어 gettingHere·members 를 깊이로 쓰므로,
+//    그 페이지에 있는 어휘(transport/parking/member)까지 허용한다. 목적은 '엉뚱/빈/JS 페이지
+//    걸러내기'지 '문자 그대로 seat 강제'가 아니다(빈 홈페이지는 애초에 소스에 없다).
+const GROUP_KEYWORDS = {
+  seating: ['seat', 'bay', 'stand', 'member', 'transport', 'parking'],
+  roof: ['roof'],
+  access: ['parking', 'transport', 'getting here', 'train', 'tram', 'bus'],
+  membership: ['member'],
+  firsttimer: ['bag', 'gate', 'entry', 'getting here', 'transport', 'member'],
+};
+
 function keywordsFor(candidate) {
-  const kws = [];
-  if (candidate.cls === 'toll') kws.push('toll');
-  if (candidate.facility?.name) kws.push(candidate.facility.name.replace(/^the /i, ''));
-  for (const w of String(candidate.subject || '').split('-')) if (w.length >= 4) kws.push(w);
-  return [...new Set(kws)];
+  if (candidate.cls === 'toll') return ['toll'];
+  const g = GROUP_KEYWORDS[candidate.group];
+  if (g && g.length) return [...g];
+  // 그룹 매핑이 없는 예외 케이스만 시설명으로 최소 방어(엉뚱한 도메인 fetch 방지).
+  return candidate.facility?.name ? [candidate.facility.name.replace(/^the /i, '')] : [];
 }
 
 // ── AU PLACES(단일 소스) 로드 — gmap id 검증용 ────────────────────────────
@@ -78,7 +114,7 @@ async function loadPlaces() {
 }
 
 // ── 프롬프트 ──────────────────────────────────────────────────────────────
-function buildPrompt(candidate, sources, allPlaceIds) {
+export function buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings = [], todayAu = '') {
   const sufficient = sources.filter((s) => s.sufficient);
   const sourceBlock = sufficient.length
     ? sufficient.map((s) => `SOURCE (${s.url}):\n${s.text.slice(0, 6000)}`).join('\n\n')
@@ -92,20 +128,38 @@ function buildPrompt(candidate, sources, allPlaceIds) {
     `WORKING TITLE: ${candidate.title}`,
     ``,
     `🔴 FACT RULES (non-negotiable):`,
-    `- State a fact (price, rule, time, distance) ONLY if it appears in the SOURCE material below. Cite it inline with the source URL.`,
-    `- For any fact NOT in the sources, write exactly: "unverified — check the official source" (do not guess).`,
+    `- State a facility-specific fact (price, rule, time, distance, exact stand/section name, capacity) ONLY if it appears in the SOURCE material below. Cite it inline with the source URL.`,
+    `- For any such facility-specific fact NOT in the sources, write exactly: "unverified — check the official source" (do not guess).`,
+    `- 🔴 BUT do NOT dodge physics/common-sense that needs no official source. E.g. in the Southern Hemisphere the afternoon sun sits in the west/north-west, so west-facing seats cop the late-day sun — state that plainly and turn it into practical advice ("if you burn easily, book the eastern side"). Committing to the general answer is the whole point; only the venue-specific specifics stay "unverified".`,
     `- For any number, add the source URL and a "last updated: dd/mm/yyyy" if the source shows one.`,
+    `- In the final "Sources & last updated" list, give each source as: URL — last updated: <date or "unverified"> — accessed ${todayAu || 'dd/mm/yyyy'}.`,
     `- Australian English (colour, centre, kerb, organise). Currency AUD $ (e.g. A$49). Dates dd/mm/yyyy.`,
     ``,
     `🔴 ZERO-CLICK DEFENCE: lead with judgment/comparison the official sites don't give. Use tables and ranked options. Include a short FAQ (2–3 Q&A) and a "Sources & last updated" list at the end.`,
     ``,
+    ...(candidate.judgment
+      ? [
+          `🔴 JUDGMENT/EXPLAINER TOPIC: the official sites do NOT publish this — that is exactly the value. Write the general, physics/common-sense answer with confidence (do NOT dodge it or blanket it as "unverified"). E.g. which Australian venues have retractable roofs is well-known general knowledge; state it. Mark as "unverified — check the official source" ONLY the venue-specific operating facts (exact roof-closing policy/criteria, timings, which events close it).`,
+          ``,
+        ]
+      : []),
     `🗺 MAP LINKS — link the real places you mention (stadiums, stations, landmarks, shopping strips, car parks).`,
     `- To link a place, write a markdown link to gmap:<id> — e.g. [📍 View on Google Maps](gmap:mcg).`,
+    ...(requiredGmapId
+      ? [`- 🔴 REQUIRED: link the article's main subject at least once — write [📍 View on Google Maps](gmap:${requiredGmapId}) where you first introduce it.`]
+      : []),
     `- 🔴 ONLY use ids from this registry: ${allPlaceIds.join(', ')}.`,
     `- 🔴 If you mention a real place that is NOT in the registry, DO NOT link it and DO NOT invent an id.`,
     `  Instead list its exact name at the very end under "LINK CANDIDATES:" (one per line) for a human to verify.`,
     `- Link generously — a reader should be able to open every venue/station/landmark on a map — but registry ids only.`,
     ``,
+    ...(siblings.length
+      ? [
+          `🔗 INTERNAL LINKS — existing articles on THIS site. Where genuinely relevant (same city or same topic), work 1–2 of them into the body as a natural markdown link [anchor text](/entry/<slug>). Never force an irrelevant link.`,
+          ...siblings.map((s) => `  - /entry/${s.slug}  — ${s.title}`),
+          ``,
+        ]
+      : []),
     `OUTPUT FORMAT — output exactly these parts and nothing else:`,
     `DESCRIPTION: <one sentence meta description, Australian English>`,
     `---BODY---`,
@@ -163,10 +217,9 @@ function h2sOf(body) {
 }
 
 function frontmatter(candidate, description) {
-  const today = new Date();
-  const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const iso = todayParts().iso;
   const tags = candidate.cls === 'toll'
-    ? ['tolls', 'driving', 'australia']
+    ? [...new Set(['tolls', 'driving', 'australia', geoTagForToll(candidate.subject)].filter(Boolean))]
     : [candidate.facility?.city?.toLowerCase() || 'australia', 'stadium', 'gameday'];
   return [
     '---',
@@ -189,13 +242,19 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   const allPlaceIds = Object.keys(places); // 🔴 전체 등재 장소를 프롬프트에 노출(경기장·역·랜드마크 등)
   const validGmapIds = (candidate.gmapIds || []).filter((id) => places[id]);
   const droppedGmap = (candidate.gmapIds || []).filter((id) => !places[id]);
+  // 🔴 A-3: 이 글의 '주제 장소' — 본문에 반드시 1회 링크돼야 한다. 후보의 첫 유효 gmap id.
+  //    (경기장 글 = 그 경기장 · 판단형 roof = marvel-stadium · 유료도로 글 = 단일 장소 없음 → 강제 안 함)
+  const requiredGmapId = validGmapIds[0] || null;
 
   const kws = keywordsFor(candidate);
   const fetched = await Promise.all((candidate.official || []).map((u) => fetchSource(u)));
   const sources = fetched.map((f) => assessSufficiency(f, kws));
   const sufficient = sources.filter((s) => s.sufficient);
 
-  const prompt = buildPrompt(candidate, sources, allPlaceIds);
+  // 🔴 A-5: 발행 형제 글 주입(내부 링크) + accessed 날짜.
+  const siblings = publishedPosts().slice(0, 12);
+  const today = todayParts();
+  const prompt = buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings, today.au);
   const intendedSlug = uniqueSlug(slugify(candidate.title));
   const intendedPath = path.join(AU_BLOG, `${intendedSlug}.md`);
   guardAuRealpath(intendedPath); // 🔴 쓰기 대상이 AU 안·한국 밖인지 (dryRun 이어도 검증)
@@ -213,12 +272,31 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
 
   if (dryRun) return { ...summary, dryRun: true, wrote: false };
 
+  // 🔴 A-1 게이트: 주제를 실제로 다루는 공식 출처가 하나도 없으면 '생성 보류'.
+  //    이름만 있고 알맹이 없는 홈페이지로 글을 만들지 않는다(Gabba(출처 4곳) vs 자동글(1곳)
+  //    격차의 근본 원인). CLI 를 호출하지 않고(비용 0) held 로 돌려보내 카드가 사유를 보여준다.
+  //    → 조용히 통과하지 않고 사람에게 사유를 알린다(fail-loud, safe-automation §2b).
+  // 🔴 A-2/A-4 예외: judgment 토픽(물리·상식·비교 — 공식 팩트 페이지가 없는 유형)은 보류하지
+  //    않는다. 출처 없이도 일반 답을 쓰되(A-4), 시설 고유 사실은 프롬프트가 unverified 로 남긴다.
+  if (!candidate.judgment && sufficient.length === 0) {
+    return {
+      ...summary,
+      held: true,
+      wrote: false,
+      heldReason:
+        '주제를 다루는 충분한 공식 출처가 없어 생성을 보류했습니다 — 홈페이지에 주제 알맹이가 없거나(서브페이지 필요) fetch 가 JS 렌더링/빈 본문입니다.',
+    };
+  }
+
   // 실제 생성 — CLI 1회(구독). 실패는 fail-loud(throw, 호출부가 카드로 통지).
   const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 240000 });
   const { result, costUsd } = unwrapClaudeJSON(stdout);
   const { description, body, linkCandidates } = parseOutput(result);
 
   const gmap = checkGmap(body, places);
+  // 🔴 A-3: 주제 장소 링크가 본문에 실제로 들어갔는지 검증. 빠졌으면 카드에 경고(차단 아님 —
+  //    CLI 는 이미 소모됐고 사람이 검토하므로, 조용히 넘기지 않고 눈에 띄게 알린다).
+  const gmapSubjectMissing = requiredGmapId && !gmap.used.includes(requiredGmapId) ? requiredGmapId : null;
   const missingAxes = titleBodyMismatch(candidate.title, h2sOf(body), candidate.cls);
   const painPoints = countPainPoints(candidate.title, candidate.cls);
 
@@ -237,6 +315,7 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
       titleBodyMismatch: missingAxes, // 비어야 좋음
       gmapUsed: gmap.used, // 실제로 붙은 지도 링크(등재 장소)
       gmapUnknown: gmap.unknown, // 비어야 좋음(있으면 링크 안 붙음)
+      gmapSubjectMissing, // 🔴 A-3: 주제 장소 링크 누락(있으면 id, 없으면 null)
       linkCandidates, // 🔴 미등재 장소 후보 — 사람이 검증 후 PLACES 에 등재
       unverifiedSources: sources.filter((s) => !s.sufficient).map((s) => s.url),
     },
@@ -262,5 +341,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(`gmap 유효 id: [${r.validGmapIds.join(', ') || '없음'}]${r.droppedGmap.length ? ` · 미등재(링크안붙음): [${r.droppedGmap.join(', ')}]` : ''}`);
   console.log(`쓰기 대상(가드 통과): ${r.intendedPath}`);
   console.log(`프롬프트 길이: ${r.promptChars}자`);
-  if (r.sufficientCount === 0) console.log('\n⚠️ 충분한 공식 출처 0개 — 실제 생성 시 사실은 전부 "unverified"로 남고 카드에 경고됩니다(지어내기 방지).');
+  if (r.sufficientCount === 0) {
+    if (cand.judgment) console.log('\n⚖️ judgment 토픽 · 공식출처 0 — 보류하지 않고 일반 답(물리·상식)으로 생성합니다(시설 고유 사실은 unverified).');
+    else console.log('\n⏸ 충분한 공식 출처 0개 — 실제 실행에서는 생성을 보류(held)합니다(CLI 호출·쓰기 없음).');
+  }
 }

@@ -17,25 +17,60 @@ import { AU_BLOG } from './au-guard.mjs';
 
 // ── 축 A: 시설 속성표 (best-effort — 생성 시 공식 재확인) ──────────────────
 // roof: 개폐식 지붕 있음 · members: 눈에 띄는 회원 전용석 있음 · hardParking: 이벤트일 주차난
+//
+// 🔴 A-1(출처 깊이): pages = 주제별 '검증된 정적 서브페이지'. 홈페이지가 아니라 알맹이 있는
+//    서브페이지를 fetch 한다(Gabba 손글이 getting-here·members 등 4곳을 쓴 그 깊이를 재현).
+//    각 URL 은 2026-07-23 실측: HTTP 200 + 주제 키워드 정적본문 실재 확인분만.
+//    · gettingHere = 오는 길·교통·주차 (9곳 전부 정적 추출 OK — 가장 견고)
+//    · members     = 회원석 (Gabba·MCG(mcc.org.au)·Adelaide Oval·SCG 만)
+//    · seating     = 정적 좌석 페이지. 대부분 인터랙티브 JS/이미지라 정적 추출 불가 →
+//                    MCG 만 정적 확인됨. 나머지는 생략(생성 시 gettingHere·members 깊이 +
+//                    물리·판단(A-4)으로 좌석 글을 쓴다 — 손글 Gabba/Suncorp 방식).
 export const FACILITIES = [
-  { id: 'marvel-stadium', name: 'Marvel Stadium', city: 'Melbourne', official: 'https://www.marvelstadium.com.au', roof: true, members: false, hardParking: true },
-  { id: 'mcg', name: 'the MCG', city: 'Melbourne', official: 'https://www.mcg.org.au', roof: false, members: true, hardParking: true },
-  { id: 'adelaide-oval', name: 'Adelaide Oval', city: 'Adelaide', official: 'https://www.adelaideoval.com.au', roof: false, members: true, hardParking: true },
-  { id: 'scg', name: 'the SCG', city: 'Sydney', official: 'https://www.sydneycricketground.com.au', roof: false, members: true, hardParking: true },
-  { id: 'the-gabba', name: 'the Gabba', city: 'Brisbane', official: 'https://thegabba.com.au', roof: false, members: true, hardParking: true },
-  { id: 'optus-stadium', name: 'Optus Stadium', city: 'Perth', official: 'https://www.optusstadium.com.au', roof: false, members: false, hardParking: true },
-  { id: 'suncorp-stadium', name: 'Suncorp Stadium', city: 'Brisbane', official: 'https://www.suncorpstadium.com.au', roof: false, members: false, hardParking: true },
-  { id: 'accor-stadium', name: 'Accor Stadium', city: 'Sydney', official: 'https://www.accorstadium.com.au', roof: false, members: false, hardParking: true },
-  { id: 'aami-park', name: 'AAMI Park', city: 'Melbourne', official: 'https://www.aamipark.com.au', roof: false, members: false, hardParking: true },
+  { id: 'marvel-stadium', name: 'Marvel Stadium', city: 'Melbourne', official: 'https://www.marvelstadium.com.au', roof: true, members: false, hardParking: true,
+    pages: { gettingHere: 'https://www.marvelstadium.com.au/getting-to-marvel-stadium' } },
+  { id: 'mcg', name: 'the MCG', city: 'Melbourne', official: 'https://www.mcg.org.au', roof: false, members: true, hardParking: true,
+    pages: { gettingHere: 'https://www.mcg.org.au/plan-a-visit/get-to-the-mcg', members: 'https://www.mcc.org.au/membership', seating: 'https://www.mcg.org.au/plan-a-visit/seating-and-ticket-information' } },
+  { id: 'adelaide-oval', name: 'Adelaide Oval', city: 'Adelaide', official: 'https://www.adelaideoval.com.au', roof: false, members: true, hardParking: true,
+    pages: { gettingHere: 'https://www.adelaideoval.com.au/getting-here/', members: 'https://www.adelaideoval.com.au/mtx-club-membership/' } },
+  { id: 'scg', name: 'the SCG', city: 'Sydney', official: 'https://www.sydneycricketground.com.au', roof: false, members: true, hardParking: true,
+    pages: { gettingHere: 'https://www.sydneycricketground.com.au/plan-your-visit/transport', members: 'https://www.sydneycricketground.com.au/members/members_faq' } },
+  { id: 'the-gabba', name: 'the Gabba', city: 'Brisbane', official: 'https://thegabba.com.au', roof: false, members: true, hardParking: true,
+    pages: { gettingHere: 'https://thegabba.com.au/plan-your-visit/getting-here', members: 'https://thegabba.com.au/members/members-info' } },
+  { id: 'optus-stadium', name: 'Optus Stadium', city: 'Perth', official: 'https://www.optusstadium.com.au', roof: false, members: false, hardParking: true,
+    // ⚠️ optusstadium.com.au 는 JS SPA + 봇 차단(403) — 우리 표준 fetch 로는 내용 미확보라
+    //    게이트가 보류시킨다. 정직하게 남겨 둔다(카드에 "HTTP 403" 사유 노출).
+    pages: { gettingHere: 'https://optusstadium.com.au/getting-here' } },
+  { id: 'suncorp-stadium', name: 'Suncorp Stadium', city: 'Brisbane', official: 'https://www.suncorpstadium.com.au', roof: false, members: false, hardParking: true,
+    pages: { gettingHere: 'https://suncorpstadium.com.au/plan-your-visit/getting-here' } },
+  { id: 'accor-stadium', name: 'Accor Stadium', city: 'Sydney', official: 'https://www.accorstadium.com.au', roof: false, members: false, hardParking: true,
+    pages: { gettingHere: 'https://www.accorstadium.com.au/transport' } },
+  { id: 'aami-park', name: 'AAMI Park', city: 'Melbourne', official: 'https://www.aamipark.com.au', roof: false, members: false, hardParking: true,
+    pages: { gettingHere: 'https://aamipark.com.au/plan-your-visit/getting-here/' } },
 ];
+
+// 🔴 A-1: modifierGroup → 그 주제 글이 실제로 fetch 할 검증된 서브페이지들(홈페이지 아님).
+//    seating/firsttimer 는 전용 정적 페이지가 드물어 gettingHere·members 깊이를 함께 쓴다.
+//    비어 있으면(해당 서브페이지 없음) 후보의 official 이 [] 이 되어 → 생성 게이트가 보류한다.
+export function sourcesForGroup(f, group) {
+  const p = f.pages || {};
+  const pick = {
+    access: [p.gettingHere],
+    membership: [p.members],
+    seating: [p.seating, p.gettingHere, p.members],
+    firsttimer: [p.gettingHere, p.members],
+    roof: [p.gettingHere],
+  }[group] || [f.official];
+  return pick.filter(Boolean);
+}
 
 // ── 축 A: 수식어 (각자 고유 modifierGroup) ────────────────────────────────
 // 🔴 seats + shade 는 한 글(group 'seating')로 묶는다 — 발행 순서 #3(Suncorp)·#5(Optus)가
 //    "best seats & 오후 햇빛 피하기"를 한 편으로 잡았기 때문. 지붕 있는 곳은 shade 부분 생략.
 // 🔴 제외 수식어(bag policy·parking rules·transport 안내·betting/odds)는 아예 없음.
+// 🔴 A-2: 예전의 시설별 'roof'('지붕 열리나?')는 조회형(공식이 한 줄로 답함)이라 제거했다.
+//    → 판단형으로 재프레이밍해 축 C(AXIS_C)의 크로스-경기장 토픽으로 옮겼다.
 export const STADIUM_MODIFIERS = [
-  { id: 'roof', group: 'roof', priority: 1, cls: 'stadium', applies: (f) => f.roof,
-    title: (f) => `${f.name}: how to check if the roof will be open, and what decides it` },
   { id: 'seating', group: 'seating', priority: 1, cls: 'stadium', applies: () => true,
     title: (f) => f.roof
       ? `${f.name}: best seats and where to sit for footy and concerts`
@@ -73,6 +108,36 @@ export const AXIS_B = [
     title: 'Toll notices and disputes: what to do if you get an unpaid toll notice',
     gmapIds: [], officialUrls: ['https://www.linkt.com.au/help/tolls-and-payments'] },
 ];
+
+// ── 축 C: 경기장 전반 '판단·설명' 토픽 (특정 시설 1곳이 아니라 여러 곳을 가로지름) ──
+// 🔴 A-2: roof 재프레이밍. '지붕 열리나?'(조회형)가 아니라 '어느 경기장이 개폐식 지붕이고,
+//    닫히면 내 좌석·햇빛·분위기에 무엇이 달라지나'(판단형). 공식 팩트 페이지가 없다(Marvel
+//    getting-here·홈·A-Z 28k자 어디에도 'roof' 없음 — 2026-07-23 실측). 그래서:
+//    judgment:true = 물리·상식·비교 토픽 → 게이트가 '출처 0개'로 보류하지 않는다(A-4).
+//    생성 시 '어느 곳이 지붕 있나'는 일반 상식으로 답하고, 시설 고유 운영사실(정확한 개폐
+//    정책·시각)은 unverified 로 남긴다. 카드에 "judgment 토픽 · 공식출처 0" 를 표시한다.
+export const AXIS_C = [
+  { id: 'retractable-roofs-seat-impact', subject: 'retractable-roofs', group: 'explainer', priority: 3, cls: 'stadium', judgment: true,
+    title: 'Which Australian stadiums have retractable roofs — and what a closed roof means for your seat, sun and atmosphere',
+    gmapIds: ['marvel-stadium'], officialUrls: [] },
+];
+
+// 축 C 후보.
+export function stadiumExplainerCandidates() {
+  return AXIS_C.map((t) => ({
+    id: t.id,
+    axis: 'C',
+    cls: t.cls,
+    subject: t.subject,
+    group: t.group,
+    priority: t.priority,
+    title: t.title,
+    official: t.officialUrls || [],
+    gmapIds: t.gmapIds || [],
+    judgment: !!t.judgment,
+    timeSensitive: false,
+  }));
+}
 
 // ── 발행 seed 순서 (상위 5, 두 축 교대) ───────────────────────────────────
 export const PUBLISH_SEED = [
@@ -117,6 +182,32 @@ export function publishedSubjects() {
   return { set, warnings };
 }
 
+// 🔴 A-5: 발행된 AU 형제 글 목록(slug·title·subject) — 생성기에 주입해 본문에 자연스러운
+//    내부 링크를 1~2개 넣게 한다. 초안 제외. AU_BLOG 만 읽는다(한국 경로 안 봄).
+export function publishedPosts() {
+  const out = [];
+  let files = [];
+  try {
+    files = fs.readdirSync(AU_BLOG).filter((f) => f.endsWith('.md'));
+  } catch {
+    return out;
+  }
+  for (const f of files) {
+    let txt = '';
+    try {
+      txt = fs.readFileSync(path.join(AU_BLOG, f), 'utf8');
+    } catch {
+      continue;
+    }
+    const fm = txt.split(/^---\s*$/m)[1] || '';
+    if (/^\s*draft:\s*true\s*$/m.test(fm)) continue; // 초안은 링크 대상 아님
+    const title = (fm.match(/^\s*title:\s*["']?([^"'\n]+)/m) || [])[1]?.trim();
+    const subject = (fm.match(/^\s*subject:\s*["']?([^"'\n]+)/m) || [])[1]?.trim();
+    out.push({ slug: f.replace(/\.md$/, ''), title: title || f.replace(/\.md$/, ''), subject: subject || '' });
+  }
+  return out;
+}
+
 // 축 A 후보 전개: 시설 × 해당되는 수식어.
 export function stadiumCandidates() {
   const out = [];
@@ -131,7 +222,7 @@ export function stadiumCandidates() {
         group: m.group,
         priority: m.priority,
         title: m.title(f),
-        official: [f.official],
+        official: sourcesForGroup(f, m.group), // 🔴 A-1: 홈페이지 대신 주제별 검증된 서브페이지
         gmapIds: [f.id],
         facility: f,
         timeSensitive: false,
@@ -161,7 +252,7 @@ export function tollCandidates() {
 // 반환: { candidates:[…], excluded:[{subject,group,title,reason}], warnings, lowStock }
 export function buildPool() {
   const { set: published, warnings } = publishedSubjects();
-  const all = [...stadiumCandidates(), ...tollCandidates()];
+  const all = [...stadiumCandidates(), ...stadiumExplainerCandidates(), ...tollCandidates()];
 
   const candidates = [];
   const excluded = [];
