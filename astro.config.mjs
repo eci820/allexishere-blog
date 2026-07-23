@@ -9,6 +9,7 @@ import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeImageGrid from './src/lib/rehype-image-grid.mjs';
 import rehypeCallouts from './src/lib/rehype-callouts.mjs';
 import rehypeSeoFix from './src/lib/rehype-seo-fix.mjs';
+import rehypeMapLinks from './src/lib/rehype-map-links.mjs';
 import { writeDevEditor } from './src/lib/write-editor.mjs';
 
 // 로컬 개발 전용 편집기(Sveltia CMS) 서빙 통합.
@@ -62,9 +63,9 @@ export default defineConfig({
     // remark-cjk-friendly: **볼드**가 한글·문장부호에 붙어 있어도(예: **‘중독’**입니다)
     // 제대로 볼드 처리되도록 CommonMark 강조 규칙을 한중일 친화적으로 보정합니다.
     remarkPlugins: [[remarkGfm, { singleTilde: false }], remarkCjkFriendly],
-    // 콜아웃(강조박스) → 연속 이미지 그리드 → SEO 보정(본문 h1강등·img alt 채움) 순.
+    // 콜아웃(강조박스) → 연속 이미지 그리드 → 지도 링크 pill → SEO 보정(본문 h1강등·img alt) 순.
     // seoFix 를 마지막에 둬 그리드로 재배치된 이미지까지 alt 를 확실히 채운다.
-    rehypePlugins: [rehypeCallouts, rehypeImageGrid, rehypeSeoFix],
+    rehypePlugins: [rehypeCallouts, rehypeImageGrid, rehypeMapLinks, rehypeSeoFix],
   },
 
   vite: {
