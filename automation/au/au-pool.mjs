@@ -100,13 +100,19 @@ export const AXIS_B = [
     gmapIds: [], officialUrls: ['https://www.service.nsw.gov.au/services/toll-relief', 'https://www.linkt.com.au/help/cashback-and-rebates/toll-relief-rebate/sydney'] },
   { id: 'visitors-rental-tolls', subject: 'aus-tolls-visitors', group: 'visitor', priority: 5, cls: 'toll',
     title: 'Driving a toll road in a rental or as a visitor: what happens and how to pay',
-    gmapIds: [], officialUrls: ['https://www.linkt.com.au/using-toll-roads/casual-use', 'https://www.eastlink.com.au/buy-trip-pass'] },
+    // 🔴 [3] 2026-07-23: Linkt 사이트 개편으로 /using-toll-roads/casual-use 가 404 → 현행 /open/visitor-pass
+    //    로 교체(실측 200·51,795자·visitor/pass/rental/toll 포함, 계정 없이 내는 방문자 패스 주제 일치).
+    gmapIds: [], officialUrls: ['https://www.linkt.com.au/open/visitor-pass', 'https://www.eastlink.com.au/buy-trip-pass'] },
   { id: 'brisbane-tolls', subject: 'brisbane-tolls', group: 'explainer', priority: 6, cls: 'toll',
     title: 'Brisbane tolls explained: Gateway, Logan and AirportlinkM7',
     gmapIds: [], officialUrls: ['https://www.linkt.com.au/using-toll-roads/toll-calculator/brisbane'] },
   { id: 'toll-notices-disputes', subject: 'toll-notices', group: 'disputes', priority: 7, cls: 'toll',
     title: 'Toll notices and disputes: what to do if you get an unpaid toll notice',
-    gmapIds: [], officialUrls: ['https://www.linkt.com.au/help/tolls-and-payments'] },
+    // 🔴 [3] 2026-07-23: /help/tolls-and-payments 가 404 → 현행 후속 경로 /help/toll-payments 로 교체
+    //    (실측 200·"Payments and tolls"·notice/toll/pay 포함). ⚠️ 단 Linkt Help Centre 는 JS SPA 라
+    //    정적 추출이 ~3.9k(보일러플레이트 다수) — MIN_SOURCE_CHARS(600)는 통과하나 얇다. 첫 생성 결과를
+    //    보고 얇으면 정부(Service NSW/Revenue NSW 미납 통행료) 출처 추가를 검토(사람 판단).
+    gmapIds: [], officialUrls: ['https://www.linkt.com.au/help/toll-payments'] },
 ];
 
 // ── 축 C: 경기장 전반 '판단·설명' 토픽 (특정 시설 1곳이 아니라 여러 곳을 가로지름) ──

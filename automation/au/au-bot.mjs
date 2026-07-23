@@ -116,6 +116,16 @@ function registerDraft(r) {
 // 🔴 A-1: 출처 불충분으로 생성이 보류됐을 때. 초안이 없으므로 발행/뷰 버튼도 없다 —
 //    사람에게 '무엇이/왜' 막혔는지 사유만 보여준다(fail-loud). CLI 비용도 들지 않았다.
 async function sendHeldCard(chatId, r) {
+  // 🔴 [2] 중복 초안 보류 — A-1(출처 불충분)과 다른 사유. 같은 held 경로로 통지(발행 버튼 없음).
+  if (r.heldKind === 'duplicate') {
+    const text = [
+      `🇦🇺 ⏸ *Generation held (duplicate draft)* — ${r.title}`,
+      `A draft for this same topic already exists (\`${r.existingSlug}\`). No new draft, no CLI spent.`,
+      '',
+      `Fix: reject the existing draft first (then regenerate), or publish/edit the existing one.`,
+    ].join('\n');
+    return sendMessage(chatId, text, { parse_mode: 'Markdown' });
+  }
   const lines = (r.sources || []).map(
     (s) => `${s.sufficient ? '✅' : '⚠️'} ${s.url}\n   ${s.chars}c · ${s.reason}`
   );

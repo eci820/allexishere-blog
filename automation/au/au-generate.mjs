@@ -47,24 +47,49 @@ function stripHtml(html) {
     .trim();
 }
 
-export async function fetchSource(url, { timeoutMs = 15000 } = {}) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      redirect: 'follow',
-      headers: { 'user-agent': 'Mozilla/5.0 (allexishere-au research bot)' },
-    });
-    if (!res.ok) return { url, ok: false, chars: 0, reason: `HTTP ${res.status}`, text: '' };
-    const html = await res.text();
-    const text = stripHtml(html);
-    return { url, ok: true, chars: text.length, text };
-  } catch (e) {
-    return { url, ok: false, chars: 0, reason: `fetch 실패: ${e.name === 'AbortError' ? 'timeout' : e.message}`, text: '' };
-  } finally {
-    clearTimeout(t);
+// 🔴 [4] 정직한 UA(단일 소스). Mozilla 위장 접두를 떼고 봇임을 명시 + 연락 URL.
+//    robots.txt 를 존중하는 기조 유지 — 브라우저인 척하지 않는다.
+const AU_UA = 'allexishere-au-bot/1.0 (+https://au.allexishere.com/)';
+
+// 🔴 [1] 재시도 대상 = '일시적' 상태만. 진단(2026-07-23)에서 Accor 403 은 감사 버스트로 인한
+//    일시 rate-limit/WAF 스로틀이었고(연속 5회 200 회복), 재시도 없는 단일 fetch 가 곧바로
+//    게이트 보류로 직결됐다. telegram.call 철학과 동일: 네트워크·일시 오류만 재시도하고,
+//    영구 오류(404 등 대부분 4xx)는 재시도해도 낫지 않으므로 즉시 실패시킨다.
+//    🔴 재시도해도 안 되면 지금처럼 정직하게 보류한다 — 게이트를 풀지 않는다.
+const RETRYABLE_STATUS = new Set([403, 408, 425, 429, 500, 502, 503, 504]);
+
+export async function fetchSource(url, { timeoutMs = 15000, retries = 2, backoffMs = 2500 } = {}) {
+  let last = { url, ok: false, chars: 0, reason: 'fetch 미시도', text: '' };
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        signal: ctrl.signal,
+        redirect: 'follow',
+        headers: { 'user-agent': AU_UA },
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const text = stripHtml(html);
+        return { url, ok: true, chars: text.length, text, attempts: attempt + 1 };
+      }
+      last = { url, ok: false, chars: 0, reason: `HTTP ${res.status}`, text: '', attempts: attempt + 1 };
+      // 🔴 404 등 영구 오류는 즉시 실패(재시도 무의미). 403/429/5xx 등 일시 오류만 아래서 재시도.
+      if (!RETRYABLE_STATUS.has(res.status)) { clearTimeout(t); return last; }
+    } catch (e) {
+      last = { url, ok: false, chars: 0, reason: `fetch 실패: ${e.name === 'AbortError' ? 'timeout' : e.message}`, text: '', attempts: attempt + 1 };
+      // 네트워크·timeout 은 재시도 대상 — 아래 backoff 후 재시도.
+    } finally {
+      clearTimeout(t);
+    }
+    if (attempt < retries) {
+      // 2~5초 백오프(+지터) — 같은 도메인 순간 재요청을 흩뜨린다.
+      const wait = backoffMs + attempt * 2000 + Math.floor(Math.random() * 500);
+      await new Promise((r) => setTimeout(r, wait));
+    }
   }
+  return last; // 재시도 소진 → 정직하게 실패 반환(게이트가 보류 처리)
 }
 
 // 🔴 보완 1: 내용 충분성 판정. keywords 중 하나라도 있어야 하고, 길이도 충분해야 한다.
@@ -204,6 +229,27 @@ function uniqueSlug(base) {
   return slug;
 }
 
+// 🔴 [2] 같은 (subject, modifierGroup)의 draft:true 초안이 이미 있으면 그 slug 를 반환(없으면 null).
+//    · 발행글(draft:false)은 막지 않는다 — 그건 au-pool 의 published dedup·topicsPool 소관이다.
+//    · 목적: 같은 주제의 미검토 초안이 쌓이는 것 방지. uniqueSlug 의 -2 는 그대로 둔다(진짜 다른
+//      글의 파일명 충돌 방지용으로 여전히 유효). 이 게이트는 '내용 중복'을 subject 단위로 막는다.
+//    · 우회가 아니라 안내(게이트): 기존 초안을 Reject 후 재생성하도록 held 로 돌려보낸다.
+function existingDraftFor(subject, group) {
+  if (!subject || !group) return null;
+  let files = [];
+  try { files = fs.readdirSync(AU_BLOG).filter((f) => f.endsWith('.md')); } catch { return null; }
+  for (const f of files) {
+    let raw;
+    try { raw = fs.readFileSync(path.join(AU_BLOG, f), 'utf8'); } catch { continue; }
+    const head = raw.split(/^---\s*$/m)[1] || '';
+    if (!/^\s*draft:\s*true\s*$/m.test(head)) continue;
+    const sub = (head.match(/^\s*subject:\s*(.+?)\s*$/m) || [])[1];
+    const grp = (head.match(/^\s*modifierGroup:\s*(.+?)\s*$/m) || [])[1];
+    if (sub === String(subject) && grp === String(group)) return f.replace(/\.md$/, '');
+  }
+  return null;
+}
+
 // gmap:<id> 를 본문에서 뽑아 PLACES 와 대조. 반환 {used, unknown}.
 function checkGmap(body, places) {
   const ids = [...body.matchAll(/\]\(gmap:([a-z0-9-]+)\)/gi)].map((m) => m[1]);
@@ -245,6 +291,18 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   // 🔴 A-3: 이 글의 '주제 장소' — 본문에 반드시 1회 링크돼야 한다. 후보의 첫 유효 gmap id.
   //    (경기장 글 = 그 경기장 · 판단형 roof = marvel-stadium · 유료도로 글 = 단일 장소 없음 → 강제 안 함)
   const requiredGmapId = validGmapIds[0] || null;
+
+  // 🔴 [2] 중복 초안 게이트: 같은 (subject, group)의 draft:true 가 이미 있으면 fetch·CLI 전에 보류.
+  //    비용 0으로 held 로 돌려보내 '이미 초안이 있음(slug) — Reject 후 재생성' 을 카드로 안내한다.
+  //    (dryRun 은 검사 목적이므로 막지 않고 fetch 결과까지 보여준다.)
+  const dupSlug = existingDraftFor(candidate.subject, candidate.group);
+  if (!dryRun && dupSlug) {
+    return {
+      candidate: candidate.id, title: candidate.title,
+      held: true, heldKind: 'duplicate', wrote: false, existingSlug: dupSlug,
+      heldReason: `같은 주제 초안이 이미 있습니다 (slug ${dupSlug}) — Reject 후 재생성하세요.`,
+    };
+  }
 
   const kws = keywordsFor(candidate);
   const fetched = await Promise.all((candidate.official || []).map((u) => fetchSource(u)));
