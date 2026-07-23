@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-23T02:31:48.028Z",
+  "updatedAt": "2026-07-23T05:12:11.440Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2947,6 +2947,96 @@
       "lastProposedAt": "2026-07-23T01:00:05.131Z",
       "metrics": null,
       "source": "agent"
+    },
+    {
+      "id": "t6de5dg",
+      "keyword": "전립선 PSA 검사비용",
+      "tier": "health",
+      "series": "A",
+      "angle": "국가검진 미포함 항목의 비급여 검사 필요성 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-23T04:56:11.970Z",
+      "lastProposedAt": "2026-07-23T04:56:13.180Z",
+      "metrics": {
+        "vol": 95,
+        "doc": 4419,
+        "ratio": 0.021,
+        "stars": 5,
+        "ts": 1784782571968
+      }
+    },
+    {
+      "id": "t7a9lgs",
+      "keyword": "루테인 지아잔틴 비율",
+      "tier": "health",
+      "series": "B",
+      "angle": "함량비율별 가격차이와 효과 판단",
+      "status": "published",
+      "slug": "루테인-지아잔틴-비율-51-기준권장량부작용-정리-2026",
+      "addedAt": "2026-07-23T04:56:11.970Z",
+      "lastProposedAt": "2026-07-23T04:56:13.180Z",
+      "metrics": {
+        "vol": 150,
+        "doc": 16689,
+        "ratio": 0.009,
+        "stars": 4,
+        "ts": 1784782571968
+      }
+    },
+    {
+      "id": "tsir2f3",
+      "keyword": "데드리프트 부상위험",
+      "tier": "health",
+      "series": "C",
+      "angle": "중량설정 원리로 부상없이 늘리는 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-23T04:56:11.970Z",
+      "lastProposedAt": "2026-07-23T04:56:13.180Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 73798,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1784782571968
+      }
+    },
+    {
+      "id": "tsnra1r",
+      "keyword": "요요현상 대사적응",
+      "tier": "health",
+      "series": "E",
+      "angle": "다이어트 재시도 시기와 방법 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-23T04:56:11.970Z",
+      "lastProposedAt": "2026-07-23T04:56:13.180Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 12151,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784782571968
+      }
+    },
+    {
+      "id": "tu5rcgf",
+      "keyword": "실업급여 수급조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "자진퇴사 예외 인정과 수급기간 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-23T04:56:11.970Z",
+      "lastProposedAt": "2026-07-23T04:56:13.181Z",
+      "metrics": {
+        "vol": 1880,
+        "doc": 69057,
+        "ratio": 0.027,
+        "stars": 5,
+        "ts": 1784782571968
+      }
     }
   ]
 }
