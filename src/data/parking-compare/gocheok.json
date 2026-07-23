@@ -1,0 +1,15 @@
+{
+  "id": "gocheok",
+  "facility": "고척스카이돔",
+  "title": "고척스카이돔 인근 주차장 거리 비교",
+  "subtitle": "경기·공연일엔 돔 안 주차 불가 — 인근 주차장 5곳을 거리순으로 비교하세요",
+  "sortable": ["dist"],
+  "lots": [
+    { "name": "동양미래대학교 주차장", "dist": "도보 1~3분", "sortDist": 150, "fee": null, "sortFee": null, "memo": "돔 바로 길 건너 · 평일 개방 제한적, 경쟁 치열" },
+    { "name": "중앙유통단지 주차장", "dist": "약 700m · 도보 10분", "sortDist": 700, "fee": null, "sortFee": null, "memo": "상가 주차장이라 자리 비교적 넉넉" },
+    { "name": "고척산업용품종합상가 주차장", "dist": "약 800m · 도보 10분", "sortDist": 800, "fee": "30분 1,000원 수준", "sortFee": 1000, "memo": "24시간 운영 · 저렴한 편" },
+    { "name": "아이파크몰 고척점", "dist": "약 1km", "sortDist": 1000, "fee": null, "sortFee": null, "memo": "쇼핑·식사 겸하면 매장별 주차 할인" },
+    { "name": "구로기계공구상가 주차장", "dist": "약 1.3km · 도보 15분", "sortDist": 1300, "fee": null, "sortFee": null, "memo": "약 4,000면으로 가장 넓음" }
+  ],
+  "sourceNote": "인근 주차장 요금·운영시간은 업체 사정에 따라 바뀔 수 있어 방문 전 앱(아이파킹·모두의주차장)으로 확인을 권합니다."
+}

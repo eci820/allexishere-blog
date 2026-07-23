@@ -4,6 +4,7 @@ description: "대구삼성라이온즈파크 경기일 전설로주차장 요금
 pubDate: 2026-07-21T20:32:39+09:00
 category: info
 tags: ["대구삼성라이온즈파크", "전설로주차장", "대구 야구장 주차", "삼성라이온즈", "야구장 주차 요금"]
+parkingCompare: "daegu-samsung"
 draft: false
 ---
 

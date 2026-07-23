@@ -29,6 +29,14 @@ export const PARKING_TOOLS = [
   { facility: '고양종합운동장', slug: '96', tool: 'calc',    data: 'src/data/parking/goyang-stadium.json',   source: '고양도시관리공사 gys.or.kr (2026-06)' },
   { facility: '코엑스',        slug: '76', tool: 'compare', data: 'src/data/parking-compare/coex.json',      source: '본문 게재 수치(이관글) — 현장 확인 우선' },
   { facility: 'SETEC',        slug: '81', tool: 'compare', data: 'src/data/parking-compare/setec.json',     source: '본문 게재 수치(이관글) — 현장 확인 우선' },
+  // C 비교표 확산 2차(2026-07-23 승인). 전부 '본문 게재 수치만' 재배치 — 현장 확인 우선.
+  { facility: '서울월드컵경기장', slug: '서울월드컵경기장-근처-주차장-요금위치혼잡-대비-정리-2026', tool: 'compare', data: 'src/data/parking-compare/worldcup.json',      source: '본문 게재 수치 — 현장 확인 우선' },
+  { facility: '벡스코',        slug: '벡스코-근처-주차장-입구-위치혼잡-시간대대체-주차-정리-2026',       tool: 'compare', data: 'src/data/parking-compare/bexco.json',         source: '본문 게재 수치 — 벡스코 공식·현장 안내 우선' },
+  { facility: '대구삼성라이온즈파크', slug: '대구삼성라이온즈파크-경기일-주차-요금혼잡대체-주차-비교2026',  tool: 'compare', data: 'src/data/parking-compare/daegu-samsung.json', source: '본문 게재 수치(블로그·기사 기준) — 구단 공식 아님, 현장 확인 우선' },
+  { facility: '고척스카이돔',   slug: '95', tool: 'compare', data: 'src/data/parking-compare/gocheok.json',       source: '본문 게재 수치 — 경기·공연일 돔 통대관, 앱 확인 우선' },
+  // 🔴 잠실종합운동장: 부설주차장이 잠실야구장(A 계산기)과 같은 곳. 도구 유형이 달라(요금계산 vs 대안비교)
+  //    사용자 승인으로 허용. 부설 행 요금(선불 소형6,000·대형12,000)은 잠실 계산기 값과 일치 유지.
+  { facility: '잠실종합운동장', slug: '잠실종합운동장-근처-주차장-요금위치만차-대비-가이드-2026', tool: 'compare', data: 'src/data/parking-compare/jamsil-complex.json', source: '본문 게재 수치 — 부설 요금은 잠실 계산기(jamsil-baseball.json)와 일치' },
 ];
 
 const norm = (s) => String(s || '').trim().toLowerCase();

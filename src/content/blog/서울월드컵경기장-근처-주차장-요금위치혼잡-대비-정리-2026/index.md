@@ -4,6 +4,7 @@ description: "서울월드컵경기장 내부 주차장 위치와 요금, 혼잡
 pubDate: 2026-07-22T11:25:48+09:00
 category: info
 tags: ["서울월드컵경기장주차장", "상암주차장", "서울월드컵경기장주차요금", "월드컵경기장근처주차장", "난지천공원주차장"]
+parkingCompare: "worldcup"
 draft: false
 ---
 

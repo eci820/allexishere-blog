@@ -4,6 +4,7 @@ description: "벡스코 근처 주차장의 입구 위치, 혼잡·만차가 잦
 pubDate: 2026-07-23T01:46:31+09:00
 category: info
 tags: ["벡스코 주차장", "벡스코 근처 주차장", "벡스코역 주차장", "부산 전시장 주차", "벡스코 만차"]
+parkingCompare: "bexco"
 draft: false
 ---
 
