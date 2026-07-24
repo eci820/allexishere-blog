@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-24T12:28:14.112Z",
+  "updatedAt": "2026-07-24T12:44:12.168Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3080,8 +3080,8 @@
       "tier": "evergreen",
       "series": "life",
       "angle": "나이·가입시기별 보험료·보장 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "치아보험-가입조건-나이고지의무면책기간-한눈에-정리-2026",
       "addedAt": "2026-07-24T01:01:19.425Z",
       "lastProposedAt": "2026-07-24T01:01:20.696Z",
       "metrics": {
