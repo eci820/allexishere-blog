@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-24T01:38:08.542Z",
+  "updatedAt": "2026-07-24T12:28:14.112Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3062,8 +3062,8 @@
       "tier": "science",
       "series": "life",
       "angle": "얼음 위생 리스크로 렌탈 여부 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "제빙기-정수기-위생-비교-원인전기요금관리-가이드-2026",
       "addedAt": "2026-07-24T01:01:19.425Z",
       "lastProposedAt": "2026-07-24T01:01:20.695Z",
       "metrics": {
