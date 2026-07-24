@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-23T06:20:17.389Z",
+  "updatedAt": "2026-07-24T01:38:08.542Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3036,6 +3036,96 @@
         "ratio": 0.027,
         "stars": 5,
         "ts": 1784782571968
+      }
+    },
+    {
+      "id": "ttvy6w9",
+      "keyword": "로봇청소기 배터리 교체비용",
+      "tier": "science",
+      "series": "life",
+      "angle": "배터리 수명·교체비로 재구매 시기 판단",
+      "status": "published",
+      "slug": "로봇청소기-배터리-교체비용-시세교체-시기셀프-vs-센터-비교-2026",
+      "addedAt": "2026-07-24T01:01:19.425Z",
+      "lastProposedAt": "2026-07-24T01:01:20.695Z",
+      "metrics": {
+        "vol": 25,
+        "doc": 97197,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1784854879423
+      }
+    },
+    {
+      "id": "tex6yh9",
+      "keyword": "제빙기 정수기 위생 비교",
+      "tier": "science",
+      "series": "life",
+      "angle": "얼음 위생 리스크로 렌탈 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-24T01:01:19.425Z",
+      "lastProposedAt": "2026-07-24T01:01:20.695Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 2270,
+        "ratio": 0.004,
+        "stars": 5,
+        "ts": 1784854879423
+      }
+    },
+    {
+      "id": "tptk2qv",
+      "keyword": "치아보험 가입조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "나이·가입시기별 보험료·보장 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-24T01:01:19.425Z",
+      "lastProposedAt": "2026-07-24T01:01:20.696Z",
+      "metrics": {
+        "vol": 820,
+        "doc": 40315,
+        "ratio": 0.02,
+        "stars": 5,
+        "ts": 1784854879423
+      }
+    },
+    {
+      "id": "tf2q78d",
+      "keyword": "어린이보험 필요성",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "실손 중복 여부로 가입 필요성 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-24T01:01:19.425Z",
+      "lastProposedAt": "2026-07-24T01:01:20.697Z",
+      "metrics": {
+        "vol": 15,
+        "doc": 49858,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1784854879423
+      }
+    },
+    {
+      "id": "ttqgka5",
+      "keyword": "화재보험 가입조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "주택유형별 보험료·보장 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-24T01:01:19.425Z",
+      "lastProposedAt": "2026-07-24T01:01:20.697Z",
+      "metrics": {
+        "vol": 20,
+        "doc": 93539,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1784854879423
       }
     }
   ]
