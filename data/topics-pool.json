@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-25T06:58:09.169Z",
+  "updatedAt": "2026-07-25T07:11:17.524Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3263,7 +3263,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3275,7 +3275,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3287,7 +3287,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3299,7 +3299,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3311,7 +3311,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3323,7 +3323,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-25T06:52:07.071Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
     },
     {
@@ -3349,6 +3349,78 @@
       "addedAt": "2026-07-25T06:52:07.071Z",
       "lastProposedAt": null,
       "metrics": null
+    },
+    {
+      "id": "tpuegvo",
+      "keyword": "비타민K2 MK7 효과",
+      "tier": "health",
+      "series": "B",
+      "angle": "칼슘제 병용 필요성으로 추가구매 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T07:05:53.774Z",
+      "lastProposedAt": "2026-07-25T07:05:54.925Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 710,
+        "ratio": 0.014,
+        "stars": 5,
+        "ts": 1784963153772
+      }
+    },
+    {
+      "id": "teu5ry5",
+      "keyword": "수면무호흡증 치료비용",
+      "tier": "health",
+      "series": "D",
+      "angle": "양압기 구입·렌탈 비용 비교로 치료법 선택",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T07:05:53.774Z",
+      "lastProposedAt": "2026-07-25T07:05:54.925Z",
+      "metrics": {
+        "vol": 70,
+        "doc": 26061,
+        "ratio": 0.003,
+        "stars": 5,
+        "ts": 1784963153772
+      }
+    },
+    {
+      "id": "tgcs6is",
+      "keyword": "멜라토닌 복용시기",
+      "tier": "health",
+      "series": "D",
+      "angle": "시차·불면 상황별 복용 타이밍 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T07:05:53.774Z",
+      "lastProposedAt": "2026-07-25T07:05:54.925Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 9879,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784963153772
+      }
+    },
+    {
+      "id": "ttclr0s",
+      "keyword": "자동차 정기검사 과태료",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "검사 지연 시 과태료·검사비용으로 시기 판단",
+      "status": "published",
+      "slug": "자동차-정기검사-과태료-금액조회-방법감경-조건-정리-2026",
+      "addedAt": "2026-07-25T07:05:53.774Z",
+      "lastProposedAt": "2026-07-25T07:05:54.926Z",
+      "metrics": {
+        "vol": 1530,
+        "doc": 52051,
+        "ratio": 0.029,
+        "stars": 4,
+        "ts": 1784963153772
+      }
     }
   ]
 }
