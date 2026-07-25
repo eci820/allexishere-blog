@@ -71,8 +71,10 @@ export async function runBriefing({ chatId, config } = {}) {
     console.error('[briefing] 재고 보충 실패:', e.message);
   }
 
-  // 1) 캘린더 레이더(D-14~D-3, 최대 2)
-  const cal = calendarRadar(2).filter((c) => !exclude.has(c.keyword));
+  // 1) 캘린더 레이더(D-14~D-3, 최대 config.calendarCount — 기본 2)
+  //    🔴 배분 인자는 config 한 곳에서만 조정한다. 하드코딩 2 였던 시절, briefingCount 만
+  //    낮춰도 캘린더가 줄지 않아 '총수를 줄였는데 안 줄어드는' 오해가 실제로 났다.
+  const cal = calendarRadar(config.calendarCount ?? 2).filter((c) => !exclude.has(c.keyword));
   for (const c of cal) exclude.add(c.keyword); // 주차/에버그린과 중복 방지
 
   // 1.5) 🅿️ 주차 슬롯(v2.8 상시·모디파이어) — 재고 주입 후 오늘치 '최대 count'개 픽(있는 만큼만).
