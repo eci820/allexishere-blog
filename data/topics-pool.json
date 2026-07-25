@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-24T12:44:12.168Z",
+  "updatedAt": "2026-07-25T03:12:57.964Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3126,6 +3126,132 @@
         "ratio": 0,
         "stars": 5,
         "ts": 1784854879423
+      }
+    },
+    {
+      "id": "tn3ayu1",
+      "keyword": "유방초음파 검진주기",
+      "tier": "health",
+      "series": "A",
+      "angle": "국가검진 미포함 비급여 비용과 주기 판단",
+      "status": "published",
+      "slug": "유방초음파-검진주기-권장-기준대상별-차이재검-시기-안내-2026",
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.627Z",
+      "metrics": {
+        "vol": 15,
+        "doc": 18007,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "tjv436c",
+      "keyword": "체외충격파 실손적용",
+      "tier": "health",
+      "series": "A",
+      "angle": "비급여 시술 실비 청구 가능 조건 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.627Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 12899,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "trdzwv0",
+      "keyword": "밀크씨슬 효과 부작용",
+      "tier": "health",
+      "series": "B",
+      "angle": "간영양제 필요성과 복용 지속기간 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.627Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 18362,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "tjltuks",
+      "keyword": "코엔자임Q10 복용시기",
+      "tier": "health",
+      "series": "B",
+      "angle": "스타틴 복용자 병용 필요성과 비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.627Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 18726,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "tkhra9i",
+      "keyword": "펫보험 가입시기",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "노령견 가입 거절 리스크와 보험료 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.628Z",
+      "metrics": {
+        "vol": 35,
+        "doc": 3066,
+        "ratio": 0.011,
+        "stars": 5,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "ts424aa",
+      "keyword": "간병보험 필요성",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "실손 미보장 간병비와 보험료 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.629Z",
+      "metrics": {
+        "vol": 80,
+        "doc": 23076,
+        "ratio": 0.003,
+        "stars": 4,
+        "ts": 1784941291490
+      }
+    },
+    {
+      "id": "tz2lm55",
+      "keyword": "증여세 면제한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "가족간 증여 시기별 공제한도 활용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T01:01:31.492Z",
+      "lastProposedAt": "2026-07-25T01:01:32.629Z",
+      "metrics": {
+        "vol": 15700,
+        "doc": 48430,
+        "ratio": 0.324,
+        "stars": 5,
+        "ts": 1784941291490
       }
     }
   ]
