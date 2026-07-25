@@ -8,7 +8,7 @@
   "_captureTimeoutNote": "📷 현장 캡처 초안 생성 전용 타임아웃(초). 사진이 붙으면 프롬프트·출력이 길어져 일반 초안보다 오래 걸린다(실측: 텍스트만 149초 / 사진 1장 212초). 240초로는 사진 포함 생성이 SIGTERM(코드143)으로 죽었다 — 파일럿3 사고. 사진을 여러 장 붙일수록 늘어나므로 여유 있게 600.",
   "model": "claude-sonnet-5",
   "briefingCount": 4,
-  "_briefingCountNote": "하루 제안 12 = 🅿️주차 3 + 나머지 9(신규 7 + 📂갱신 2). 🔥실검은 폐지(tierCounts.trend=0). 신규 7 = 🔬과학2+💪건강2+🌲에버그린1+📅캘린더2. 갱신이 2개 미만인 날은 부족분을 신규(🔬·💪)로 메워 항상 12를 맞춘다.",
+  "_briefingCountNote": "🔴 이 값은 '하루 제안 총수'가 아니다 — 신규 계급 배분만 줄인다. briefing.mjs:106-107 이 need = briefingCount - 주차 - 갱신 - 캘린더 로 계산하고, 🅿️주차(parkingSlots.count=최대5)·📅캘린더(calendarRadar 인자 2 하드코딩)·📂갱신(updateCount=2)은 이 값과 무관하게 먼저 확정된다. 최종 ordered(149행)는 이 값으로 slice 되지 않는다. 그래서 현재 4 에서 실제 제안은 약 9개(🅿️5+📅2+📂2)이고 need=max(0,4-5-2-2)=0 이라 🔬과학·💪건강·🌲에버그린 신규 제안이 0개다(tierCounts 는 무시됨, 🔥실검은 별도로 폐지 trend=0). 신규가 0이면 재고(topics-pool)가 소비되지 않고 replenish 만 계속 채운다. 제안을 진짜 4개로 맞추려면 parkingSlots.count·updateCount·calendarRadar 인자까지 함께 줄여야 한다(미조정 — 주차 주력 비중 영향이 커서 보류). 되돌리기: 12 로 → 🅿️주차5+📅2+📂2+신규3 구조 복원(신규 배분은 tierCounts 비율대로).",
   "tierCounts": { "trend": 0, "science": 2, "health": 2, "evergreen": 1 },
   "_tierCountsNote": "🔥trend=0 → 실검 계급 폐지(GSC/네이버 실측상 노출만 나오고 클릭 0). 0이면 실시간 검색어 수집(collectTrend) 자체를 건너뛴다. 2로 되돌리면 즉시 부활 — 코드는 그대로 살아있다. 🌲에버그린 1 = 재고 pending이 가장 얕음(과학11·건강18).",
   "updateCount": 2,
