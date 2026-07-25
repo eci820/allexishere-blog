@@ -1,6 +1,7 @@
 ---
 title: "미스트롯4 시기, 심사위원, 출연자 총 정리"
 pubDate: 2025-08-03T21:43:28+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "미스트롯4 시기, 심사위원, 출연자 총 정리"

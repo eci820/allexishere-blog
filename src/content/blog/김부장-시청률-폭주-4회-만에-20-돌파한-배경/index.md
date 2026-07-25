@@ -2,6 +2,7 @@
 title: "김부장 시청률 폭주, 4회 만에 20% 돌파한 배경"
 description: "SBS 드라마 '김부장' 시청률 추이와 넷플릭스 글로벌 흥행 현황, 흥행 요인을 한눈에 정리했습니다."
 pubDate: 2026-07-05T14:51:40+09:00
+noindex: true
 category: info
 tags: ["김부장", "김부장 시청률", "소지섭", "SBS 드라마", "넷플릭스 순위"]
 draft: false
