@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-25T03:12:57.964Z",
+  "updatedAt": "2026-07-25T05:33:28.179Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3152,8 +3152,8 @@
       "tier": "health",
       "series": "A",
       "angle": "비급여 시술 실비 청구 가능 조건 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "체외충격파-실손적용-횟수적용-부위자기부담금-가이드-2026",
       "addedAt": "2026-07-25T01:01:31.492Z",
       "lastProposedAt": "2026-07-25T01:01:32.627Z",
       "metrics": {
