@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-25T05:33:28.179Z",
+  "updatedAt": "2026-07-25T06:52:07.104Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3253,6 +3253,102 @@
         "stars": 5,
         "ts": 1784941291490
       }
+    },
+    {
+      "id": "t41w47l",
+      "keyword": "주차 과태료 범칙금 차이",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "과태료 vs 범칙금 금액·부과 기준 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "txggkz2",
+      "keyword": "불법주차 견인 비용",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "견인료·보관료·차 찾는 절차 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tqlkurb",
+      "keyword": "경차 장애인 친환경차 주차 감면",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "대상별 주차요금 감면율 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tm69m05",
+      "keyword": "월주차 일일주차 손익분기",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "월주차 vs 일일주차 손익분기 계산",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tex2xlm",
+      "keyword": "공항 장기주차 비용 비교",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "장기주차 vs 발렛 vs 외부 비용 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tb5eq9o",
+      "keyword": "주차 예약앱 비교",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "예약앱별 수수료·기능 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t9hijtz",
+      "keyword": "아파트 EV 충전구역 과태료",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "EV 충전구역 불법주차 과태료 규정 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t5d0u7e",
+      "keyword": "전기차 충전방해 과태료",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "충전 방해 행위 신고 방법·과태료 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-25T06:52:07.071Z",
+      "lastProposedAt": null,
+      "metrics": null
     }
   ]
 }
