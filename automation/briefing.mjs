@@ -85,15 +85,19 @@ export async function runBriefing({ chatId, config } = {}) {
   if (pState.active) {
     try {
       seedParkingTopics(config); // v2.8: base 은퇴 + 모디파이어 주입(멱등). 발행글 강매칭분 자동 제외
-      const { loadPool } = await import('./lib/topicsPool.mjs');
+      const { loadPool, eligibleCount } = await import('./lib/topicsPool.mjs');
       const pool = loadPool();
       parking = pickParking(pool, pState.count, exclude);
       for (const p of parking) exclude.add(p.keyword);
-      // 재고 부족 알림: 미발행 주차 주제가 임계 미만이면 텔레그램으로 새 시설 추가 요청
+      // 재고 부족 알림 — 🔴 pending 이 아니라 '제안 가능(eligible)' 수를 봐야 한다.
+      // pickForBrief 는 30일 제안 쿨다운으로 한 번 더 걸러내므로 pending 이 많아도 0개가 나올 수 있다.
+      // 실측(2026-07-25): pending 33 / 제안가능 0 인데 임계 10 을 넘어 알림이 침묵했고,
+      // 주력인 주차가 3주간 조용히 0개로 나오는 상태를 아무도 몰랐다. 두 숫자를 함께 알린다.
       const threshold = config.parkingSlots?.lowStockThreshold ?? 10;
-      const stock = parkingStock(loadPool());
-      if (chatId && stock < threshold) {
-        await sendMessage(chatId, `🔔 주차 재고 부족 — 미발행 주차 주제 ${stock}개(임계 ${threshold}). lib/parking.mjs PARKING_TOPICS 에 새 시설을 추가하세요.`);
+      const fresh = eligibleCount(pool, 'parking');
+      const stock = parkingStock(pool);
+      if (chatId && fresh < threshold) {
+        await sendMessage(chatId, `🔔 주차 재고 부족 — 제안 가능 ${fresh}개(전체 pending ${stock}개, 임계 ${threshold}).${stock > fresh ? ` 차이 ${stock - fresh}개는 30일 제안 쿨다운 중입니다.` : ''}\nlib/parking.mjs PARKING_TOPICS 에 새 시설을 추가하세요.`);
       }
     } catch (e) { console.error('[briefing] 주차 슬롯 실패:', e.message); }
   }

@@ -10,8 +10,13 @@ import { subscriptionEnv } from './claudeCli.mjs';
 
 const execFileP = promisify(execFile);
 
-const REPLENISH_PROMPT = (existing) =>
+const REPLENISH_PROMPT = (existing, evergreenFloor) =>
   `당신은 한국어 정보 블로그의 '주제 재고 기획자'입니다. 아래 조건으로 새 블로그 주제 20개를 제안하세요.
+
+[🔴 계급 쿼터 — 반드시 지킬 것]
+- evergreen 계급을 **최소 ${evergreenFloor}개** 포함하세요. 나머지는 아래 우선순위대로 자유롭게.
+- 이유: 🅿️주차 슬롯이 마르는 날 브리핑 부족분이 전부 evergreen 백필로 흘러가 하루 3~6개씩
+  소비된다. evergreen 이 마르면 브리핑 카드 수 자체가 붕괴한다(실측 2026-07-25).
 
 [콘텐츠 도그마 — 필수]
 - "원리를 설명하고, 돈이 드는 실생활 판단(선택·비용·시기)으로 연결"되는 주제만. 단순 나열·가십·인물·시사 금지.
@@ -42,11 +47,16 @@ function parseArr(text) {
 }
 
 // pending 이 threshold 미만이면 want 개 보충. 반환: {added, skipped, note} 또는 null(보충 불필요/실패).
-export async function replenishIfLow(config, { threshold = 30, want = 20 } = {}) {
+export async function replenishIfLow(config, { threshold = 30, want = 20, evergreenFloor = 8 } = {}) {
   const pool = loadPool();
   if (!pool) return null;
   // 신선(제안 가능) 재고가 임계 미만이면 보충 — 총 pending이 아직 많아도 쿨다운으로 마르는 걸 방지.
-  if (eligibleCount(pool) >= threshold) return null;
+  // 🔴 계급별 판정도 함께 본다: 총합이 임계를 넘어도 evergreen 만 마르면 브리핑이 붕괴한다.
+  //    (주차 슬롯이 빌 때 부족분 백필이 전부 evergreen 에서 나가기 때문 — briefing.mjs §2.5)
+  //    호출은 브리핑당 1회뿐이라 이 조건을 추가해도 LLM 호출은 여전히 최대 하루 1회다.
+  const lowTotal = eligibleCount(pool) < threshold;
+  const lowEver = eligibleCount(pool, 'evergreen') < evergreenFloor;
+  if (!lowTotal && !lowEver) return null;
 
   // 중복 금지 목록: 현재 재고 전체 + 발행글 제목(대표어)
   const existing = [
@@ -56,7 +66,7 @@ export async function replenishIfLow(config, { threshold = 30, want = 20 } = {})
 
   let raw;
   try {
-    const args = ['-p', REPLENISH_PROMPT(existing), '--output-format', 'json'];
+    const args = ['-p', REPLENISH_PROMPT(existing, evergreenFloor), '--output-format', 'json'];
     if (config.cliModel) args.push('--model', config.cliModel);
     const { stdout } = await execFileP('claude', args, {
       cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv(),
@@ -94,12 +104,22 @@ export async function replenishIfLow(config, { threshold = 30, want = 20 } = {})
   });
 
   const skipped = prepared.filter((p) => p.status === 'skipped').length;
+  // 쿼터 준수 검증은 산수로 한다(LLM 재검증 없음). 프롬프트 하한은 '요청'이지 '보장'이 아니므로
+  // 실제로 몇 개가 pending 으로 들어갔는지 계급별로 세어 리포트에 드러낸다 — 조용히 어기는 것만 막는다.
+  const everBefore = eligibleCount(pool, 'evergreen');
   const added = addTopics(pool, prepared);
   savePool(pool);
+  const everAdded = eligibleCount(pool, 'evergreen') - everBefore;
   const pendingAdded = added - skipped;
+  const quotaWarn = lowEver && everAdded < evergreenFloor
+    ? `\n⚠️ evergreen 쿼터 미달 — 하한 ${evergreenFloor}개 요청했으나 ${everAdded}개만 확보(중복 제외·★2미만 보류 영향). 다음 실행에서 재시도되며, 반복되면 프롬프트 하한을 올리거나 시드를 수기 추가하세요.`
+    : '';
   return {
     added,
     skipped,
-    note: added ? `📥 주제 재고 ${pendingAdded}개 보충됨${skipped ? ` (★2미만 ${skipped}개 보류)` : ''} · 현재 pending ${pendingCount(loadPool())}개` : '재고 보충: 새 주제 없음',
+    everAdded,
+    note: added
+      ? `📥 주제 재고 ${pendingAdded}개 보충됨(🌲evergreen ${everAdded}개)${skipped ? ` (★2미만 ${skipped}개 보류)` : ''} · 현재 pending ${pendingCount(loadPool())}개${quotaWarn}`
+      : `재고 보충: 새 주제 없음${quotaWarn}`,
   };
 }
