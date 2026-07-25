@@ -1,6 +1,7 @@
 ---
 title: "SKT 유출 조회 서비스 이용 방법과 주의사항"
 pubDate: 2025-08-03T19:22:05+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "SKT 유출 조회 서비스 이용 방법과 주의사항"

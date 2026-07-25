@@ -1,6 +1,7 @@
 ---
 title: "SKT 개인정보 유출 소송 방법"
 pubDate: 2025-08-03T21:00:52+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "SKT 개인정보 유출 소송 방법"
