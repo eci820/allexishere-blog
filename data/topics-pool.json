@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-25T07:11:17.524Z",
+  "updatedAt": "2026-07-25T09:01:16.780Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3260,8 +3260,8 @@
       "tier": "evergreen",
       "series": "parking",
       "angle": "과태료 vs 범칙금 뭐가 다른지·금액 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "주차-과태료-범칙금-차이-부과-대상벌점감경-기준-비교-2026",
       "addedAt": "2026-07-25T06:52:07.071Z",
       "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null
@@ -3272,8 +3272,8 @@
       "tier": "evergreen",
       "series": "parking",
       "angle": "견인료·보관료·차 찾는 절차 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "불법주차-견인-비용-얼마보관료-계산과태료-별도-안내-2026",
       "addedAt": "2026-07-25T06:52:07.071Z",
       "lastProposedAt": "2026-07-25T07:05:54.927Z",
       "metrics": null

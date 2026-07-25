@@ -12,7 +12,7 @@ import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { subscriptionEnv } from './lib/claudeCli.mjs';
-import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk } from './lib/titleRules.mjs';
+import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk, distinctive } from './lib/titleRules.mjs';
 import { facilityFromTitle, insertMapLink } from './lib/mapLink.mjs';
 
 const execFileP = promisify(execFile);
@@ -539,6 +539,10 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   //    세 경로(브리핑·수동·캡처)가 전부 이 카드를 쓰므로 여기가 맞는 자리다.
   const isParking = /주차/.test(title) || opts.source === 'parking';
   const parkingDedupBad = isParking && !parkingDedupOk(title);
+  // 🅿️ 구별 토큰이 하나도 없으면 matchLive 의 subject 모드가 이 글을 '대상 없음'으로 보고
+  //    중복 판정을 아예 못 한다(fail-open). 2자 지명(예: 가락·수유)이 REGION 사전에 없을 때
+  //    이렇게 되는데, 조용히 방어가 사라지므로 사람이 알 수 있게 경고한다.
+  const noSubject = isParking && distinctive(title).length === 0;
   const msg =
     `📝 ${title}\n` +
     (opts.context ? `🧭 ${opts.context}\n` : '') +
@@ -559,6 +563,10 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
       ? `⚠️ 제목에 '주차'가 독립 단어로 없습니다 — 발행해도 브리핑이 같은 시설을 또 제안합니다\n` +
         `   → '주차요금'처럼 붙이지 말고 띄우세요. [✏️수정]으로 "제목: ..." 입력\n` +
         `   예) "○○ 주차요금·위치·만차 가이드" → "○○ 주차 요금·위치·만차 가이드"\n`
+      : '') +
+    (noSubject
+      ? `⚠️ 제목에 '구별 토큰'이 없습니다 — 중복 방어(subject 판정)가 이 글엔 작동하지 않습니다\n` +
+        `   → 2자 지명이면 lib/titleRules.mjs 의 REGION 에 추가하세요(광역지명 금지)\n`
       : '') +
     (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
     (opts.note ? `${opts.note}\n` : '') +
