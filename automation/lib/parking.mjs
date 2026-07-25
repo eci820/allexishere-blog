@@ -4,7 +4,7 @@
 //  · 재고(topics-pool.json)에 tier='parking' 으로 주입 → 기존 3중 방어를 그대로 탄다:
 //    ① matchLive 발행글 강매칭 ② status(pending/published/skipped) ③ 30일 제안 쿨다운.
 //  · config.parkingSlots.until 이 지나면 자동 비활성(원복). briefing.mjs 가 판정.
-import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, matchLive } from './topicsPool.mjs';
+import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, liveDupe } from './topicsPool.mjs';
 
 // 배열 순서 = 우선순위. pickForBrief 는 별점(미측정=0) → lastProposedAt 오름차순으로
 // 정렬하므로, 지표가 없는 초기에는 이 삽입 순서가 사실상 제안 순서가 된다.
@@ -79,8 +79,8 @@ const facilityName = (t) => t.keyword.replace(/ 주차$/, '');
 
 // 결정1/3: 이 시설의 종합 가이드가 이미 발행됐나(= base "○○ 주차"가 발행글과 강매칭 score≥2).
 export function isComprehensivelyPublished(name) {
-  const m = matchLive(`${name} 주차`);
-  return !!(m && m.score >= 2);
+  // 🅿️ 주차 계급이므로 subject 모드(구별 토큰 1개 겹침) — 임계까지 liveDupe 가 맞춰준다.
+  return !!liveDupe(`${name} 주차`, 'parking');
 }
 
 // M1 '○○ 주차요금' 키워드에서 시설명 추출(계산기 결합 판정용). M1 아니면 null.

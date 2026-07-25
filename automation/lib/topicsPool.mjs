@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './env.mjs';
 import { STOP } from './topics.mjs';
+import { distinctive, ALIAS } from './titleRules.mjs';
 
 const DB = path.join(ROOT, 'data', 'topics-pool.json');
 const DAY = 24 * 3600 * 1000;
@@ -201,15 +202,53 @@ export function invalidateLive() {
 }
 
 // 키워드가 발행글과 얼마나 겹치나 → 가장 겹치는 글 {slug,title,score} 또는 null
-export function matchLive(keyword) {
-  const kw = tokens(keyword);
+//
+// mode:
+//  · 'token'(기본) — 기존 규칙. 전체 토큰 겹침 수. 호출부 임계는 score>=2.
+//  · 'subject'     — 🅿️ 주차 계급 전용. 수식어를 걷어낸 '구별 토큰' 겹침 수.
+//                    호출부 임계는 score>=1. 반환 score 의 의미가 다르므로 반드시 짝을 맞춘다.
+//
+// 🔴 왜 주차 계급에만 쓰는가: 'subject' 는 임계 1이라 도메인 일반어 하나만 겹쳐도 차단된다.
+//    MODIFIER 는 주차 어휘 전용이어서 비주차 계급의 '전기요금'·'건강보험'·'비급여' 같은
+//    일반어를 못 걸러낸다. 전 계급에 적용하면 오탐이 난다(실측: science 5·health 5·
+//    evergreen 6개가 무관한 글에 차단됐다). 그래서 계급을 한정한다.
+export function matchLive(keyword, { mode = 'token' } = {}) {
+  const subject = mode === 'subject';
+  const kw = subject ? distinctive(keyword) : tokens(keyword);
   if (!kw.length) return null;
   let best = null;
   for (const p of liveIndex()) {
-    const score = kw.filter((w) => p.toks.has(w)).length;
-    if (score > 0 && (!best || score > best.score)) best = { slug: p.slug, title: p.title, score };
+    // subject 모드는 발행글 토큰도 별칭 정규화해서 비교한다(세텍 ↔ SETEC).
+    const toks = subject ? aliasNorm(p) : p.toks;
+    const hits = kw.filter((w) => toks.has(w));
+    if (hits.length && (!best || hits.length > best.score)) {
+      best = { slug: p.slug, title: p.title, score: hits.length, on: hits };
+    }
   }
   return best;
+}
+
+// 계급별 중복 판정 — 🔴 mode 와 임계는 '짝'이다. 따로 적으면 반드시 어긋난다.
+//   (subject 모드에 임계 2를 쓰면 '킨텍스 주차요금'이 구별 토큰 1개라 통과해버리고,
+//    token 모드에 임계 1을 쓰면 '주차' 하나로 전부 차단된다)
+//   그래서 여기 한 곳에서만 정하고, 호출부는 이 함수만 쓴다.
+//   🅿️ parking → subject + 임계 1 / 그 외 계급 → token + 임계 2(기존 규칙 그대로)
+export function liveDupe(keyword, tier) {
+  const subject = tier === 'parking';
+  const m = matchLive(keyword, { mode: subject ? 'subject' : 'token' });
+  return m && m.score >= (subject ? 1 : 2) ? m : null;
+}
+
+// 발행글 토큰의 별칭 정규화 결과를 글마다 한 번만 계산해 재사용한다(브리핑 1회에
+// 수백 번 호출되므로 매번 만들면 낭비). liveIndex 캐시가 버려지면 함께 사라진다.
+function aliasNorm(p) {
+  if (!p._alias) {
+    p._alias = new Set([...p.toks].map((w) => {
+      const l = String(w).toLowerCase();
+      return ALIAS.get(l) || l;
+    }));
+  }
+  return p._alias;
 }
 
 // ── 3중 방어로 브리핑 후보 픽 ──
@@ -230,9 +269,9 @@ export function pickForBrief(pool, tier, count, extraExclude = new Set()) {
     if (extraExclude.has(t.keyword)) continue;
     // ③ 제안 쿨다운
     if (t.lastProposedAt && now - Date.parse(t.lastProposedAt) < PROPOSE_COOLDOWN) continue;
-    // ① 발행글 강매칭 → 소진 처리(published) 후 제외
-    const m = matchLive(t.keyword);
-    if (m && m.score >= 2) {
+    // ① 발행글 강매칭 → 소진 처리(published) 후 제외. 계급별 판정은 liveDupe 가 정한다.
+    const m = liveDupe(t.keyword, t.tier);
+    if (m) {
       t.status = 'published'; t.slug = m.slug; t.publishedNote = 'live-match'; dirty = true;
       continue;
     }
@@ -328,8 +367,9 @@ export function addTopics(pool, items) {
   let added = 0;
   for (const it of items) {
     if (!it.keyword || have.has(it.keyword)) continue;
-    const lm = matchLive(it.keyword);
-    if (lm && lm.score >= 2) continue; // 발행글과 '강매칭'(2토큰↑)일 때만 제외 — 단일 공통어 오탐 방지
+    // 발행글과 강매칭이면 제외. 🅿️ 주차는 구별 토큰 1개, 그 외는 기존 2토큰 규칙(liveDupe).
+    const lm = liveDupe(it.keyword, it.tier || 'evergreen');
+    if (lm) continue;
     pool.topics.push({
       id: topicId(it.keyword), keyword: it.keyword, tier: it.tier || 'evergreen',
       series: it.series || '', angle: it.angle || '', status: it.status || 'pending',

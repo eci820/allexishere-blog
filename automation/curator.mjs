@@ -36,6 +36,7 @@ import { runClaude, unwrapClaudeJSON } from './lib/claudeCli.mjs';
 import * as gsc from './lib/gsc.mjs';
 import { loadPool, liveIndex } from './lib/topicsPool.mjs';
 import { PARKING_TOPICS } from './lib/parking.mjs';
+import { MODIFIER, ALIAS } from './lib/titleRules.mjs';
 
 loadEnv();
 
@@ -178,14 +179,9 @@ function parseProposals(text) {
 // 수식어 — 시설명이 아니다. 이것만 겹치는 건 중복이 아니다.
 // 첫 판에서 '콘서트+주차', '대구+주차' 처럼 주차 글이면 흔히 겹치는 단어 2개로
 // 멀쩡한 새 시설(DGB대구은행파크)이 차단됐다. 시설명 단위로만 본다.
-const MODIFIER = new Set([
-  '주차', '주차장', '주차요금', '요금', '무료', '근처', '경기일', '콘서트', '공연', '행사',
-  '총정리', '가이드', '완벽', '얼마', '기준', '조건', '정리', '방법', '위치', '비교', '최신',
-  '할인', '팁', '꿀팁', '대안', '입구', '시간', '정산', '예약', '만차', '혼잡',
-]);
-// 표기 변형 — 한글↔영문 쌍. 발행글이 "학여울역 SETEC"인데 제안이 "세텍"이면
-// 토큰이 하나도 안 겹쳐 그냥은 못 잡는다.
-const ALIAS = new Map([['세텍', 'setec'], ['코엑스', 'coex'], ['디디피', 'ddp'], ['케이스포돔', 'kspo'], ['케이스포', 'kspo']]);
+// MODIFIER·ALIAS 는 lib/titleRules.mjs 에서 가져온다 — 원래 여기 따로 정의돼 있었는데,
+// matchLive 의 subject 모드가 같은 목록을 쓰게 되면서 정의가 두 곳이 됐다. 두 곳에 적으면
+// 반드시 어긋나고(SKILL.md §3), 어긋난 경고는 사람이 믿지 않게 되어 없느니만 못해진다.
 
 const facTokens = (s) => String(s || '')
   .toLowerCase()
