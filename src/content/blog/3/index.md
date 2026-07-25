@@ -1,6 +1,7 @@
 ---
 title: "부모님들 주목! 글로벌 전문가들이 말하는 우리 아이 미래 교육법"
 pubDate: 2025-07-06T19:25:50+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "부모님들 주목! 글로벌 전문가들이 말하는 우리 아이 미래 교육법"

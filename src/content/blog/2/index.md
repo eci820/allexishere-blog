@@ -1,6 +1,7 @@
 ---
 title: "[유망 사업] 이거 하면 돈 된다! 유망 직업·사업 아이템과 정부 정책 이야기"
 pubDate: 2025-07-06T18:51:45+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "[유망 사업] 이거 하면 돈 된다! 유망 직업·사업 아이템과 정부 정책 이야기"

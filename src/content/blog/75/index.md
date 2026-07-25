@@ -1,6 +1,7 @@
 ---
 title: "코엑스 서울팝콘페어(Seoul POPCON) 일정·티켓·프로그램 총정리"
 pubDate: 2025-08-15T20:28:49+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "코엑스 서울팝콘페어(Seoul POPCON) 일정·티켓·프로그램 총정리"

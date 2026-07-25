@@ -1,6 +1,7 @@
 ---
 title: "관세의 의미·역할·영향 분석"
 pubDate: 2025-07-12T13:51:45+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "관세의 의미·역할·영향 분석"

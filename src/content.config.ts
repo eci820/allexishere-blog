@@ -49,6 +49,9 @@ const blog = defineCollection({
       originalPath: z.string().optional(),
       /** 초안 여부. true 면 배포 빌드에서 제외 */
       draft: z.boolean().default(false),
+      /** 검색엔진 색인 제외. true 면 <meta robots="noindex, follow"> 출력 + sitemap·RSS 제외.
+       *  'follow' 는 유지해 링크 자산은 살립니다. 페이지는 삭제하지 않고 검색결과에서만 뺍니다. */
+      noindex: z.boolean().default(false),
       /** 실험 코호트 태그(검증용). 예: "2026-07-13_conditions_changed" */
       cohort: z.string().optional(),
       /** 🅿️ 주차요금 계산기 임베드. 값 = src/data/parking/*.json 의 facility 명(예: "잠실야구장").

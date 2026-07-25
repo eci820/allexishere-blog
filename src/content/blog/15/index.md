@@ -1,6 +1,7 @@
 ---
 title: "랜드로버 디스커버리 성능·가격·공간·트림 비교 분석"
 pubDate: 2025-07-08T10:02:25+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "랜드로버 디스커버리 성능·가격·공간·트림 비교 분석"

@@ -1,6 +1,7 @@
 ---
 title: "옥수수 요리 찜기 없이 맛있게 먹기"
 pubDate: 2025-07-08T08:19:47+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "옥수수 요리 찜기 없이 맛있게 먹기"

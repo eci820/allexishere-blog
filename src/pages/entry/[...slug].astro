@@ -73,6 +73,7 @@ const jsonLd = faqJsonLd ? [articleJsonLd, faqJsonLd] : articleJsonLd;
   publishedTime={post.data.pubDate.toISOString()}
   modifiedTime={(post.data.updatedDate ?? post.data.pubDate).toISOString()}
   jsonLd={jsonLd}
+  noindex={post.data.noindex}
 >
   <main id="top" class="mx-auto max-w-content px-5 py-10">
     <!-- 글 제목 (날짜는 화면에 표시하지 않음) -->

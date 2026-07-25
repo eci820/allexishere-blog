@@ -1,6 +1,7 @@
 ---
 title: "한국인 없는 동남아는 어디?"
 pubDate: 2025-07-08T01:00:30+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "한국인 없는 동남아는 어디?"

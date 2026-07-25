@@ -1,6 +1,7 @@
 ---
 title: "아우디 A6 가격·성능·특징 정리"
 pubDate: 2025-07-12T23:38:44+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "아우디 A6 가격·성능·특징 정리"

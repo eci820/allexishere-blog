@@ -14,7 +14,9 @@ export async function GET(context: APIContext) {
     title: `${SITE.title} - ${SITE.tagline}`,
     description: SITE.description,
     site,
-    items: posts.map((post) => ({
+    // noindex:true 글은 sitemap 과 동일하게 RSS 에서도 제외(색인·배포 신호 일관성).
+    // 페이지 자체는 살아 있고 사이트 내부 링크로는 계속 접근됩니다.
+    items: posts.filter((post) => !post.data.noindex).map((post) => ({
       title: post.data.title,
       description: post.data.description?.trim() || makeExcerpt(post.body ?? ''),
       pubDate: post.data.pubDate,

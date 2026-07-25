@@ -1,6 +1,7 @@
 ---
 title: "항공권 예약·예매·할인·가격비교, 싸게 구입하는 사이트·방법"
 pubDate: 2025-08-11T23:06:13+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "항공권 예약·예매·할인·가격비교, 싸게 구입하는 사이트·방법"

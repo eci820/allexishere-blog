@@ -1,6 +1,7 @@
 ---
 title: "숙박세일 페스타 할인·쿠폰·혜택 방법 정리 (야놀자·여기어때·네이버여행 등)"
 pubDate: 2025-08-23T21:22:39+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "숙박세일 페스타 할인·쿠폰·혜택 방법 정리 (야놀자·여기어때·네이버여행 등)"

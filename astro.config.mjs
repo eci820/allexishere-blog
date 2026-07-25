@@ -41,6 +41,33 @@ function sveltiaDevAdmin() {
   };
 }
 
+// noindex:true 인 글의 URL 경로 집합. sitemap·RSS 에서 제외해 'noindex' 와 '목록 포함'의
+// 상충 신호를 막습니다. getPostUrl 과 같은 규칙(originalPath 우선, 없으면 /entry/{폴더명}).
+function noindexPaths() {
+  const base = new URL('./src/content/blog/', import.meta.url);
+  const set = new Set();
+  let files = [];
+  try {
+    files = fs.readdirSync(base, { recursive: true });
+  } catch {
+    return set;
+  }
+  for (const rel of files) {
+    const f = String(rel);
+    if (!/\.(md|mdx)$/.test(f) || f.startsWith('_templates') || f.startsWith('.obsidian')) continue;
+    const raw = fs.readFileSync(new URL(f, base), 'utf8');
+    const fm = raw.split(/\r?\n---/)[0];
+    if (!/^noindex:\s*true\s*$/m.test(fm)) continue;
+    const orig = (fm.match(/^originalPath:\s*["']?(.*?)["']?\s*$/m) || [])[1];
+    const id = f.replace(/[\\/]index\.(md|mdx)$/, '').replace(/\.(md|mdx)$/, '');
+    let p = orig && orig.trim() ? orig.trim() : `/entry/${id}`;
+    if (!p.startsWith('/')) p = '/' + p;
+    set.add(p.replace(/\/+$/, ''));
+  }
+  return set;
+}
+const NOINDEX_PATHS = noindexPaths();
+
 // https://astro.build/config
 export default defineConfig({
   // 우리 블로그의 실제 주소. sitemap·RSS·SEO(canonical 등)가 이 값을 기준으로 만들어집니다.
@@ -72,5 +99,18 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  integrations: [sitemap(), sveltiaDevAdmin(), writeDevEditor()],
+  integrations: [
+    sitemap({
+      filter: (page) => {
+        try {
+          const p = decodeURIComponent(new URL(page).pathname).replace(/\/+$/, '');
+          return !NOINDEX_PATHS.has(p);
+        } catch {
+          return true;
+        }
+      },
+    }),
+    sveltiaDevAdmin(),
+    writeDevEditor(),
+  ],
 });

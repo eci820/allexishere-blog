@@ -1,6 +1,7 @@
 ---
 title: "국회의원 보좌관 역할·연봉·업무·자격 총정리"
 pubDate: 2025-07-13T18:40:58+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "국회의원 보좌관 역할·연봉·업무·자격 총정리"

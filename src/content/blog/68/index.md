@@ -1,6 +1,7 @@
 ---
 title: "2025 관상어 박람회 티켓 가격, 일정·관전 포인트 총정리"
 pubDate: 2025-08-13T19:23:39+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "2025 관상어 박람회 티켓 가격, 일정·관전 포인트 총정리"

@@ -1,6 +1,7 @@
 ---
 title: "권은비와 워터밤 서울·부산·속초·발리까지 총정리"
 pubDate: 2025-07-13T19:29:41+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "권은비와 워터밤 서울·부산·속초·발리까지 총정리"

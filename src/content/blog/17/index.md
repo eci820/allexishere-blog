@@ -1,6 +1,7 @@
 ---
 title: "에어팟 노이즈캔슬링 기술 활용(층간소음)"
 pubDate: 2025-07-10T10:55:49+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "에어팟 노이즈캔슬링 기술 활용(층간소음)"

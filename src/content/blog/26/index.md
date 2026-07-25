@@ -1,6 +1,7 @@
 ---
 title: "장기예보 단기예보, 일기예보 보는 방법"
 pubDate: 2025-07-13T01:05:54+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "장기예보 단기예보, 일기예보 보는 방법"

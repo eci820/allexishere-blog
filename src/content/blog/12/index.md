@@ -1,6 +1,7 @@
 ---
 title: "[멀티태스킹이 어렵다고?] 이 글 하나로 고민 끝!"
 pubDate: 2025-07-08T01:57:20+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "[멀티태스킹이 어렵다고?] 이 글 하나로 고민 끝!"
