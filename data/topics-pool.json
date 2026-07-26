@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-26T11:30:58.135Z",
+  "updatedAt": "2026-07-26T23:51:49.426Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3518,10 +3518,10 @@
       "tier": "evergreen",
       "series": "life",
       "angle": "계약갱신 행사 시기와 임대료 인상폭에 따른 손익 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "상가임대차-갱신청구권-행사-시기보장-기간거절-사유-가이드-2026",
       "addedAt": "2026-07-26T01:01:49.932Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-26T23:47:56.510Z",
       "metrics": {
         "vol": 10,
         "doc": 44306,
@@ -3726,6 +3726,132 @@
         "ratio": 0.001,
         "stars": 4,
         "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tqecal2",
+      "keyword": "유방MRI 검진대상",
+      "tier": "health",
+      "series": "A",
+      "angle": "국가검진 미포함 대상 기준으로 자비검진 필요성 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": "2026-07-26T23:47:56.509Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 7479,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "tyu2j15",
+      "keyword": "아연 피콜리네이트 흡수",
+      "tier": "health",
+      "series": "B",
+      "angle": "화합물 형태별 흡수율 차이로 가격 대비 제품 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": "2026-07-26T23:47:56.508Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 887,
+        "ratio": 0.011,
+        "stars": 5,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "thkenq4",
+      "keyword": "홈짐 헬스장 비용비교",
+      "tier": "health",
+      "series": "C",
+      "angle": "장비 구매비 대비 회원권 손익분기로 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": "2026-07-26T23:47:56.508Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 850,
+        "ratio": 0.012,
+        "stars": 5,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "tfxplne",
+      "keyword": "국민연금 조기수령",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "조기수령 감액률 대비 수령시기 손익분기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 41728,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "t7ncok2",
+      "keyword": "부모급여 지급기준",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "소득무관 지급여부와 신청시기별 손실 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 25,
+        "doc": 194099,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "t2ngm8b",
+      "keyword": "양도세 필요경비 인정",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "인정 항목별 공제로 절세 가능액 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 23769,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1785109674748
+      }
+    },
+    {
+      "id": "thz6wt4",
+      "keyword": "간이과세 전환기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "매출기준 초과시 세부담 변화로 전환시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T23:47:54.749Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 25,
+        "doc": 24557,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1785109674748
       }
     }
   ]
