@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-26T06:45:04.029Z",
+  "updatedAt": "2026-07-26T11:30:58.135Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3698,8 +3698,8 @@
       "tier": "health",
       "series": "D",
       "angle": "소음 종류별 수면효과 비교해 기기 구매 여부 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "백색소음-수면효과-원리볼륨-기준부작용-정리-2026",
       "addedAt": "2026-07-26T04:16:19.945Z",
       "lastProposedAt": "2026-07-26T04:16:21.650Z",
       "metrics": {
