@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-26T04:20:15.135Z",
+  "updatedAt": "2026-07-26T06:45:04.029Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3662,8 +3662,8 @@
       "tier": "science",
       "series": "life",
       "angle": "방식별 전기요금과 위생관리 비용 비교해 선택 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "가습기-초음파식-가열식-차이-원리전기세위생-비교-2026",
       "addedAt": "2026-07-26T04:16:19.945Z",
       "lastProposedAt": "2026-07-26T04:16:21.649Z",
       "metrics": {
