@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-25T09:01:16.780Z",
+  "updatedAt": "2026-07-26T04:20:15.135Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3420,6 +3420,312 @@
         "ratio": 0.029,
         "stars": 4,
         "ts": 1784963153772
+      }
+    },
+    {
+      "id": "tq1g78m",
+      "keyword": "오피스텔 주택수 산정",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "청약·양도세 산정 시 오피스텔 포함여부에 따른 세부담 차이 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 16428,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "tp7qutm",
+      "keyword": "임대사업자 세제혜택",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "등록임대사업자 전환 시 세금 감면과 의무를 비교해 손익 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": "2026-07-26T01:01:51.939Z",
+      "metrics": {
+        "vol": 20,
+        "doc": 82803,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "tkhe9uw",
+      "keyword": "프리랜서 원천징수환급",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "3.3% 원천징수액 중 종합소득세 신고로 환급받을 금액 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": "2026-07-26T01:01:51.939Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 32425,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "txmszsk",
+      "keyword": "두루누리 사회보험지원",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "소규모사업장 보험료 지원 신청 자격과 절감액 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 120,
+        "doc": 14856,
+        "ratio": 0.008,
+        "stars": 4,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "ty3eudc",
+      "keyword": "아파트 관리비 절감",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "관리비 항목별 감사요청·절감 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 106714,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "tg251x",
+      "keyword": "상가임대차 갱신청구권",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "계약갱신 행사 시기와 임대료 인상폭에 따른 손익 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 44306,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "t7xpqoj",
+      "keyword": "분양권 전매제한 기간",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "전매 가능 시기별 세금·프리미엄 손익 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 54137,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "tkqc7a2",
+      "keyword": "헬리코박터 제균비용",
+      "tier": "health",
+      "series": "A",
+      "angle": "제균치료 필요성과 실손보험 청구 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": "2026-07-26T01:01:51.937Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 2126,
+        "ratio": 0.005,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "ttf2k3g",
+      "keyword": "고강도인터벌 운동원리",
+      "tier": "health",
+      "series": "C",
+      "angle": "시간 대비 효과로 PT·홈트 비용 지출 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T01:01:49.932Z",
+      "lastProposedAt": "2026-07-26T01:01:51.937Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 10353,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1785027709930
+      }
+    },
+    {
+      "id": "tbu84m8",
+      "keyword": "노란우산공제 공제한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "소득공제 한도와 연금저축 병행 시 절세효과 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 30,
+        "doc": 23643,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tgrv0os",
+      "keyword": "다자녀 전기요금할인",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "가구원수 기준 할인율과 신청 서류 준비 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 3550,
+        "doc": 25046,
+        "ratio": 0.142,
+        "stars": 5,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tqgf1yg",
+      "keyword": "블랙박스 특약할인",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "특약 가입비용 대비 보험료 할인폭 비교해 가입 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 181465,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tuzw7l5",
+      "keyword": "알뜰교통카드 마일리지",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "이동거리·카드실적별 적립액 비교해 카드 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 24374,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tlifnwj",
+      "keyword": "가습기 초음파식 가열식",
+      "tier": "science",
+      "series": "life",
+      "angle": "방식별 전기요금과 위생관리 비용 비교해 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": "2026-07-26T04:16:21.649Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 27814,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "t3sxewc",
+      "keyword": "자궁경부암 백신비용",
+      "tier": "health",
+      "series": "A",
+      "angle": "연령별 지원 여부와 자비 접종비용 비교 판단",
+      "status": "published",
+      "slug": "자궁경부암-백신비용-무료-대상9가-가격차이접종-횟수-정리-2026",
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": "2026-07-26T04:16:21.650Z",
+      "metrics": {
+        "vol": 45,
+        "doc": 5557,
+        "ratio": 0.008,
+        "stars": 5,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "t23gx5k",
+      "keyword": "백색소음 수면효과",
+      "tier": "health",
+      "series": "D",
+      "angle": "소음 종류별 수면효과 비교해 기기 구매 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": "2026-07-26T04:16:21.650Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 26561,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785039379942
+      }
+    },
+    {
+      "id": "tb2yo2m",
+      "keyword": "야식 대사증후군",
+      "tier": "health",
+      "series": "E",
+      "angle": "야식 시간대별 대사 영향 비교해 식습관 개선 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-26T04:16:19.945Z",
+      "lastProposedAt": "2026-07-26T04:16:21.652Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 13875,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1785039379942
       }
     }
   ]
