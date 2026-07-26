@@ -34,7 +34,11 @@ function inCooldown(slug, cd) {
   return t && Date.now() - Date.parse(t) < COOLDOWN;
 }
 
-// 발행글 1편 읽기 → {slug,title,tags,orig,body,len}
+// 발행글 1편 읽기 → {slug,title,tags,orig,body,len,noindex}
+//
+// 🔴 noindex 는 '읽기만' 하고 여기서 return null 하지 않는다.
+//    이 함수는 diagnose() 도 쓰는데, 거기서 null 을 주면 글이 멀쩡히 있는데도
+//    "발행글 없음"이라는 거짓 메시지가 뜬다. 제외는 후보 선정(updateCandidates)에서만 한다.
 function readPost(slug) {
   const f = path.join(BLOG, slug, 'index.md');
   if (!fs.existsSync(f)) return null;
@@ -43,8 +47,9 @@ function readPost(slug) {
   const title = (raw.match(/^title:\s*"?(.*?)"?\s*$/m) || [])[1] || '';
   const tags = (raw.match(/^tags:\s*\[(.*?)\]/m) || [])[1] || '';
   const orig = (raw.match(/^originalPath:\s*"?(.*?)"?\s*$/m) || [])[1] || '';
+  const noindex = /^noindex:\s*true/m.test(raw);
   const body = raw.split(/^---\s*$/m).slice(2).join('---').split('<!--')[0].trim();
-  return { slug, title, tags, orig, body, len: body.length };
+  return { slug, title, tags, orig, body, len: body.length, noindex };
 }
 
 // 한 글의 갱신 신호 계산 → {score, reasons[], top}
@@ -86,6 +91,10 @@ export function updateCandidates(limit = 2) {
     if (inCooldown(d, cd)) continue;
     const post = readPost(d);
     if (!post) continue;
+    // 🔴 색인에서 뺀 글은 갱신할 이유가 없다 — 갱신해도 검색에 안 나온다.
+    //    실측(2026-07-25): 갱신 후보 9편 중 5편(56%)이 noindex 글이라 정상 글의
+    //    갱신 기회를 절반 넘게 잠식하고 있었다(SKT 유출 글이 후보 1위였다).
+    if (post.noindex) continue;
     const ev = evaluate(post, seasonEvents, curYear);
     if (ev.score <= 0) continue;
     const url = post.orig || '/entry/' + d;
@@ -102,8 +111,15 @@ export function diagnose(slug) {
   const seasonEvents = calendarRadar(20, 3, 14);
   const ev = evaluate(post, seasonEvents, kstYear());
   const cd = loadCooldown();
+  // noindex 글은 후보에서 빠지지만, 지난 카드의 버튼으로 여기 도달할 수 있다.
+  // 그때 "발행글 없음"으로 속이지 않고 상태를 그대로 알린다(ops §6 정직한 한계).
+  // 🔴 경고를 reasons 맨 앞에 넣는 이유: bot.mjs 가 dg.reasons 만 화면에 뿌린다.
+  //    별도 필드로만 두면 사람 눈에 안 보여 없느니만 못하다.
+  const reasons = post.noindex
+    ? ['⚠️ 이 글은 noindex 상태입니다 — 검색 색인에서 빠져 있어 갱신해도 유입이 늘지 않습니다. 되살리려면 frontmatter 의 noindex 를 먼저 false 로 바꾸세요.', ...ev.reasons]
+    : ev.reasons;
   return {
     ok: true, slug, title: post.title, url: post.orig || '/entry/' + slug, len: post.len,
-    reasons: ev.reasons, lastUpdated: cd.slugs[slug] || null, score: ev.score,
+    reasons, noindex: post.noindex, lastUpdated: cd.slugs[slug] || null, score: ev.score,
   };
 }
