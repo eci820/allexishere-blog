@@ -163,9 +163,16 @@ export const MODIFIER = new Set([
 //    멀쩡한 새 시설이 차단된다. 이 오탐은 2026-07 첫 판에서 실제로 났고, SKILL.md §3 이
 //    기록한 사고다. 오탐이 쌓이면 사람이 경보 자체를 무시하게 되는 게 가장 큰 손실이다.
 //    여기 들어갈 수 있는 것은 '그 이름 하나로 상권이 특정되는' 지명뿐이다.
+//
+// 🔴 여기에는 '접미를 뗀 기본형'만 넣는다. 파생형(연남동·성수역·홍대입구)은 넣지 마라 —
+//    아래 canonRegionSuffix 가 만들어 준다. 파생형을 직접 넣으면 REGION 검사가 먼저
+//    걸려 절단 단계에 못 가고, 기본형과 파생형이 서로 다른 대상으로 남는다(연남↔연남동
+//    실측). 아래 불변식이 이 실수를 로드 시점에 잡는다.
+//    ※ '익선동'은 예외가 아니라 '기본형'이다 — 몸통 '익선'은 그 자체로 상권이 아니라서
+//      REGION 에 없다. 그래서 '익선동' 통째가 기본형이고, 지우면 대상이 통째로 사라진다.
 export const REGION = new Set([
   '경복궁', '덕수궁', '북촌', '홍대', '성수', '가로수길', '명동', '이태원',
-  '힙지로', '을지로', '익선동', '연남동', '연남', '서울숲', '여의도',
+  '힙지로', '을지로', '익선동', '연남', '서울숲', '여의도',
 ]);
 
 // 표기 변형 — 한글↔영문 쌍. 발행글이 "학여울역 SETEC"인데 제안이 "세텍"이면
@@ -175,14 +182,80 @@ export const ALIAS = new Map([
   ['케이스포돔', 'kspo'], ['케이스포', 'kspo'],
 ]);
 
+// ── 접미 정규화 — '여의도 ↔ 여의도역'은 같게, '잠실야구장 ↔ 잠실종합운동장'은 다르게 ──
+//
+// 문제: 별칭(ALIAS)은 정확 일치만 본다. 그래서 '여의도'와 '여의도역'이 서로 다른 토큰이
+//   되어 중복을 못 막았다. 반대로 접미를 함부로 떼면 '잠실야구장'과 '잠실종합운동장'이
+//   '잠실' 하나로 뭉개진다 — 이쪽이 훨씬 비싼 사고다(멀쩡한 시설 글이 영영 안 생긴다).
+//
+// 🔴 그래서 '두 자물쇠'를 건다. 둘 다 만족할 때만 치환한다:
+//     ① 꼬리가 LOCATION_SUFFIX 에 있다   ② 남은 몸통이 REGION 에 **정확히** 있다
+//   하나라도 실패하면 원본을 그대로 돌려준다(부분 절단 금지). 그래서
+//   '성수동물병원'은 성수동물병 → 성수동물 어느 것도 REGION 에 없어 안 깎이고,
+//   '충전구역'은 몸통 '충전구'가 REGION 에 없어 안 깎인다. 앵커가 없으면 아무 일도 없다.
+const LOCATION_SUFFIX = ['사거리', '입구', '역', '앞', '동']; // 긴 것 우선(입구역 → 입구 먼저)
+
+// 🔴 시설 구분어 — **절대 접미로 취급하지 않는다.** 서로 다른 장소를 가르는 결정적
+//    토큰이기 때문이다('야구장' vs '종합운동장'). 이 목록은 깎는 데 쓰지 않는다.
+//    오직 아래 불변식이 "위치접미가 시설구분어의 꼬리와 겹치지 않는가"를 검사할 때만 쓴다.
+//    예: '점'을 위치접미에 넣으면 '백화점'이 '백화'로 깎인다 → 불변식이 로드 시점에 잡는다.
+const FACILITY_KIND = new Set([
+  '야구장', '종합운동장', '운동장', '체육관', '경기장', '전시장', '컨벤션', '아레나', '스타디움',
+  '돔', '공원', '아트센터', '미술관', '박물관', '공항', '터미널', '시장', '백화점', '병원',
+  '대학교', '호텔', '파크', '필드', '센터',
+]);
+
+const MAX_STRIP = 2;  // '홍대입구역' → '홍대입구' → '홍대'
+const MIN_BASE = 2;   // 몸통은 최소 2자(REGION 최단 항목이 2자)
+
+// 불변식 — 사전을 잘못 늘렸을 때 조용히 뭉개지지 않고 **로드 시점에 죽는다**.
+// 조용한 오작동(다른 시설을 같다고 판정)은 몇 주 뒤에나 발견되고, 그때는 이미
+// 안 쓰인 글감이 재고에서 소진된 뒤다. 그래서 시끄럽게 실패하는 쪽을 택한다.
+for (const f of FACILITY_KIND) {
+  const bad = LOCATION_SUFFIX.find((s) => f !== s && f.endsWith(s));
+  if (bad) throw new Error(`[titleRules] 위치접미 '${bad}' 가 시설구분어 '${f}' 의 꼬리다 — 시설이 뭉개진다`);
+}
+for (const r of REGION) {
+  for (const s of LOCATION_SUFFIX) {
+    if (!r.endsWith(s) || r.length - s.length < MIN_BASE) continue;
+    const base = r.slice(0, -s.length);
+    if (REGION.has(base)) {
+      throw new Error(`[titleRules] REGION 에 '${r}' 와 '${base}' 가 함께 있다 — 파생형은 빼고 기본형 '${base}' 만 남겨라`);
+    }
+  }
+}
+
+// 위치 접미를 떼어 상권 기본형으로 착지시킨다. 착지 못 하면 원본 그대로.
+function canonRegionSuffix(w) {
+  let cur = w;
+  for (let i = 0; i < MAX_STRIP; i++) {
+    if (REGION.has(cur)) return cur;
+    const s = LOCATION_SUFFIX.find((x) => cur.endsWith(x) && cur.length - x.length >= MIN_BASE);
+    if (!s) break;
+    cur = cur.slice(0, -s.length);
+  }
+  return REGION.has(cur) ? cur : w; // 🔴 앵커 실패 → 원본 유지(반쪽짜리 토큰을 만들지 않는다)
+}
+
+// 🔴 토큰 정규화의 단일 소스. 별칭과 접미를 여기 한 곳에서만 처리한다.
+//    distinctive(제안 키워드 쪽)와 topicsPool.aliasNorm(발행글 쪽)이 **같은 함수**를
+//    써야 한다. 한쪽만 정규화하면 '여의도'와 '여의도역'이 여전히 못 만난다.
+export function canonToken(w) {
+  const l = String(w).toLowerCase();
+  if (ALIAS.has(l)) return ALIAS.get(l); // 별칭 정확일치 우선(세텍 → setec)
+  const r = canonRegionSuffix(l);
+  return ALIAS.get(r) || r;              // 절단 후 별칭 재확인
+}
+
 // 대상을 가리키는 토큰만 남긴다. 가드는 **3자** — '킨텍스'(3자)를 살리고 '대구'(2자)를
 // 떨어뜨리는 경계값이다. 4자로 잡으면 킨텍스가 탈락해 같은 시설 글이 또 생성된다(실측).
+// 정규화 결과는 정의상 REGION 원소라 2자여도 이 가드를 통과한다('성수'·'홍대').
 export function distinctive(s) {
   const toks = norm(s).toLowerCase()
     .replace(/[^가-힣a-z0-9 ]/g, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 2 && !MODIFIER.has(w) && !/^\d+$/.test(w))
-    .map((w) => ALIAS.get(w) || w)
+    .map(canonToken)
     .filter((w) => w.length >= 3 || REGION.has(w));
   return [...new Set(toks)];
 }

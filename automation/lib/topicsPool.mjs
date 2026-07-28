@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './env.mjs';
 import { STOP } from './topics.mjs';
-import { distinctive, ALIAS } from './titleRules.mjs';
+import { distinctive, canonToken } from './titleRules.mjs';
 
 const DB = path.join(ROOT, 'data', 'topics-pool.json');
 const DAY = 24 * 3600 * 1000;
@@ -241,13 +241,10 @@ export function liveDupe(keyword, tier) {
 
 // 발행글 토큰의 별칭 정규화 결과를 글마다 한 번만 계산해 재사용한다(브리핑 1회에
 // 수백 번 호출되므로 매번 만들면 낭비). liveIndex 캐시가 버려지면 함께 사라진다.
+// 🔴 canonToken 은 distinctive(제안 키워드 쪽)와 **같은 함수**여야 한다. 한쪽만 정규화하면
+//    제안 '여의도'와 발행글 '여의도역'이 여전히 못 만나 중복이 그대로 통과한다.
 function aliasNorm(p) {
-  if (!p._alias) {
-    p._alias = new Set([...p.toks].map((w) => {
-      const l = String(w).toLowerCase();
-      return ALIAS.get(l) || l;
-    }));
-  }
+  if (!p._alias) p._alias = new Set([...p.toks].map(canonToken));
   return p._alias;
 }
 
