@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-26T23:51:49.426Z",
+  "updatedAt": "2026-07-28T16:32:42.009Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3853,6 +3853,293 @@
         "stars": 5,
         "ts": 1785109674748
       }
+    },
+    {
+      "id": "tbe3p37",
+      "keyword": "기초연금 소득인정액",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "소득인정액 기준으로 수급 여부·감액폭 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 42968,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tzep6fq",
+      "keyword": "자동차보험 할증기준",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "사고 처리 여부에 따른 보험료 인상폭 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 2870,
+        "doc": 86704,
+        "ratio": 0.033,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tx9aebl",
+      "keyword": "하이패스 미납통행료",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "미납 확인·납부 지연 시 가산금 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 190,
+        "doc": 10125,
+        "ratio": 0.019,
+        "stars": 4,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tywl1ot",
+      "keyword": "기후동행카드 이용조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "정기권 대비 손익분기 이용횟수 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 95319,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "t140n3k",
+      "keyword": "케이패스 적립조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "카드사별 환급률 비교로 발급 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 2028,
+        "ratio": 0.005,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "t7w9yfx",
+      "keyword": "치과 스케일링 건보",
+      "tier": "health",
+      "series": "A",
+      "angle": "연 1회 급여 여부·본인부담 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": "2026-07-27T01:02:32.545Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 1456,
+        "ratio": 0.007,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tabyslo",
+      "keyword": "콜레스테롤 복용기준",
+      "tier": "health",
+      "series": "E",
+      "angle": "수치 구간별 약물치료 시작 시점 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": "2026-07-27T01:02:32.545Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 87106,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tz0oim0",
+      "keyword": "통풍 요산수치 관리",
+      "tier": "health",
+      "series": "E",
+      "angle": "수치별 약물·식이 병행 비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": "2026-07-27T01:02:32.547Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 64012,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "tcmwco3",
+      "keyword": "NMN 니코틴아마이드",
+      "tier": "health",
+      "series": "B",
+      "angle": "고가 보충제 효과 대비 지출 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T01:02:30.779Z",
+      "lastProposedAt": "2026-07-27T01:02:32.547Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 4158,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1785114150777
+      }
+    },
+    {
+      "id": "thgzv3l",
+      "keyword": "전주월드컵경기장 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "전북현대 홈경기일 주차 요금·경기장 진입로별 위치·조기 만차 대비 가이드",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T15:06:08.762Z",
+      "lastProposedAt": "2026-07-28T01:00:02.388Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "tg6d4dz",
+      "keyword": "포항스틸야드 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "포항스틸러스 경기일 주차 요금·입구 위치·혼잡 시간대 정리",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T15:06:08.762Z",
+      "lastProposedAt": "2026-07-28T01:00:02.388Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "ti9wlig",
+      "keyword": "대구스타디움 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "대구FC 홈경기일 주차 요금·게이트 위치·혼잡 회피 대비 가이드",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T15:06:08.762Z",
+      "lastProposedAt": "2026-07-28T01:00:02.388Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "tx2np8v",
+      "keyword": "수원월드컵경기장 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "수원월드컵경기장(빅버드) 경기·콘서트별 주차 요금·입구 위치·만차 대비 안내",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T15:06:08.762Z",
+      "lastProposedAt": "2026-07-28T01:00:02.388Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "tuapxij",
+      "keyword": "제주국제컨벤션센터 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "ICC제주 행사·전시별 주차 요금·위치·혼잡 시간대 정리",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-27T15:06:08.762Z",
+      "lastProposedAt": null,
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "tyfziup",
+      "keyword": "세종문화회관 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "주말 집회·통제 시 진입 가능한 주차장 선택 · pp: 진입로·통제 우회·대체 · src: 서울TOPIS, 서울경찰청 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "te39bx0",
+      "keyword": "DDP 심야 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "심야 전시 관람 시 인근 아울렛 구매 연계 판단 · pp: 심야 정산·연계 할인·대체 · src: 서울디자인재단, 현대시티아울렛 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tik3t9o",
+      "keyword": "사직야구장 대형행사 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "대형행사 만차 시 인근 마트·체육관 분산 판단 · pp: 만차·분산 대안·도보 동선 · src: 부산시 체육시설관리사업소 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t90x8pk",
+      "keyword": "국립극장 심야 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "심야공연 후 귀가수단 판단 — 자차 vs 버스막차 · pp: 심야 출차·막차 시각·대체 교통 · src: 국립극장 교통안내, 서울버스 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t9rogpm",
+      "keyword": "광화문 집회 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "집회 통제 시 우회 진입과 지하철 연계 판단 · pp: 통제 구간·우회 진입·환승 · src: 서울TOPIS · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
     }
   ]
 }
