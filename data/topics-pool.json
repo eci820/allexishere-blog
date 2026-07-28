@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-28T16:36:21.942Z",
+  "updatedAt": "2026-07-28T16:42:10.945Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4162,6 +4162,18 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:36:21.941Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "t5dmxil",
+      "keyword": "샤롯데씨어터 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "뮤지컬 관람 시 전용주차권과 롯데월드몰·백화점 할인 결합 판단 · pp: 전용주차권 조건·할인 결합 가능 여부·정산 동선 · src: 샤롯데씨어터 공식 주차안내, 롯데자산개발 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:42:10.944Z",
       "lastProposedAt": null,
       "metrics": null
     }
