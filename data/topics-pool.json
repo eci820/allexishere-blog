@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-28T16:32:42.009Z",
+  "updatedAt": "2026-07-28T16:36:21.942Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4138,6 +4138,30 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:32:41.977Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tm8n1zv",
+      "keyword": "교통약자 무장애 주차",
+      "tier": "parking",
+      "series": "cross",
+      "angle": "악천후·휠체어·유모차 동반 시 실내 직통 엘리베이터 주차구역 선택 · pp: 전용구역 위치·엘리베이터 직결·무장애 동선 · src: 한국장애인개발원 무장애정보, 각 시설 층별안내도 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:36:21.941Z",
+      "lastProposedAt": null,
+      "metrics": null
+    },
+    {
+      "id": "tuc95en",
+      "keyword": "무인정산기 공공할인 오류 주차",
+      "tier": "parking",
+      "series": "cross",
+      "angle": "심야 출차 시 경차·저공해 공공할인 자동인식 실패 예방 · pp: 인식 실패 원인·출차 전 체크리스트·사후 환급 절차 · src: 서울시설공단, 송파구시설관리공단 주차 FAQ · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-07-28T16:36:21.941Z",
       "lastProposedAt": null,
       "metrics": null
     }
