@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-28T16:42:10.945Z",
+  "updatedAt": "2026-07-29T02:13:44.018Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4074,10 +4074,10 @@
       "tier": "parking",
       "series": "",
       "angle": "ICC제주 행사·전시별 주차 요금·위치·혼잡 시간대 정리",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "제주국제컨벤션센터-주차-요금위치혼잡-대비-안내-2026",
       "addedAt": "2026-07-27T15:06:08.762Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-29T01:00:02.463Z",
       "metrics": null,
       "source": "agent"
     },
@@ -4090,7 +4090,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:32:41.977Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-29T01:00:02.463Z",
       "metrics": null
     },
     {
@@ -4102,7 +4102,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:32:41.977Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-29T01:00:02.463Z",
       "metrics": null
     },
     {
@@ -4114,7 +4114,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:32:41.977Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-29T01:00:02.463Z",
       "metrics": null
     },
     {
