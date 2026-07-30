@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-29T14:55:16.438Z",
+  "updatedAt": "2026-07-30T02:13:13.646Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4126,7 +4126,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:32:41.977Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-30T01:00:05.557Z",
       "metrics": null
     },
     {
@@ -4135,10 +4135,10 @@
       "tier": "parking",
       "series": "facility",
       "angle": "집회 통제 시 우회 진입과 지하철 연계 판단 · pp: 통제 구간·우회 진입·환승 · src: 서울TOPIS · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "광화문-집회-주차-가능-여부도로-통제대체-주차장-가이드-2026",
       "addedAt": "2026-07-28T16:32:41.977Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-30T01:00:05.557Z",
       "metrics": null
     },
     {
@@ -4150,7 +4150,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:36:21.941Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-30T01:00:05.557Z",
       "metrics": null
     },
     {
@@ -4162,7 +4162,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:36:21.941Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-30T01:00:05.557Z",
       "metrics": null
     },
     {
