@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-30T02:13:13.646Z",
+  "updatedAt": "2026-07-30T12:09:58.323Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4123,8 +4123,8 @@
       "tier": "parking",
       "series": "facility",
       "angle": "심야공연 후 귀가수단 판단 — 자차 vs 버스막차 · pp: 심야 출차·막차 시각·대체 교통 · src: 국립극장 교통안내, 서울버스 · ⚠️발행 시 공식출처 확인 필수(수치 미확정)",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "국립극장-심야-주차-요금위치야간-할인-기준-2026",
       "addedAt": "2026-07-28T16:32:41.977Z",
       "lastProposedAt": "2026-07-30T01:00:05.557Z",
       "metrics": null
