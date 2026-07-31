@@ -68,6 +68,55 @@ function noindexPaths() {
 }
 const NOINDEX_PATHS = noindexPaths();
 
+// 글 URL → 최종 수정일(ISO). sitemap 의 <lastmod> 근거입니다.
+//
+// 🔴 부정확한 lastmod 는 없느니만 못합니다. 구글은 lastmod 가 실제 변경과 어긋나는 걸
+//    반복 확인하면 그 사이트의 lastmod 를 통째로 무시합니다. 그래서 규칙을 좁게 잡습니다:
+//      ① updatedDate 가 있으면 그것   ② 없으면 pubDate   ③ 둘 다 없거나 파싱 실패면 생략
+//    '오늘 날짜'·'빌드 시각' 같은 값을 넣지 않습니다 — 그건 매 배포마다 전 글이 수정된 척
+//    하는 거짓 신호이고, lastmod 신뢰를 잃는 가장 빠른 길입니다.
+//
+// ⚠️ 알려진 한계: 봇 갱신 경로(generate.mjs 의 refreshPublished)는 frontmatter 를
+//    verbatim 보존만 하고 updatedDate 를 남기지 않습니다. 그래서 갱신된 글도 pubDate 가
+//    들어가 '실제보다 오래된' 값이 됩니다. 오래된 쪽으로 틀리는 건 거짓 신선도를 주장하지
+//    않으므로 해롭지 않지만, 정확하지도 않습니다. 근본 해결은 refreshPublished 가
+//    updatedDate 를 찍게 하는 것이며 별건입니다.
+//
+// 글이 아닌 페이지(홈·/page/N·about·privacy)는 근거가 될 날짜가 없어 lastmod 를 넣지
+// 않습니다. 목록 페이지에 '오늘'을 넣고 싶어지지만, 그게 바로 ③의 거짓 신호입니다.
+function postLastmods() {
+  const base = new URL('./src/content/blog/', import.meta.url);
+  const map = new Map();
+  let files = [];
+  try {
+    files = fs.readdirSync(base, { recursive: true });
+  } catch {
+    return map;
+  }
+  for (const rel of files) {
+    const f = String(rel);
+    if (!/\.(md|mdx)$/.test(f) || f.startsWith('_templates') || f.startsWith('.obsidian')) continue;
+    const raw = fs.readFileSync(new URL(f, base), 'utf8');
+    const fm = raw.split(/\r?\n---/)[0];
+    const pick = (re) => (fm.match(re) || [])[1];
+    // updatedDate 우선, 없으면 pubDate. 파싱 안 되면 넣지 않는다.
+    const rawDate = (pick(/^updatedDate:\s*["']?(.*?)["']?\s*$/m) || '').trim()
+      || (pick(/^pubDate:\s*["']?(.*?)["']?\s*$/m) || '').trim();
+    if (!rawDate) continue;
+    const d = new Date(rawDate);
+    if (Number.isNaN(d.getTime())) continue;
+    // 미래 날짜는 넣지 않는다(예약 발행·오타 방지) — 거짓 신선도가 된다.
+    if (d.getTime() > Date.now()) continue;
+    const orig = (fm.match(/^originalPath:\s*["']?(.*?)["']?\s*$/m) || [])[1];
+    const id = f.replace(/[\\/]index\.(md|mdx)$/, '').replace(/\.(md|mdx)$/, '');
+    let p = orig && orig.trim() ? orig.trim() : `/entry/${id}`;
+    if (!p.startsWith('/')) p = '/' + p;
+    map.set(p.replace(/\/+$/, '').toLowerCase(), d.toISOString());
+  }
+  return map;
+}
+const POST_LASTMOD = postLastmods();
+
 // https://astro.build/config
 export default defineConfig({
   // 우리 블로그의 실제 주소. sitemap·RSS·SEO(canonical 등)가 이 값을 기준으로 만들어집니다.
@@ -108,6 +157,18 @@ export default defineConfig({
         } catch {
           return true;
         }
+      },
+      // <lastmod> 를 채웁니다. 근거가 있는 URL 에만 넣고, 없으면 그대로 둡니다(생략).
+      // 근거 규칙은 postLastmods() 주석 참고 — updatedDate → pubDate, 없으면 생략.
+      serialize: (item) => {
+        try {
+          const p = decodeURIComponent(new URL(item.url).pathname).replace(/\/+$/, '').toLowerCase();
+          const lastmod = POST_LASTMOD.get(p);
+          if (lastmod) item.lastmod = lastmod;
+        } catch {
+          /* URL 파싱 실패는 무시 — lastmod 없이 그대로 내보낸다 */
+        }
+        return item;
       },
     }),
     sveltiaDevAdmin(),
