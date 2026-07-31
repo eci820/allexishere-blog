@@ -1,6 +1,6 @@
 # 티스토리 구 permalink → 신 URL(/entry/제목) 301 리다이렉트
 # 자동 생성: node scripts/gen-redirects.mjs (originalPath 기반). 직접 수정 금지.
-# 규칙 182개 (숫자 91 + 모바일 91). Cloudflare Pages 한도 2,100 내.
+# 규칙 183개 (숫자 91 + 모바일 91 + 삭제글 수동 1). Cloudflare Pages 한도 2,100 내.
 # 목적지는 canonical과 동일한 퍼센트 인코딩(서빙 URL과 정확히 일치).
 # 초안(draft:true) 1편은 규칙 제외 — 목적지 페이지가 없어 301→404 가 되기 때문.
 # 발행하면 이 스크립트를 다시 돌려야 규칙이 생긴다.
@@ -190,3 +190,8 @@
 /m/97  /entry/2026-%EC%97%90%EB%84%88%EC%A7%80%EB%B0%94%EC%9A%B0%EC%B2%98-%EC%98%AC%ED%95%B4%EB%B6%80%ED%84%B0-%EC%97%AC%EB%A6%84-%EB%83%89%EB%B0%A9%EB%B9%84%EB%A1%9C-%EB%AA%B0%EC%95%84-%EC%93%B8-%EC%88%98-%EC%9E%88%EC%8A%B5%EB%8B%88%EB%8B%A4-%EB%8C%80%EC%83%81%C2%B7%EA%B8%88%EC%95%A1%C2%B7%EC%8B%A0%EC%B2%AD%EB%B2%95  301
 /m/98  /entry/%EA%B3%A0%EC%B2%99%EB%8F%94-%EC%BD%98%EC%84%9C%ED%8A%B8-%EC%9D%BC%EC%B0%8D-%EB%8F%84%EC%B0%A9%ED%96%88%EB%8B%A4%EB%A9%B4-%EA%B7%BC%EC%B2%98%EC%97%90%EC%84%9C-2%EC%8B%9C%EA%B0%84-%EC%95%8C%EC%B0%A8%EA%B2%8C-%EB%B3%B4%EB%82%B4%EB%8A%94-%EB%B2%95-%EC%8B%9D%EC%82%AC%C2%B7%EC%B9%B4%ED%8E%98%C2%B7%EB%8C%80%EA%B8%B0-%ED%8C%81  301
 /m/99  /entry/7%EC%9B%94-%EC%9E%AC%EC%82%B0%EC%84%B8-%EB%AF%B8%EB%A6%AC-%EC%A4%80%EB%B9%84%ED%95%98%EC%84%B8%EC%9A%94-%E2%80%94-%EB%88%84%EA%B0%80-%EB%82%B4%EB%8A%94%EC%A7%80%EB%8A%94-%EC%9D%B4%EB%AF%B8-6%EC%9B%94-1%EC%9D%BC%EC%97%90-%EC%A0%95%ED%95%B4%EC%A1%8C%EC%8A%B5%EB%8B%88%EB%8B%A4-%EB%82%A9%EB%B6%80%EA%B8%B0%EA%B0%84%C2%B7%EC%B9%B4%EB%93%9C-%EB%AC%B4%EC%9D%B4%EC%9E%90%C2%B7%EC%A0%84%EC%9E%90%EA%B3%A0%EC%A7%80-%ED%98%9C%ED%83%9D  301
+
+# 삭제된 발행글 → 후속 글 (수동 매핑, DELETED_POST_REDIRECTS)
+# 목적지가 발행글인지 매 생성마다 검증한다 — 죽은 목적지면 규칙을 빼고 404 로 둔다.
+#   0ec88d4 통합 — 계산기(parkingCalc)를 목적지 글로 이식하고 파일럿 삭제
+/entry/%EC%9E%A0%EC%8B%A4%EC%95%BC%EA%B5%AC%EC%9E%A5-%EC%A3%BC%EC%B0%A8-%EC%99%84%EB%B2%BD-%EA%B0%80%EC%9D%B4%EB%93%9C-%EA%B2%BD%EA%B8%B0%EC%9D%BC-%EC%9A%94%EA%B8%88-%EA%B7%BC%EC%B2%98-%EB%8C%80%EC%95%88-2026  /entry/%EC%9E%A0%EC%8B%A4%EC%95%BC%EA%B5%AC%EC%9E%A5-%EC%A3%BC%EC%B0%A8-%EB%B0%A9%EB%B2%95%EA%B3%BC-%EC%9A%94%EA%B8%88-%EC%B4%9D%EC%A0%95%EB%A6%AC-2026%EB%85%84-7%EC%9B%94  301

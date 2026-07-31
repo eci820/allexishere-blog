@@ -16,8 +16,9 @@
 //   위 5행의 '카테고리/태그 폴백 제외' 와 같은 이유다. 초안은 404 로 두는 게 정직하다.
 //   (실측 2026-07-25: /11·/m/11 이 301 → 404. 11번이 이관 시점부터 draft:true 였다.)
 //
-// ⚠️ 이 스크립트는 빌드에 물려 있지 않다(수동 실행). 초안을 발행하거나 글을 내리면
-//   여기를 다시 돌려야 규칙이 맞춰진다. 제외된 초안은 실행 로그와 파일 헤더에 남긴다.
+// 🔴 이 스크립트는 public/_redirects 를 통째로 덮어쓰고, npm run build 에 물려 있다.
+//   → _redirects 파일에 손으로 적은 규칙은 다음 빌드에서 반드시 사라진다.
+//     수동 규칙은 아래 DELETED_POST_REDIRECTS 에 적어야 살아남는다.
 //
 // 재생성: node scripts/gen-redirects.mjs  → public/_redirects 덮어씀. (astro가 dist/_redirects로 복사)
 import fs from 'node:fs';
@@ -32,6 +33,39 @@ const SITE = 'https://allexishere.com';
 // frontmatter 블록만 본다 — 본문에 'draft: true' 같은 줄이 있어도 오판하지 않게.
 const frontmatter = (raw) => raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
 const field = (fm, key) => fm.match(new RegExp(`^${key}:\\s*"?(.*?)"?\\s*$`, 'm'))?.[1] ?? '';
+// canonical·서빙 URL과 동일한 퍼센트 인코딩.
+const enc = (p) => new URL(p, SITE).pathname;
+
+// ── 삭제된 발행글 → 후속 글 301 (수동 매핑) ─────────────────────────────
+// 숫자 permalink 자동 생성의 대상이 아니라서 손으로 유지한다.
+// 넣을 자격: 글이 '사라진' 게 아니라 다른 글로 '옮겨간' 경우만. 대체 글이 없거나
+//   시설·주제가 다르면 넣지 않는다 — 관련 없는 목적지는 soft-404 라 404 만 못하다.
+//   (2026-07-25 조사: 삭제된 발행글 5편 중 통합으로 옮겨간 1편만 자격이 있었다.
+//    롯데백화점 본점·공영주차장 요금 조회·여름 전기요금·편집기 테스트 글은 대체 글이
+//    없어 404 를 유지한다.)
+const DELETED_POST_REDIRECTS = [
+  {
+    from: '/entry/잠실야구장-주차-완벽-가이드-경기일-요금-근처-대안-2026',
+    to: '/entry/잠실야구장-주차-방법과-요금-총정리-2026년-7월',
+    why: '0ec88d4 통합 — 계산기(parkingCalc)를 목적지 글로 이식하고 파일럿 삭제',
+  },
+];
+
+// 발행글의 서빙 URL 집합. src/utils/url.ts 의 getPostUrl 과 같은 규칙을 쓴다
+//   (originalPath 가 있으면 그대로, 없으면 /entry/<폴더명>). 초안은 페이지가 없으므로 제외.
+// 이 집합이 수동 매핑의 검증 근거다 — 목적지가 여기 없으면 301→404 가 된다.
+function publishedUrls() {
+  const set = new Set();
+  for (const dir of fs.readdirSync(BLOG)) {
+    const f = path.join(BLOG, dir, 'index.md');
+    if (!fs.existsSync(f)) continue;
+    const fm = frontmatter(fs.readFileSync(f, 'utf8'));
+    if (/^draft:\s*true\s*$/m.test(fm)) continue;
+    const op = field(fm, 'originalPath');
+    set.add(op ? (op.startsWith('/') ? op : '/' + op) : `/entry/${dir}`);
+  }
+  return set;
+}
 
 const rows = [];
 const skipped = []; // 초안이라 규칙을 만들지 않은 글 — 조용히 빠지면 안 되므로 남긴다
@@ -58,10 +92,27 @@ for (const dir of fs.readdirSync(BLOG)) {
 rows.sort((a, b) => a.n - b.n);
 skipped.sort((a, b) => a.n - b.n);
 
+// 수동 매핑 검증 — 죽은 목적지로 301 하면 /11 사고(301→404)를 그대로 반복한다.
+// 어긴 규칙은 조용히 빼고 크게 알린다. 빼면 그냥 404 가 되어 안전한 쪽으로 무너진다.
+const live = publishedUrls();
+const manual = [];
+for (const r of DELETED_POST_REDIRECTS) {
+  if (!live.has(r.to)) {
+    console.warn(`⚠️ 수동 규칙 제외 — 목적지가 발행글이 아님: ${r.from} → ${r.to} (301→404 방지)`);
+    continue;
+  }
+  if (live.has(r.from)) {
+    console.warn(`⚠️ 수동 규칙 제외 — 출발지가 살아있는 글임: ${r.from} (실제 페이지를 가릴 뻔했다)`);
+    continue;
+  }
+  manual.push({ from: enc(r.from), to: enc(r.to), why: r.why });
+}
+
 const lines = [
   '# 티스토리 구 permalink → 신 URL(/entry/제목) 301 리다이렉트',
   '# 자동 생성: node scripts/gen-redirects.mjs (originalPath 기반). 직접 수정 금지.',
-  `# 규칙 ${rows.length * 2}개 (숫자 ${rows.length} + 모바일 ${rows.length}). Cloudflare Pages 한도 2,100 내.`,
+  `# 규칙 ${rows.length * 2 + manual.length}개 (숫자 ${rows.length} + 모바일 ${rows.length}` +
+    `${manual.length ? ` + 삭제글 수동 ${manual.length}` : ''}). Cloudflare Pages 한도 2,100 내.`,
   '# 목적지는 canonical과 동일한 퍼센트 인코딩(서빙 URL과 정확히 일치).',
   ...(skipped.length
     ? [
@@ -77,6 +128,15 @@ lines.push('');
 lines.push('# 모바일 permalink(/m/N)도 동일 매핑');
 for (const r of rows) lines.push(`/m/${r.n}  ${r.dest}  301`);
 lines.push('');
+if (manual.length) {
+  lines.push('# 삭제된 발행글 → 후속 글 (수동 매핑, DELETED_POST_REDIRECTS)');
+  lines.push('# 목적지가 발행글인지 매 생성마다 검증한다 — 죽은 목적지면 규칙을 빼고 404 로 둔다.');
+  for (const m of manual) {
+    lines.push(`#   ${m.why}`);
+    lines.push(`${m.from}  ${m.to}  301`);
+  }
+  lines.push('');
+}
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, lines.join('\n'));
@@ -84,4 +144,8 @@ console.log(`생성: public/_redirects — 매핑 ${rows.length}편 × 2(숫자+
 console.log(`범위: /${rows[0]?.n} ~ /${rows[rows.length - 1]?.n}`);
 for (const s of skipped) {
   console.log(`제외(초안): /${s.n} · /m/${s.n} → ${s.original} — "${s.title}". 발행하면 이 스크립트를 다시 실행할 것.`);
+}
+for (const r of DELETED_POST_REDIRECTS) {
+  const on = manual.some((m) => m.from === enc(r.from));
+  console.log(`${on ? '수동 규칙' : '수동 규칙(제외됨)'}: ${r.from} → ${r.to}`);
 }
