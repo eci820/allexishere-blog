@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-30T16:35:21.660Z",
+  "updatedAt": "2026-07-31T02:04:14.058Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3539,7 +3539,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T01:01:49.932Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-31T01:00:04.788Z",
       "metrics": {
         "vol": 10,
         "doc": 54137,
@@ -3608,10 +3608,10 @@
       "tier": "evergreen",
       "series": "life",
       "angle": "가구원수 기준 할인율과 신청 서류 준비 여부 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "다자녀-전기요금할인-대상할인율신청-채널-가이드-2026",
       "addedAt": "2026-07-26T04:16:19.945Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-31T01:00:04.788Z",
       "metrics": {
         "vol": 3550,
         "doc": 25046,
@@ -3809,7 +3809,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T23:47:54.749Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-31T01:00:04.788Z",
       "metrics": {
         "vol": 25,
         "doc": 194099,
@@ -4174,7 +4174,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-28T16:42:10.944Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-07-31T01:00:03.558Z",
       "metrics": null
     }
   ]
