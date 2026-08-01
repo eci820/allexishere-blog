@@ -12,7 +12,7 @@ import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { subscriptionEnv } from './lib/claudeCli.mjs';
-import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk, distinctive } from './lib/titleRules.mjs';
+import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk, distinctive, facilityDataMissing } from './lib/titleRules.mjs';
 import { facilityFromTitle, insertMapLink } from './lib/mapLink.mjs';
 
 const execFileP = promisify(execFile);
@@ -543,6 +543,12 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   //    중복 판정을 아예 못 한다(fail-open). 2자 지명(예: 가락·수유)이 REGION 사전에 없을 때
   //    이렇게 되는데, 조용히 방어가 사라지므로 사람이 알 수 있게 경고한다.
   const noSubject = isParking && distinctive(title).length === 0;
+  // 🅿️ 시설 고유 데이터 게이트 — "이 글에 그 시설에서만 나올 수 있는 사실이 하나라도 있나."
+  //    없으면 어느 시설에나 붙는 일반론이라, 검색한 사람이 원한 답이 없다.
+  //    제도 글(과태료·견인 등)은 facilityDataMissing 이 알아서 판정 대상에서 뺀다.
+  //    🔴 경고 전용이다 — 생성을 막지 않는다. 데이터가 없는 게 사실이면 그 사실을
+  //       사람이 알고 제목을 줄이거나 반려하면 된다. 막아 버리면 우회로만 생긴다.
+  const dataGap = isParking ? facilityDataMissing(body, title) : null;
   const msg =
     `📝 ${title}\n` +
     (opts.context ? `🧭 ${opts.context}\n` : '') +
@@ -567,6 +573,12 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
     (noSubject
       ? `⚠️ 제목에 '구별 토큰'이 없습니다 — 중복 방어(subject 판정)가 이 글엔 작동하지 않습니다\n` +
         `   → 2자 지명이면 lib/titleRules.mjs 의 REGION 에 추가하세요(광역지명 금지)\n`
+      : '') +
+    (dataGap
+      ? `⚠️ 시설 고유 데이터가 하나도 없습니다 (${dataGap.missing.join('·')} 전부 없음)\n` +
+        `   → 지금 이 글은 어느 시설에나 쓸 수 있는 일반론입니다. 검색한 사람이 원한 답이 없습니다\n` +
+        `   → 🔴 없는 숫자를 지어내지 마세요. 데이터를 못 구했으면 **제목에서 그 축을 빼세요**\n` +
+        `      (제목에 "요금"을 넣고 본문에 요금이 없으면 낚시입니다. [✏️수정]으로 "제목: ..." 입력)\n`
       : '') +
     (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
     (opts.note ? `${opts.note}\n` : '') +

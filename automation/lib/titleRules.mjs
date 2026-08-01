@@ -320,6 +320,80 @@ export function assertDistinctSubjects(names, where = 'list') {
   return names.length;
 }
 
+// ── 🅿️ 시설 고유 데이터 게이트 ────────────────────────────────────────────
+//
+// 무엇을 보는가: "이 글에 **그 시설에서만 나올 수 있는 사실**이 하나라도 있나."
+//   요금표·혼잡 팁은 어느 시설에나 쓸 수 있는 일반론이라 신호가 못 된다. 반면
+//   면수·주소·전화·운영시간·이름 붙은 대체주차장은 실제로 찾아봐야만 나온다.
+//   하나도 없으면 그 글은 검색한 사람이 원한 답을 안 갖고 있다는 뜻이다.
+//
+// 🔴 차단이 아니라 경고다. 게이트가 판정하는 건 '데이터를 구했나'지 '글이 나쁜가'가 아니다.
+//
+// 🔴 왜 '엄격판'인가: 느슨하게 잡으면 말버릇이 데이터로 둔갑한다. 실측(발행글 34편)에서
+//   "인근 공영주차장"·"머물 거면 공영주차장" 같은 문장이 대체주차장 탐지에 걸려
+//   22편이 '데이터 있음'으로 나왔다. 이름이 붙은 것만 세도록 조인 뒤 실제 신호는
+//   그 절반이었다. 통과율이 높은 검사는 검사가 아니다.
+const FACILITY_DATA_MIN = 1; // 이만큼도 없으면 경고
+
+// 일반 수식어 — 뒤에 '공영주차장'이 붙어도 특정 주차장을 가리키지 않는다.
+const GENERIC_QUALIFIER = new Set([
+  '인근', '근처', '주변', '가까운', '다른', '대체', '대안', '해당', '기타', '일반',
+  '여러', '몇몇', '저렴한', '무료', '유료', '공공', '시내', '가까이', '처음부터',
+  '차라리', '아예', '모든', '각', '위', '아래', '이런', '그런',
+]);
+// 조사·어미로 끝나면 고유명이 아니다("머물 거면 공영주차장"). 행정구역 '면'(송정면)을
+// 죽이지 않도록 '면' 한 글자가 아니라 어미 통째로 본다.
+const QUALIFIER_TAIL = /(은|는|한|운|던|의|도|만|부터|까지|께|서|거면|려면|으면|다면|라면|하면|되면)$/;
+const NAMED_LOT = /([가-힣A-Za-z0-9]{2,})\s?(?:공영|공용|노외|시립|구립)\s?주차장/g;
+
+// 🔴 탐지기 5종. 전부 '숫자나 고유명이 실제로 적혀 있을 때만' 참이다.
+export const FACILITY_DETECTORS = [
+  { key: 'spots', label: '면수', test: (b) => /\d[\d,]{0,6}\s?면(?![적제허세담])/.exec(b)?.[0] },
+  { key: 'address', label: '주소', test: (b) => /[가-힣]{2,}(?:시|군|구)\s*[가-힣A-Za-z0-9]{2,}(?:대?로|길)\s*\d/.exec(b)?.[0] },
+  { key: 'tel', label: '전화', test: (b) => /(?:0\d{1,2}[-)]\s?\d{3,4}[-\s]?\d{4}|1[5-8]\d{2}[-\s]?\d{4})/.exec(b)?.[0] },
+  {
+    key: 'hours',
+    label: '운영시간',
+    // 🔴 엄격판 — 숫자를 동반할 때만 인정한다. '연중무휴'·'상시 운영' 같은 말은
+    //    어느 시설에나 쓸 수 있어서 '확인했다'의 증거가 되지 못한다.
+    test: (b) => /(?:\d{1,2}\s*:\s*\d{2}\s*[~\-–—]\s*\d{1,2}\s*:\s*\d{2})|(?:\d{1,2}\s*시\s*(?:\d{1,2}\s*분)?\s*[~\-–—]\s*\d{1,2}\s*시)|(?:24\s*시간)/.exec(b)?.[0],
+  },
+  {
+    key: 'altLot',
+    label: '대체주차장',
+    test: (b) => {
+      for (const m of String(b).matchAll(NAMED_LOT)) {
+        const q = m[1];
+        if (!GENERIC_QUALIFIER.has(q) && !QUALIFIER_TAIL.test(q)) return m[0];
+      }
+      return null;
+    },
+  },
+];
+
+// 제도어 — 이게 제목에 있으면 '시설 안내'가 아니라 '제도 설명' 글이다.
+// 과태료·견인 글에 면수나 전화번호를 요구하는 건 말이 안 된다. 실측 3편
+// (교통약자 주차구역 / 불법주차 견인 / 주차 과태료·범칙금)이 여기 걸러진다.
+// 🔴 오탐이 쌓이면 사람이 경고 자체를 무시한다 — 그게 가장 큰 손실이다.
+export const INSTITUTIONAL_WORDS = [
+  '과태료', '범칙금', '벌점', '감경', '견인', '보관료', '불법주차', '위반', '신고',
+  '단속', '주차구역', '장애인주차', '법령', '조례', '제도', '지원금', '보조금',
+];
+
+// 시설 고유 데이터가 임계 미만인가. 경고할 게 없으면 null(titleIsGeneric 과 같은 규약).
+//  · 제도 글이면 아예 판정하지 않는다(null).
+//  · 반환 found/missing 은 사람이 읽을 라벨. found 가 비어 있을 때만 경고가 뜬다.
+export function facilityDataMissing(body, title) {
+  const t = norm(title);
+  const inst = INSTITUTIONAL_WORDS.filter((w) => t.includes(w));
+  if (inst.length) return null; // 제도 글 — 시설 데이터를 요구하지 않는다
+  const b = norm(body);
+  const found = [], missing = [];
+  for (const d of FACILITY_DETECTORS) (d.test(b) ? found : missing).push(d.label);
+  if (found.length >= FACILITY_DATA_MIN) return null;
+  return { found, missing };
+}
+
 // 생성 프롬프트에 넣을 계급별 제목 지침.
 // source 를 모르면(캡처 등) 공통 공식만 낸다.
 export function titleGuideFor(source) {
