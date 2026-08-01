@@ -35,8 +35,8 @@ import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { runClaude, unwrapClaudeJSON } from './lib/claudeCli.mjs';
 import * as gsc from './lib/gsc.mjs';
 import { loadPool, liveIndex } from './lib/topicsPool.mjs';
-import { PARKING_TOPICS } from './lib/parking.mjs';
-import { MODIFIER, ALIAS } from './lib/titleRules.mjs';
+import { PARKING_TOPICS, EXCLUDED_FACILITIES } from './lib/parking.mjs';
+import { MODIFIER, canonToken } from './lib/titleRules.mjs';
 
 loadEnv();
 
@@ -123,6 +123,10 @@ ${tight.length ? `→ 우선 보강 대상: ${tight.map((f) => f.tier).join(', '
 이미 목록에 있는 시설(${parking.knownCount}개, 여기 있는 건 절대 다시 제안하지 마세요):
 ${parking.known.join(', ')}
 
+🚫 아래 시설은 목록에 없지만 **이미 글이 있거나 지리적으로 겹칩니다 — 여기도 절대 제안 금지**입니다.
+   괄호 안 이름은 같은 대상의 다른 표기이니 그것도 제안하지 마세요.
+${EXCLUDED_FACILITIES.map((e) => `- ${e.name}${e.aliases?.length ? ` (=${e.aliases.join(', ')})` : ''} — ${e.reason}`).join('\n')}
+
 새 시설을 제안한다면 아래 4대 기준을 모두 만족해야 합니다(검증된 성공 시설의 특성):
  ① 정기적으로 대형 행사가 열린다 ② 그날 주차 대란이 난다
  ③ "○○ 주차" 검색 의도가 명확하다 ④ 대중교통만으로는 애매해 차를 끌고 간다
@@ -179,16 +183,20 @@ function parseProposals(text) {
 // 수식어 — 시설명이 아니다. 이것만 겹치는 건 중복이 아니다.
 // 첫 판에서 '콘서트+주차', '대구+주차' 처럼 주차 글이면 흔히 겹치는 단어 2개로
 // 멀쩡한 새 시설(DGB대구은행파크)이 차단됐다. 시설명 단위로만 본다.
-// MODIFIER·ALIAS 는 lib/titleRules.mjs 에서 가져온다 — 원래 여기 따로 정의돼 있었는데,
+// MODIFIER·canonToken 은 lib/titleRules.mjs 에서 가져온다 — 원래 여기 따로 정의돼 있었는데,
 // matchLive 의 subject 모드가 같은 목록을 쓰게 되면서 정의가 두 곳이 됐다. 두 곳에 적으면
 // 반드시 어긋나고(SKILL.md §3), 어긋난 경고는 사람이 믿지 않게 되어 없느니만 못해진다.
-
+//
+// 🔴 ALIAS 를 직접 쓰지 않고 canonToken 을 경유한다. ALIAS 는 정규화의 '일부'일 뿐이라
+//    직접 쓰면 나중에 붙는 규칙(위치접미 절단·포함관계)이 큐레이터에만 도달하지 않는다.
+//    실제로 그런 상태였다 — 재고·발행 쪽은 '여의도역'을 '여의도'로 보는데 큐레이터만
+//    둘을 다른 시설로 봤다. 정규화가 갈라지면 카드에 보이는 판정과 실제 반영이 어긋난다(계약 §2).
 const facTokens = (s) => String(s || '')
   .toLowerCase()
   .replace(/[^가-힣a-z0-9]/g, ' ')
   .split(/\s+/)
   .filter((w) => w.length >= 2 && !MODIFIER.has(w) && !/^\d+$/.test(w))
-  .map((w) => ALIAS.get(w) || w);
+  .map(canonToken);
 
 // 두 제목이 '같은 시설'을 가리키나.
 //  · 시설명은 대개 4자 이상이다(올림픽공원·DGB대구은행파크·전주월드컵경기장).
@@ -204,15 +212,31 @@ export function sameFacility(aTitle, bTitle) {
   return null;
 }
 
+// 제외 목록(parking.mjs EXCLUDED_FACILITIES) 대조.
+// 🔴 발행글 제목 대조보다 **먼저** 본다. 제외 사유가 '이미 발행'만이 아니기 때문이다 —
+//    KSPO돔은 발행글 제목 어디에도 없지만 올림픽공원 안이라 지리적으로 겹친다.
+//    제목만 대조하면 이런 건 영원히 안 걸리고, 매주 같은 제안이 다시 올라온다.
+export function excludedHit(keyword) {
+  for (const e of EXCLUDED_FACILITIES) {
+    for (const n of [e.name, ...(e.aliases || [])]) {
+      const hit = sameFacility(keyword, n);
+      if (hit) return { on: hit, name: e.name, reason: e.reason };
+    }
+  }
+  return null;
+}
+
 // 🔴 프롬프트만 믿지 않는다. 모델은 근거 데이터에 이끌려 '이미 글이 있는 대상'을
 //    제안하는 경향이 있다(실제로 킨텍스·세텍·올림픽공원을 제안했다).
 export function flagOverlaps(proposals, publishedTitles) {
   return proposals.map((p) => {
+    const ex = excludedHit(p.keyword);
+    if (ex) return { ...p, overlap: `${ex.name} (${ex.reason})`, overlapOn: ex.on, excluded: true };
     for (const t of publishedTitles) {
       const hit = sameFacility(p.keyword, t);
-      if (hit) return { ...p, overlap: t, overlapOn: hit };
+      if (hit) return { ...p, overlap: t, overlapOn: hit, excluded: false };
     }
-    return { ...p, overlap: null, overlapOn: null };
+    return { ...p, overlap: null, overlapOn: null, excluded: false };
   });
 }
 
@@ -333,14 +357,18 @@ export async function runCurator({ dry = false } = {}) {
   }
   if (flagged.length) {
     L.push('');
-    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 같은 시설 글이 있음`);
+    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 같은 시설 글이 있거나 제외 목록에 있음`);
     for (const p of flagged) {
       L.push(`  · ${p.keyword}`);
       L.push(`    사유: "${p.overlapOn}" 이 겹침`);
-      L.push(`    기존: ${p.overlap.slice(0, 38)}`);
+      L.push(p.excluded ? `    제외 목록: ${p.overlap}` : `    기존: ${p.overlap.slice(0, 38)}`);
     }
     L.push('  새로 쓰면 자기잠식입니다. 기존 글 개선은 SEO 감시 쪽에서 다룹니다.');
-  } else {
+  }
+  // 🔴 '없다'는 말은 정말 아무것도 없을 때만 한다. 예전에는 이 문장이 flagged 의 else 에
+  //    붙어 있어서, 추가 예정 3개를 나열해 놓고 바로 아래에 "제안할 것이 없습니다"를
+  //    같이 찍었다. 카드가 자기 말과 어긋나면 사람은 카드 전체를 믿지 않게 된다(계약 §2).
+  if (!clean.length && !flagged.length) {
     L.push(llmError ? `❌ 제안 생성 실패: ${llmError}` : '제안할 것이 없습니다(근거가 분명한 주제 없음).');
   }
 

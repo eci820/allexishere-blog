@@ -5,6 +5,30 @@
 //    ① matchLive 발행글 강매칭 ② status(pending/published/skipped) ③ 30일 제안 쿨다운.
 //  · config.parkingSlots.until 이 지나면 자동 비활성(원복). briefing.mjs 가 판정.
 import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, liveDupe } from './topicsPool.mjs';
+import { assertDistinctSubjects } from './titleRules.mjs';
+
+// ⚠️ 이미 발행됐거나 지리적으로 겹쳐 **고정 목록에 넣지 않는** 시설.
+//
+// 왜 주석이 아니라 데이터인가: 여기 있던 세 줄짜리 주석은 사람만 읽을 수 있었다.
+//   그래서 큐레이터(LLM)는 매주 킨텍스·세텍·올림픽공원을 다시 제안했고, 매번 사람이
+//   손으로 걸렀다. 목록을 데이터로 만들면 프롬프트('여기도 제안 금지')와 중복 판정이
+//   **같은 한 곳**을 본다 — 두 곳에 적으면 반드시 어긋난다(SKILL.md §3).
+//
+// aliases 에는 '표기가 달라 토큰이 안 겹치는' 이름을 적는다. 이게 없으면 제안이
+//   "세텍 주차장"으로 오는데 발행글은 "학여울역 SETEC…"이라 한 글자도 안 겹쳐 통과한다.
+export const EXCLUDED_FACILITIES = [
+  { name: '킨텍스', reason: '이미 발행' },
+  { name: '코엑스', aliases: ['COEX', '삼성역'], reason: '이미 발행' },
+  { name: 'SETEC', aliases: ['세텍', '학여울역'], reason: '이미 발행' },
+  { name: '고척스카이돔', aliases: ['고척돔'], reason: '이미 발행' },
+  // 아래 둘은 '주차 vs 주차장' 토큰 차이로 addTopics dedup 이 못 걸러 손으로 뺐던 것들이다.
+  { name: '고양종합운동장', reason: '이미 발행 · 토큰 차이로 자동 dedup 우회' },
+  {
+    name: '올림픽공원',
+    aliases: ['KSPO돔', '케이스포돔', '올림픽체조경기장'],
+    reason: '이미 발행 · KSPO돔(=올림픽체조경기장)이 공원 안이라 지리적 중복',
+  },
+];
 
 // 배열 순서 = 우선순위. pickForBrief 는 별점(미측정=0) → lastProposedAt 오름차순으로
 // 정렬하므로, 지표가 없는 초기에는 이 삽입 순서가 사실상 제안 순서가 된다.
@@ -14,9 +38,7 @@ import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, liveDupe 
 //  · 🅰️ A급 14 — 야구장·아레나·대형경기장·대형전시장(4대 기준 다 충족) → 앞 배치
 //  · 🅱️ B급 21 — 병원·컨벤션·공항·테마파크·복합몰(일부 충족) → A급 뒤
 //  · 🅲 제외 — 시험장4·학교2·상권8·터미널3(검색의도 약함, 총 17개 제거)
-// ⚠️ 이미 발행/지리적 중복이라 넣지 않는 시설:
-//    킨텍스·코엑스/삼성역·SETEC·고척돔·고양종합운동장·올림픽공원(+그 안의 KSPO돔=올림픽체조).
-//    올림픽공원·고양종합운동장은 '주차 vs 주차장' 토큰 차이로 addTopics dedup 이 못 걸러 수동 제외.
+// ⚠️ 여기 넣지 않는 시설은 위 EXCLUDED_FACILITIES 에 사유와 함께 데이터로 적혀 있다.
 export const PARKING_TOPICS = [
   // ── 🅰️ A급 (14) — 4대 기준 충족. 배열 맨 앞 = 우선 노출 ──
   { keyword: '인스파이어 아레나 주차', angle: '공연일 만차·영종도 차량 접근·대안' },
@@ -76,6 +98,11 @@ const MODIFIERS = [
   { id: 'M3', suffix: '근처 주차장', angle: '인근 대안·거리·요금 비교' },
 ];
 const facilityName = (t) => t.keyword.replace(/ 주차$/, '');
+
+// 🔴 로드 시 불변식 — 고정 목록 36개 중 둘이 같은 구별 토큰으로 정규화되면 여기서 죽는다.
+//    이 목록은 자동 보충이 없다(SKILL.md §1). 사전을 잘못 늘려 두 시설이 뭉개지면
+//    한쪽 글감이 조용히 사라지고, 소진된 뒤에는 되돌려도 늦다.
+assertDistinctSubjects(PARKING_TOPICS.map(facilityName), 'parking.mjs PARKING_TOPICS');
 
 // 결정1/3: 이 시설의 종합 가이드가 이미 발행됐나(= base "○○ 주차"가 발행글과 강매칭 score≥2).
 export function isComprehensivelyPublished(name) {

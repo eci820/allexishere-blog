@@ -182,6 +182,33 @@ export const ALIAS = new Map([
   ['케이스포돔', 'kspo'], ['케이스포', 'kspo'],
 ]);
 
+// ── 포함 관계(CONTAINS) — '이름은 다른데 같은 장소' ────────────────────────
+//
+// ALIAS 와 왜 분리하는가: ALIAS 는 **같은 이름의 다른 표기**를 잇는 1:1 사전이라
+//   정확 일치로 충분하다(세텍 = SETEC). 여기는 성격이 다르다 — KSPO돔은 올림픽공원
+//   **안에 있는 건물**이고, 이름이 겹치지 않아 정확 일치로는 영영 못 만난다.
+//   주차 검색 의도로 보면 같은 대상이므로 부분 문자열로 봐야 잡힌다.
+//   두 성격을 한 Map 에 섞으면 '정확일치 사전'에 부분매칭이 스며들어, 나중에
+//   무엇이 왜 걸렸는지 설명할 수 없게 된다. 그래서 사전을 나눠 둔다.
+//
+// 🔴 키에는 '그 조각 하나로 대상이 특정되는' 충분히 긴 문자열만 넣는다.
+//    짧은 조각을 넣으면(예: '공원'·'체육관') 무관한 시설이 통째로 한 대상이 되어
+//    멀쩡한 새 글감이 영영 차단된다 — 아래 assertDistinctSubjects 가 고정 목록의
+//    충돌은 잡아 주지만, 목록 밖 주제까지 지켜 주지는 않는다.
+export const CONTAINS = new Map([
+  ['kspo', '올림픽공원'],       // KSPO돔(옛 올림픽체조경기장)은 올림픽공원 안이다
+  ['케이스포', '올림픽공원'],    // ALIAS 를 안 타는 파생 표기(케이스포아레나 등)까지
+  ['올림픽체조', '올림픽공원'],  // 올림픽체조경기장 = KSPO돔의 옛 이름
+]);
+
+// 포함 관계 치환은 **한 번만** 한다. 결과를 다시 넣어 돌리면 사전이 커졌을 때
+// A→B→C 연쇄가 생겨 무엇이 왜 그 값이 됐는지 추적할 수 없게 된다.
+// 여러 키가 걸리면 Map 삽입 순서상 먼저 등재된 것이 이긴다.
+function containsCanon(t) {
+  for (const [frag, canon] of CONTAINS) if (t.includes(frag)) return canon;
+  return t;
+}
+
 // ── 접미 정규화 — '여의도 ↔ 여의도역'은 같게, '잠실야구장 ↔ 잠실종합운동장'은 다르게 ──
 //
 // 문제: 별칭(ALIAS)은 정확 일치만 본다. 그래서 '여의도'와 '여의도역'이 서로 다른 토큰이
@@ -242,9 +269,13 @@ function canonRegionSuffix(w) {
 //    써야 한다. 한쪽만 정규화하면 '여의도'와 '여의도역'이 여전히 못 만난다.
 export function canonToken(w) {
   const l = String(w).toLowerCase();
-  if (ALIAS.has(l)) return ALIAS.get(l); // 별칭 정확일치 우선(세텍 → setec)
-  const r = canonRegionSuffix(l);
-  return ALIAS.get(r) || r;              // 절단 후 별칭 재확인
+  let t;
+  if (ALIAS.has(l)) t = ALIAS.get(l);      // 별칭 정확일치 우선(세텍 → setec)
+  else {
+    const r = canonRegionSuffix(l);
+    t = ALIAS.get(r) || r;                 // 절단 후 별칭 재확인
+  }
+  return containsCanon(t);                 // 🔴 포함 관계는 맨 끝에서 딱 한 번
 }
 
 // 대상을 가리키는 토큰만 남긴다. 가드는 **3자** — '킨텍스'(3자)를 살리고 '대구'(2자)를
@@ -258,6 +289,35 @@ export function distinctive(s) {
     .map(canonToken)
     .filter((w) => w.length >= 3 || REGION.has(w));
   return [...new Set(toks)];
+}
+
+// 🔴 고정 목록 충돌 불변식 — 서로 다른 두 대상이 같은 구별 토큰으로 착지하면
+//    **로드 시점에 죽는다.**
+//
+// 왜 필요한가: 주차 계급의 중복 판정은 구별 토큰 **1개** 겹침이면 차단이다(topicsPool
+//   liveDupe). 그래서 사전을 잘못 늘려 두 시설이 한 토큰으로 뭉개지면, 둘 중 하나는
+//   "이미 있는 글"로 오인돼 **영영 생성되지 않는다.** 이 고장은 에러를 내지 않는다 —
+//   조용히 글감이 사라질 뿐이라, 몇 주 뒤 재고가 마르고 나서야 알아챈다.
+//   그때는 이미 되돌릴 시점이 지났다. 그래서 시끄럽게 실패하는 쪽을 택한다.
+//
+// 규칙 자체(무엇이 충돌인가)는 여기 한 곳에만 두고, 실제 목록을 가진 쪽
+// (parking.mjs 의 PARKING_TOPICS)이 로드 때 이 함수를 부른다. 목록을 여기로 가져오면
+// titleRules ← topicsPool ← parking 순환 import 가 된다.
+export function assertDistinctSubjects(names, where = 'list') {
+  const owner = new Map(); // 구별 토큰 → 그 토큰을 처음 차지한 이름
+  for (const name of names) {
+    for (const tok of distinctive(name)) {
+      const prev = owner.get(tok);
+      if (prev !== undefined && prev !== name) {
+        throw new Error(
+          `[titleRules] ${where}: '${prev}' 와 '${name}' 이 같은 구별 토큰 '${tok}' 으로 정규화된다 ` +
+          `— 둘 중 하나는 중복으로 오인돼 영영 생성되지 않는다. ALIAS·CONTAINS·REGION 등재를 되돌려라`
+        );
+      }
+      owner.set(tok, name);
+    }
+  }
+  return names.length;
 }
 
 // 생성 프롬프트에 넣을 계급별 제목 지침.
