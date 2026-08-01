@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-07-31T02:04:14.058Z",
+  "updatedAt": "2026-08-01T01:02:04.277Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4176,6 +4176,222 @@
       "addedAt": "2026-07-28T16:42:10.944Z",
       "lastProposedAt": "2026-07-31T01:00:03.558Z",
       "metrics": null
+    },
+    {
+      "id": "twwep1a",
+      "keyword": "퇴직소득세 계산방법",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "퇴직금 일시금·연금 수령방식별 세금 차이로 수령방법 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 210,
+        "doc": 61629,
+        "ratio": 0.003,
+        "stars": 5,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tj8iv2g",
+      "keyword": "기타소득세 원천징수",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "강연료·원고료 종합소득세 환급 여부로 신고방법 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 109988,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "txh96o2",
+      "keyword": "육아휴직급여 신청조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "통상임금 대비 실수령액 계산해 휴직 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 40,
+        "doc": 172482,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tgxgze2",
+      "keyword": "출산휴가급여 지급조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "회사 규모별 정부지원금 차이로 신청시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 149813,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "t9snfdf",
+      "keyword": "산재보험 신청절차",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "통원·입원치료 보상금 차이로 신청여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 90,
+        "doc": 96558,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tefnoiq",
+      "keyword": "여행자보험 가입시기",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "여행기간별 보험료 비교해 가입시점·보장범위 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 210,
+        "doc": 13542,
+        "ratio": 0.016,
+        "stars": 4,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tkjdoc8",
+      "keyword": "어린이집 보육료지원",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "소득분위별 지원금 차이로 어린이집 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 1190,
+        "doc": 59842,
+        "ratio": 0.02,
+        "stars": 4,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tnmhudf",
+      "keyword": "피부양자 자격상실조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "소득초과 시 지역가입자 전환 보험료 인상폭 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15,
+        "doc": 9099,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "t9pctgi",
+      "keyword": "무선청소기 배터리수명",
+      "tier": "science",
+      "series": "life",
+      "angle": "배터리 교체비용과 신제품 구매 손익 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": "2026-08-01T01:02:04.276Z",
+      "metrics": {
+        "vol": 120,
+        "doc": 50844,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tm82qs4",
+      "keyword": "은하수 보는시기",
+      "tier": "science",
+      "series": "knowledge",
+      "angle": "관측 성공률 높은 시기로 여행·숙박비 지출 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": "2026-08-01T01:02:04.276Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 90722,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "t5um7vw",
+      "keyword": "폼롤러 마사지효과",
+      "tier": "health",
+      "series": "C",
+      "angle": "마사지샵 비용 대비 자가관리 효과 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": "2026-08-01T01:02:04.277Z",
+      "metrics": {
+        "vol": 25,
+        "doc": 90191,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785546122523
+      }
+    },
+    {
+      "id": "t960odc",
+      "keyword": "인슐린 저항성개선",
+      "tier": "health",
+      "series": "E",
+      "angle": "저탄수 식단과 약물치료 비용·효과 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-01T01:02:02.525Z",
+      "lastProposedAt": "2026-08-01T01:02:04.277Z",
+      "metrics": {
+        "vol": 9680,
+        "doc": 279086,
+        "ratio": 0.035,
+        "stars": 4,
+        "ts": 1785546122523
+      }
     }
   ]
 }
