@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-02T03:45:02.756Z",
+  "updatedAt": "2026-08-05T01:02:15.340Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4186,7 +4186,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-01T01:02:02.525Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-03T01:00:04.871Z",
       "metrics": {
         "vol": 210,
         "doc": 61629,
@@ -4222,7 +4222,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-01T01:02:02.525Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-03T01:00:04.871Z",
       "metrics": {
         "vol": 40,
         "doc": 172482,
@@ -4240,7 +4240,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-01T01:02:02.525Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-03T01:00:04.871Z",
       "metrics": {
         "vol": 10,
         "doc": 149813,
@@ -4258,7 +4258,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-01T01:02:02.525Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-03T01:00:04.871Z",
       "metrics": {
         "vol": 90,
         "doc": 96558,
@@ -4312,7 +4312,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-01T01:02:02.525Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-04T01:02:49.857Z",
       "metrics": {
         "vol": 15,
         "doc": 9099,
@@ -4391,6 +4391,163 @@
         "ratio": 0.035,
         "stars": 4,
         "ts": 1785546122523
+      }
+    },
+    {
+      "id": "tjf9620",
+      "keyword": "DGB대구은행파크 주차",
+      "tier": "parking",
+      "series": "",
+      "angle": "대구FC 홈경기일 주차 요금·입구 위치·혼잡 시간대 정리",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-03T01:36:42.223Z",
+      "lastProposedAt": "2026-08-04T01:02:49.280Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "tgos41a",
+      "keyword": "고향사랑기부제 세액공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "기부금 세액공제와 답례품 가치를 더해 실질 이득 따지는 법",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-04T01:02:48.103Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 970,
+        "doc": 31307,
+        "ratio": 0.031,
+        "stars": 4,
+        "ts": 1785805368101
+      }
+    },
+    {
+      "id": "t84b4qo",
+      "keyword": "리스 렌트 할부 비교",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "취득세·보험료·잔존가치 포함한 방식별 실비용으로 구매 방식 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-04T01:02:48.103Z",
+      "lastProposedAt": "2026-08-04T01:02:49.857Z",
+      "metrics": {
+        "vol": 15,
+        "doc": 199639,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785805368101
+      }
+    },
+    {
+      "id": "t154vso",
+      "keyword": "노후차 폐차 보조금",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "조기폐차 지원금 액수와 신차 구매 시기 맞춰 손해 줄이는 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-04T01:02:48.103Z",
+      "lastProposedAt": "2026-08-05T01:02:15.340Z",
+      "metrics": {
+        "vol": 320,
+        "doc": 6637,
+        "ratio": 0.048,
+        "stars": 5,
+        "ts": 1785805368101
+      }
+    },
+    {
+      "id": "teqk1cx",
+      "keyword": "심전도 검사 필요성",
+      "tier": "health",
+      "series": "A",
+      "angle": "기본검진 외 추가검사 비용과 받아야 할 시점 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-04T01:02:48.103Z",
+      "lastProposedAt": "2026-08-04T01:02:49.855Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 12974,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1785805368101
+      }
+    },
+    {
+      "id": "t3jpbeg",
+      "keyword": "의료비세액공제 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "실손보험 수령액 차감 후 공제 가능액 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-05T01:02:13.420Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 270,
+        "doc": 58806,
+        "ratio": 0.005,
+        "stars": 4,
+        "ts": 1785891733418
+      }
+    },
+    {
+      "id": "tglfxpy",
+      "keyword": "국민연금 추납제도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "추납보험료 대비 미래 수령액 손익 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-05T01:02:13.420Z",
+      "lastProposedAt": "2026-08-05T01:02:15.340Z",
+      "metrics": {
+        "vol": 1960,
+        "doc": 13845,
+        "ratio": 0.142,
+        "stars": 5,
+        "ts": 1785891733418
+      }
+    },
+    {
+      "id": "tpc8adp",
+      "keyword": "비오틴 손톱모발 효과",
+      "tier": "health",
+      "series": "B",
+      "angle": "효과 근거 수준 대비 구매 가치 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-05T01:02:13.420Z",
+      "lastProposedAt": "2026-08-05T01:02:15.338Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 27806,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785891733418
+      }
+    },
+    {
+      "id": "t9fcsxm",
+      "keyword": "종합비타민 성분표 보는법",
+      "tier": "health",
+      "series": "B",
+      "angle": "저가·고가 제품 성분 비교 구매 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-05T01:02:13.420Z",
+      "lastProposedAt": "2026-08-05T01:02:15.338Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 831,
+        "ratio": 0.012,
+        "stars": 5,
+        "ts": 1785891733418
       }
     }
   ]
