@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-05T01:02:15.340Z",
+  "updatedAt": "2026-08-06T01:08:44.894Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4548,6 +4548,168 @@
         "ratio": 0.012,
         "stars": 5,
         "ts": 1785891733418
+      }
+    },
+    {
+      "id": "t9gwljn",
+      "keyword": "확정일자 전입신고 순서",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "순서 오류 시 보증금 우선변제권 상실 위험 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 70,
+        "doc": 347389,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tha1ydb",
+      "keyword": "부담부증여 세금계산",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "증여세·양도세 이중부담 여부와 실익 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15,
+        "doc": 16238,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tu911so",
+      "keyword": "취득세 생애최초 감면",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "감면 조건 충족 여부에 따른 수백만원 차이 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 840,
+        "doc": 44276,
+        "ratio": 0.019,
+        "stars": 4,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tomu1hk",
+      "keyword": "엔진오일 교체주기 합성유",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "합성유·광유 선택에 따른 교체비용·주기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 400815,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tzdx9dl",
+      "keyword": "온수매트 전기장판 비교",
+      "tier": "science",
+      "series": "life",
+      "angle": "제품별 전기요금·안전성 따른 구매 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": "2026-08-06T01:02:10.968Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 91940,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "txe86m0",
+      "keyword": "계시별 전기요금제",
+      "tier": "science",
+      "series": "life",
+      "angle": "심야요금제 전환 시 실제 절감 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": "2026-08-06T01:02:10.968Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 1552,
+        "ratio": 0.006,
+        "stars": 5,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tfabmdv",
+      "keyword": "비타민B군 종류별효과",
+      "tier": "health",
+      "series": "B",
+      "angle": "성분별 가격차 대비 필요 효과 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 433203,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "t11loty",
+      "keyword": "크레아틴 로딩 유지법",
+      "tier": "health",
+      "series": "C",
+      "angle": "로딩기 유무에 따른 섭취량·비용 차이 판단",
+      "status": "published",
+      "slug": "크레아틴-로딩-유지법-용량타이밍부작용까지-한-번에-2026",
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": "2026-08-06T01:02:10.969Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 7,
+        "ratio": 1.429,
+        "stars": 5,
+        "ts": 1785978129133
+      }
+    },
+    {
+      "id": "te7rboo",
+      "keyword": "체지방률 측정법 비교",
+      "tier": "health",
+      "series": "E",
+      "angle": "인바디·캘리퍼 등 측정법별 정확도 대비 비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-06T01:02:09.135Z",
+      "lastProposedAt": "2026-08-06T01:02:10.969Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 608,
+        "ratio": 0.016,
+        "stars": 5,
+        "ts": 1785978129133
       }
     }
   ]
