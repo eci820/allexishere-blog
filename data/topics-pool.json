@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-06T01:08:44.894Z",
+  "updatedAt": "2026-08-07T01:00:05.107Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3431,7 +3431,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T01:01:49.932Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-07T01:00:05.107Z",
       "metrics": {
         "vol": 10,
         "doc": 16428,
@@ -3485,7 +3485,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T01:01:49.932Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-07T01:00:05.107Z",
       "metrics": {
         "vol": 120,
         "doc": 14856,
@@ -4577,7 +4577,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-06T01:02:09.135Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-07T01:00:05.107Z",
       "metrics": {
         "vol": 15,
         "doc": 16238,
@@ -4667,7 +4667,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-06T01:02:09.135Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-07T01:00:05.104Z",
       "metrics": {
         "vol": 10,
         "doc": 433203,
