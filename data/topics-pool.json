@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-07T01:00:05.107Z",
+  "updatedAt": "2026-08-08T02:04:21.407Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -4710,6 +4710,78 @@
         "ratio": 0.016,
         "stars": 5,
         "ts": 1785978129133
+      }
+    },
+    {
+      "id": "tgwpcv",
+      "keyword": "착오송금 반환지원 신청",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "반환 신청 절차·수수료 대비 회수 가능 금액을 따져 신청 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-08T01:02:40.666Z",
+      "lastProposedAt": "2026-08-08T01:02:42.478Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 6124,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786150960664
+      }
+    },
+    {
+      "id": "t1bd7tu",
+      "keyword": "무인단속카메라 이의신청",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "이의신청 성공률 대비 범칙금·벌점 비교로 대응 방법 판단",
+      "status": "published",
+      "slug": "무인단속카메라-이의신청-방법기한인정-사유-확인-가이드-2026",
+      "addedAt": "2026-08-08T01:02:40.666Z",
+      "lastProposedAt": "2026-08-08T01:02:42.478Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 1904,
+        "ratio": 0.005,
+        "stars": 5,
+        "ts": 1786150960664
+      }
+    },
+    {
+      "id": "tao32k0",
+      "keyword": "간기능검사 AST ALT 수치",
+      "tier": "health",
+      "series": "A",
+      "angle": "수치 구간별 재검 주기·정밀검사 필요성으로 검진 비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-08T01:02:40.666Z",
+      "lastProposedAt": "2026-08-08T01:02:42.477Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 39184,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786150960664
+      }
+    },
+    {
+      "id": "tgnach4",
+      "keyword": "혈압약 복용시간 효과",
+      "tier": "health",
+      "series": "E",
+      "angle": "복용 시간대별 혈압 조절 효과 차이로 복약 습관 조정 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-08T01:02:40.666Z",
+      "lastProposedAt": "2026-08-08T01:02:42.477Z",
+      "metrics": {
+        "vol": 50,
+        "doc": 316996,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1786150960664
       }
     }
   ]
