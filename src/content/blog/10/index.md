@@ -1,6 +1,7 @@
 ---
 title: "[오징어게임 시즌 3 해외 반응] 국가별 문화 DNA로 본 완전히 다른 시선"
 pubDate: 2025-07-07T23:34:59+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "[오징어게임 시즌 3 해외 반응] 국가별 문화 DNA로 본 완전히 다른 시선"
