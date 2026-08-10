@@ -5,7 +5,7 @@
 //    ① matchLive 발행글 강매칭 ② status(pending/published/skipped) ③ 30일 제안 쿨다운.
 //  · config.parkingSlots.until 이 지나면 자동 비활성(원복). briefing.mjs 가 판정.
 import { loadPool, savePool, addTopics, pickForBrief, seedPoolIfEmpty, liveDupe } from './topicsPool.mjs';
-import { assertDistinctSubjects } from './titleRules.mjs';
+import { assertDistinctSubjects, distinctive } from './titleRules.mjs';
 
 // ⚠️ 이미 발행됐거나 지리적으로 겹쳐 **고정 목록에 넣지 않는** 시설.
 //
@@ -103,6 +103,33 @@ const facilityName = (t) => t.keyword.replace(/ 주차$/, '');
 //    이 목록은 자동 보충이 없다(SKILL.md §1). 사전을 잘못 늘려 두 시설이 뭉개지면
 //    한쪽 글감이 조용히 사라지고, 소진된 뒤에는 되돌려도 늦다.
 assertDistinctSubjects(PARKING_TOPICS.map(facilityName), 'parking.mjs PARKING_TOPICS');
+
+// 🔴 로드 시 불변식 — 제외 목록이 고정 목록 시설을 잡아먹지 않는가.
+//    두 목록은 정반대다: 고정 목록은 '쓸 것', 제외 목록은 '쓰지 말 것'. 한 시설이
+//    양쪽에 걸리면 그 글감은 addTopics 의 강매칭(liveDupe subject 모드 — 구별 토큰
+//    1개 겹침)에서 '이미 글이 있는 대상'으로 오인돼 영영 주입되지 않는다. 제외 목록에
+//    큰 이름을 하나 넣는 것만으로 A급 글감이 조용히 사라질 수 있다.
+//
+//    판정은 문자열 포함이 아니라 **구별 토큰**으로 한다. 포함으로 하면 '고양체육관'이
+//    '고양종합운동장'에 걸려 멀쩡한 글감이 막힌다(오차단 쪽이 더 비싼 사고다).
+//    한 제외 항목의 name·aliases 는 같은 대상이므로 토큰을 합쳐 하나로 본다 —
+//    따로 세면 '세텍'과 'SETEC'이 서로 충돌한 것처럼 보인다.
+const EXCLUDED_TOKENS = EXCLUDED_FACILITIES.map((e) => ({
+  name: e.name,
+  toks: new Set([e.name, ...(e.aliases || [])].flatMap(distinctive)),
+}));
+for (const t of PARKING_TOPICS) {
+  const name = facilityName(t);
+  for (const tok of distinctive(name)) {
+    const hit = EXCLUDED_TOKENS.find((e) => e.toks.has(tok));
+    if (hit) {
+      throw new Error(
+        `[parking] 고정 목록 '${name}' 이 제외 목록 '${hit.name}' 과 구별 토큰 '${tok}' 으로 겹친다 ` +
+        `— 쓸 글감이 조용히 사라진다. 제외 목록 등재를 되돌리거나 고정 목록에서 빼라`
+      );
+    }
+  }
+}
 
 // 결정1/3: 이 시설의 종합 가이드가 이미 발행됐나(= base "○○ 주차"가 발행글과 강매칭 score≥2).
 export function isComprehensivelyPublished(name) {
