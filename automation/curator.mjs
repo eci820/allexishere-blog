@@ -284,15 +284,31 @@ export function excludedHit(keyword) {
 
 // 🔴 프롬프트만 믿지 않는다. 모델은 근거 데이터에 이끌려 '이미 글이 있는 대상'을
 //    제안하는 경향이 있다(실제로 킨텍스·세텍·올림픽공원을 제안했다).
-export function flagOverlaps(proposals, publishedTitles) {
+//
+// 🔴 poolKeywords(재고 정확일치)를 보는 이유 — 계약 §2 위반을 미리보기에서 막는다.
+//    프롬프트의 중복 금지 목록은 existing.slice(0,120) 인데 실제 existing 은 429개라
+//    309개가 잘려 나간다. 잘린 구간에 주차 재고가 몰려 있어(전주·포항·대구·수원월드컵)
+//    모델이 이미 재고에 있는 시설을 다시 제안했다. 그러면 카드엔 "추가 예정 3개"라고
+//    보여주고 addVetted 는 2개만 넣는다 — 사람이 승인한 것과 반영된 것이 어긋난다.
+//    (2026-08-11 실측: 전주월드컵경기장 주차 = existing[292], 8/10 카드에도 같은 일)
+//
+//    🔴 판정 기준은 addVetted 와 **정확히 같아야** 한다 — addVetted 는 `have.has(keyword)`,
+//    즉 키워드 정확일치로만 건너뛴다. 여기서 sameFacility 같은 느슨한 판정을 쓰면
+//    반대 방향으로 어긋난다(미리보기는 뺐는데 addVetted 는 넣는다). 그래서 정확일치만 본다.
+//    slice(0,120) 상한은 일부러 건드리지 않는다 — 프롬프트 길이·비용을 늘리지 않고
+//    '보여준 것과 반영되는 것'만 일치시키는 게 이 수정의 목적이다.
+export function flagOverlaps(proposals, publishedTitles, poolKeywords = new Set()) {
   return proposals.map((p) => {
     const ex = excludedHit(p.keyword);
-    if (ex) return { ...p, overlap: `${ex.name} (${ex.reason})`, overlapOn: ex.on, excluded: true };
+    if (ex) return { ...p, overlap: `${ex.name} (${ex.reason})`, overlapOn: ex.on, excluded: true, inStock: false };
+    if (poolKeywords.has(p.keyword)) {
+      return { ...p, overlap: '재고에 이미 있는 키워드', overlapOn: p.keyword, excluded: false, inStock: true };
+    }
     for (const t of publishedTitles) {
       const hit = sameFacility(p.keyword, t);
-      if (hit) return { ...p, overlap: t, overlapOn: hit, excluded: false };
+      if (hit) return { ...p, overlap: t, overlapOn: hit, excluded: false, inStock: false };
     }
-    return { ...p, overlap: null, overlapOn: null, excluded: false };
+    return { ...p, overlap: null, overlapOn: null, excluded: false, inStock: false };
   });
 }
 
@@ -369,7 +385,9 @@ export async function runCurator({ dry = false } = {}) {
 
   // 중복 의심 표시 — 승인 전에 사람이 알아볼 수 있게.
   const publishedTitles = liveIndex().map((p) => p.title).filter(Boolean);
-  proposals = flagOverlaps(proposals, publishedTitles);
+  // 재고 정확일치 판정용 — addVetted 의 have 와 같은 집합이어야 한다(계약 §2).
+  const poolKeywords = new Set(pool.topics.map((t) => t.keyword));
+  proposals = flagOverlaps(proposals, publishedTitles, poolKeywords);
   const clean = proposals.filter((p) => !p.overlap);
   const flagged = proposals.filter((p) => p.overlap);
 
@@ -421,11 +439,15 @@ export async function runCurator({ dry = false } = {}) {
   }
   if (flagged.length) {
     L.push('');
-    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 같은 시설 글이 있거나 제외 목록에 있음`);
+    L.push(`🚫 자동 제외 ${flagged.length}개 — 이미 재고에 있거나, 같은 시설 글이 있거나, 제외 목록에 있음`);
     for (const p of flagged) {
       L.push(`  · ${p.keyword}`);
-      L.push(`    사유: "${p.overlapOn}" 이 겹침`);
-      L.push(p.excluded ? `    제외 목록: ${p.overlap}` : `    기존: ${p.overlap.slice(0, 38)}`);
+      if (p.inStock) {
+        L.push(`    사유: 이미 재고에 있는 키워드 — 승인해도 중복으로 건너뜁니다`);
+      } else {
+        L.push(`    사유: "${p.overlapOn}" 이 겹침`);
+        L.push(p.excluded ? `    제외 목록: ${p.overlap}` : `    기존: ${p.overlap.slice(0, 38)}`);
+      }
     }
     L.push('  새로 쓰면 자기잠식입니다. 기존 글 개선은 SEO 감시 쪽에서 다룹니다.');
   }
