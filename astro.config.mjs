@@ -43,6 +43,17 @@ function sveltiaDevAdmin() {
 
 // noindex:true 인 글의 URL 경로 집합. sitemap·RSS 에서 제외해 'noindex' 와 '목록 포함'의
 // 상충 신호를 막습니다. getPostUrl 과 같은 규칙(originalPath 우선, 없으면 /entry/{폴더명}).
+//
+// 🔴 키를 소문자로 정규화합니다. Astro 는 새 글 슬러그를 소문자로 서빙하는데(이관글은
+//    originalPath 를 그대로 씀) 폴더명은 대문자를 품을 수 있습니다. 예: 폴더
+//    'SK텔레콤-요금제-개편-…' → 실제 URL '/entry/sk텔레콤-요금제-개편-…'. 원형끼리
+//    비교하면 문자열이 어긋나 제외에 실패하고, noindex 인 글이 사이트맵에 남습니다.
+//    (실측: SK텔레콤 글 1편. 대소문자 섞인 폴더가 9개 있어 잠재 대상이 더 있습니다.)
+//    postLastmods() 가 이미 같은 이유로 소문자 키를 씁니다 — 규칙을 일치시킵니다.
+//
+// 🔴 정규화는 '매칭'에만 씁니다. URL 을 만들 때는 절대 쓰지 않습니다 — 여기서 만든 값은
+//    sitemap filter 의 비교 대상일 뿐이고, 내보내는 주소는 Astro 가 만든 원본 그대로입니다.
+//    소문자화한 문자열을 주소로 쓰면 대소문자 섞인 글들이 404 가 됩니다.
 function noindexPaths() {
   const base = new URL('./src/content/blog/', import.meta.url);
   const set = new Set();
@@ -62,7 +73,7 @@ function noindexPaths() {
     const id = f.replace(/[\\/]index\.(md|mdx)$/, '').replace(/\.(md|mdx)$/, '');
     let p = orig && orig.trim() ? orig.trim() : `/entry/${id}`;
     if (!p.startsWith('/')) p = '/' + p;
-    set.add(p.replace(/\/+$/, ''));
+    set.add(p.replace(/\/+$/, '').toLowerCase());
   }
   return set;
 }
@@ -152,7 +163,9 @@ export default defineConfig({
     sitemap({
       filter: (page) => {
         try {
-          const p = decodeURIComponent(new URL(page).pathname).replace(/\/+$/, '');
+          // 소문자 정규화는 NOINDEX_PATHS 와 맞추기 위한 '비교용'입니다. page 자체는
+          // 바꾸지 않으므로 사이트맵에 실리는 주소는 원본 대소문자 그대로입니다.
+          const p = decodeURIComponent(new URL(page).pathname).replace(/\/+$/, '').toLowerCase();
           return !NOINDEX_PATHS.has(p);
         } catch {
           return true;
