@@ -5,9 +5,25 @@
 //  · metrics: 네이버 지표·별점 24h 캐시(보충 시 채움).
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './env.mjs';
+import { ROOT, loadConfig } from './env.mjs';
 import { STOP } from './topics.mjs';
 import { distinctive, canonToken } from './titleRules.mjs';
+
+// ── 니치 화이트리스트(중복 방어 ④) — config.niche.allow 한 곳만 본다 ──
+// 🔴 판정은 tier 가 아니라 **series** 로 한다. evergreen tier 안에 tax(세금·환급)·
+//    parking(주차일반)·life(잡다)가 섞여 있고 전기요금은 science/life 에 있어서,
+//    tier 스위치(tierCounts)로는 니치를 표현할 수 없다 — tier 를 0 으로 두면 니치 안
+//    재고까지 같이 죽는다(2026-08-11 설계 근거).
+// 🔴 니치 밖 주제의 status 는 건드리지 않는다. pending 으로 남겨두고 제안만 막으므로
+//    config.niche.enabled=false 한 줄로 즉시 전부 되살아난다(대량 markSkipped 은 되돌리기 어렵다).
+let _nicheCfg;
+export function nicheAllows(topic, config) {
+  const n = (config ?? (_nicheCfg ??= loadConfig()))?.niche;
+  if (!n || n.enabled !== true) return true; // 미설정·비활성이면 기존 동작 그대로(전부 허용)
+  const allow = n.allow?.[topic.tier];
+  if (!allow) return false; // allow 에 없는 tier 는 통째로 니치 밖
+  return allow.includes('*') || allow.includes(topic.series || '');
+}
 
 const DB = path.join(ROOT, 'data', 'topics-pool.json');
 const DAY = 24 * 3600 * 1000;
@@ -249,7 +265,7 @@ function aliasNorm(p) {
 }
 
 // ── 3중 방어로 브리핑 후보 픽 ──
-// tier별 pending 중 (② status·③ 30일 쿨다운·① 발행글 강매칭) 통과분을 count개. 강매칭은 published로 자동 소진.
+// tier별 pending 중 (② status·③ 30일 쿨다운·① 발행글 강매칭·④ 니치) 통과분을 count개. 강매칭은 published로 자동 소진.
 // 반환: [{id, keyword, source, angle, series}] + 부수효과로 pool 갱신(markProposed·auto-published) 후 savePool.
 export function pickForBrief(pool, tier, count, extraExclude = new Set()) {
   const now = Date.now();
@@ -264,6 +280,8 @@ export function pickForBrief(pool, tier, count, extraExclude = new Set()) {
   for (const t of eligible) {
     if (out.length >= count) break;
     if (extraExclude.has(t.keyword)) continue;
+    // ④ 니치 밖은 제안하지 않는다(status 는 그대로 pending — 니치를 넓히면 즉시 되살아난다)
+    if (!nicheAllows(t)) continue;
     // ③ 제안 쿨다운
     if (t.lastProposedAt && now - Date.parse(t.lastProposedAt) < PROPOSE_COOLDOWN) continue;
     // ① 발행글 강매칭 → 소진 처리(published) 후 제외. 계급별 판정은 liveDupe 가 정한다.
@@ -285,10 +303,16 @@ export function pendingCount(pool, tier) {
 }
 
 // 지금 '제안 가능한'(pending & 30일 쿨다운 아닌) 수 — 보충 트리거 판단용(신선 재고가 마르기 전에 채움).
-export function eligibleCount(pool, tier) {
+//  · niche:true  — 니치 안(config.niche.allow)만 센다. 🔴 보충 트리거는 반드시 이걸 써야 한다:
+//    니치 밖 사재기(💪health 46개)가 총합을 부풀리면 임계에 영영 안 걸려 니치 안 재고가
+//    조용히 마른다(health 쿨다운이 풀리는 D+30 이후 실제로 발생하는 시나리오).
+//  · series:'tax' — 계급 안에서 계열까지 좁혀 센다(세금·전기요금 하한 감시용).
+export function eligibleCount(pool, tier, { niche = false, series = null } = {}) {
   const now = Date.now();
   return pool.topics.filter((t) =>
     t.status === 'pending' && (!tier || t.tier === tier) &&
+    (!series || t.series === series) &&
+    (!niche || nicheAllows(t)) &&
     (!t.lastProposedAt || now - Date.parse(t.lastProposedAt) >= PROPOSE_COOLDOWN)
   ).length;
 }

@@ -8,9 +8,18 @@
   "_captureTimeoutNote": "📷 현장 캡처 초안 생성 전용 타임아웃(초). 사진이 붙으면 프롬프트·출력이 길어져 일반 초안보다 오래 걸린다(실측: 텍스트만 149초 / 사진 1장 212초). 240초로는 사진 포함 생성이 SIGTERM(코드143)으로 죽었다 — 파일럿3 사고. 사진을 여러 장 붙일수록 늘어나므로 여유 있게 600.",
   "model": "claude-sonnet-5",
   "briefingCount": 5,
-  "_briefingCountNote": "⏳ 임시 감속(2026-07-25 ~ 08-18): A안 8 → 5. 🔴 8/18 주차 재고(30일 제안 쿨다운) 회복 시 8 로 복귀할 것. 감속 이유: 주차 제안가능이 0 이라 부족분이 전부 🌲에버그린 백필로 흘러 하루 6개씩 소비되고 eligible 11개가 이틀에 마른다(읽기전용 시뮬 실측). 총수를 5 로 낮추면 에버그린 소비가 3~4개/일로 떨어져 replenish 공급(실측 평균 9.7/일)과 균형이 맞는다. 발행 상한(publishCap 4편/일)과는 무관한 값이다 — 이건 '제안 개수'이므로 하루 4편 발행에 지장 없다. 복귀 시 A안 배분: 총 8 = 🅿️주차4 + 신규2 + 📅캘린더1 + 📂갱신1. 🔥실검은 폐지(tierCounts.trend=0). 🔴 이 값은 '총수 스위치'가 아니다 — 신규 몫을 역산하는 값이다. briefing.mjs:106-107 이 need = briefingCount - 주차 - 갱신 - 캘린더 이고, 주차(parkingSlots.count)·캘린더(calendarCount)·갱신(updateCount)이 먼저 확정되며 최종 ordered(151행)는 slice 되지 않는다. 그래서 4개 인자를 함께 맞춰야 총수가 맞는다: 8-4-1-1=2(신규). 하나만 바꾸면 총수가 어긋난다. 신규 2 의 내부 배분은 distributeNewTier(2, tierCounts) 가 trim 순서 에버그린→과학→건강 으로 5→2 로 깎아 🔬과학1+💪건강1 이 되고 🌲에버그린은 0 이다(신규 슬롯을 못 받음 — 재고는 §2.5 백필로만 소비된다). 🔴 A안 배분은 '상한'이지 '보장'이 아니다: need 는 설정 상한이 아니라 실제로 채워진 개수로 계산되므로, 주차·캘린더가 재고/이벤트 부족으로 덜 나오면 need 가 커져 부족분이 전부 신규(백필은 건강→과학→에버그린)로 흘러간다. 이 값은 사실상 '총수 보증'이다. 2026-07-25 실측: 주차 제안가능 0(30일 쿨다운, 8/18 해소)·캘린더 D-14~D-3 이벤트 0 이라 need=7 → 실제 카드는 🅿️0+신규7(에버그린6+과학1)+📅0+📂1=8 이다. 목표 배분(4/2/1/1)은 주차 재고가 회복된 뒤에 나온다.",
-  "tierCounts": { "trend": 0, "science": 2, "health": 2, "evergreen": 1 },
-  "_tierCountsNote": "🔥trend=0 → 실검 계급 폐지(GSC/네이버 실측상 노출만 나오고 클릭 0). 0이면 실시간 검색어 수집(collectTrend) 자체를 건너뛴다. 2로 되돌리면 즉시 부활 — 코드는 그대로 살아있다. 🌲에버그린 1 = 재고 pending이 가장 얕음(과학11·건강18).",
+  "_briefingCountNote": "⏳ 임시 감속(2026-07-25 ~ 08-18): A안 8 → 5. 🔴 8/18 주차 재고(30일 제안 쿨다운) 회복 시 8 로 복귀할 것. 감속 이유: 주차 제안가능이 0 이라 부족분이 전부 🌲에버그린 백필로 흘러 하루 6개씩 소비되고 eligible 11개가 이틀에 마른다(읽기전용 시뮬 실측). 총수를 5 로 낮추면 에버그린 소비가 3~4개/일로 떨어져 replenish 공급(실측 평균 9.7/일)과 균형이 맞는다. 발행 상한(publishCap 4편/일)과는 무관한 값이다 — 이건 '제안 개수'이므로 하루 4편 발행에 지장 없다. 복귀 시 A안 배분: 총 8 = 🅿️주차4 + 신규2 + 📅캘린더1 + 📂갱신1. 🔥실검은 폐지(tierCounts.trend=0). 🔴 이 값은 '총수 스위치'가 아니다 — 신규 몫을 역산하는 값이다. briefing.mjs:106-107 이 need = briefingCount - 주차 - 갱신 - 캘린더 이고, 주차(parkingSlots.count)·캘린더(calendarCount)·갱신(updateCount)이 먼저 확정되며 최종 ordered(151행)는 slice 되지 않는다. 그래서 4개 인자를 함께 맞춰야 총수가 맞는다: 8-4-1-1=2(신규). 하나만 바꾸면 총수가 어긋난다. 신규 2 의 내부 배분은 distributeNewTier(2, tierCounts) 가 trim 순서 에버그린→과학→건강 으로 5→2 로 깎아 🔬과학1+💪건강1 이 되고 🌲에버그린은 0 이다(신규 슬롯을 못 받음 — 재고는 §2.5 백필로만 소비된다). 🔴 A안 배분은 '상한'이지 '보장'이 아니다: need 는 설정 상한이 아니라 실제로 채워진 개수로 계산되므로, 주차·캘린더가 재고/이벤트 부족으로 덜 나오면 need 가 커져 부족분이 전부 신규(백필은 건강→과학→에버그린)로 흘러간다. 이 값은 사실상 '총수 보증'이다. 2026-07-25 실측: 주차 제안가능 0(30일 쿨다운, 8/18 해소)·캘린더 D-14~D-3 이벤트 0 이라 need=7 → 실제 카드는 🅿️0+신규7(에버그린6+과학1)+📅0+📂1=8 이다. 목표 배분(4/2/1/1)은 주차 재고가 회복된 뒤에 나온다. 🔴 2026-08-11 덮어씀 — 위 'A안 8 로 복귀' 지시는 폐기한다. 니치 축소로 제안 가능한 재고 자체가 좁아져(니치 안 pending 91 → 지속가능 ≈3.0/일) 8 은 더 이상 채울 수 없다. 새 배분: 총 5 = 🅿️주차2 + 신규3(🔬전기요금1 + 🌲세금·주차2) + 📅캘린더1 + 📂갱신1. 주차가 0 인 날은 신규가 3장을 유지해 총 5장이 보증된다(읽기전용 시뮬 60일: 평균 총 5.0장, 카드 0장인 날 0일 — 단 replenish 가 니치 안으로 하루 3개를 공급할 때. 보충이 멈추면 60일 중 2일이 4장 미만으로 떨어진다).",
+  "tierCounts": { "trend": 0, "science": 1, "health": 0, "evergreen": 2 },
+  "_tierCountsNote": "🔥trend=0 → 실검 계급 폐지(GSC/네이버 실측상 노출만 나오고 클릭 0). 0이면 실시간 검색어 수집(collectTrend) 자체를 건너뛴다. 2로 되돌리면 즉시 부활 — 코드는 그대로 살아있다.",
+  "_tierCountsNote2": "🔴 2026-08-11 니치 축소(주차 + 전기요금·세금·환급). 💪health=2→0 (재고 46개 전부 니치 밖). 🔬science=2→1 은 science/life(전기요금 13개)만 남기기 위함이고, 🌲evergreen=1→2 는 evergreen/tax(세금·환급 25개)가 니치의 한 축이라 오히려 올린 값이다. ⚠️ 이 값만으로는 계급이 죽지 않는다 — briefing.mjs 의 distributeNewTier add 목록(base>0 필터)과 §2.5 백필 순서(아래 backfillOrder)에서도 빠져야 한다. 실측(읽기전용 시뮬 2026-08-11): health=0 으로만 두면 30일 중 다수 날짜에 health 가 add/백필로 되살아났다. ⚠️ tier 축은 니치 축과 어긋난다 — 실제 좁히기는 아래 niche.allow 가 series 단위로 한다. tier 를 0 으로 두면 니치 안 재고까지 같이 죽으므로 evergreen·science 를 0 으로 두지 말 것.",
+  "backfillOrder": ["evergreen", "science"],
+  "_backfillOrderNote": "briefing.mjs §2.5 '총수 보증' 부족분 백필 순서. 기존 하드코딩 ['health','science','evergreen'] 은 health 가 맨 앞이라 tierCounts.health=0 이어도 부족분이 전부 health 로 흘렀다. 니치 밖 계급을 여기서 빼는 것이 계급 폐지의 실질이다. 되돌리기: 배열에 계급명을 다시 넣으면 된다(코드 수정 불필요).",
+  "niche": {
+    "enabled": true,
+    "allow": { "parking": ["*"], "evergreen": ["parking", "tax"], "science": ["life"] },
+    "_note": "🔴 니치 = 🅿️주차 + 🔬전기요금 + 🌲세금·환급 (2026-08-11 축소. 통신비·운동·식단·영양제·검진은 니치 밖). 판정은 tier 가 아니라 series 로 한다 — evergreen tier 안에 tax(세금·환급 25)·parking(주차일반 11)·life(잡다 29)가 섞여 있고, 전기요금은 science/life(13)에 있다. tier 스위치로는 니치를 표현할 수 없다. topicsPool.mjs nicheAllows() 가 이 한 곳만 읽고 브리핑·백필·보충이 같은 판정을 쓴다(두 곳에 적으면 반드시 어긋난다 — SKILL.md §3). 니치 밖 재고(health 46·science/knowledge 4·evergreen/life 29)는 status 를 건드리지 않고 pending 으로 남겨 필터로만 막는다. 되돌리기: enabled:false(즉시 전부 복구) 또는 allow 에 series 추가(부분 복구)."
+  },
+  "_nicheStockNote": "니치 안 pending 실측(2026-08-11): 🅿️parking 42(제안가능 0 — 8/18~8/21 에 33개 쿨다운 해제) · 🌲evergreen/tax 25(12) · 🌲evergreen/parking 11(7) · 🔬science/life 13(1). 합 91 → 30일 쿨다운상 지속가능 제안률 ≈ 3.0/일. briefingCount 5(주차2+신규3+캘1+갱1)가 이 상한에 맞춘 값이다.",
   "updateCount": 1,
   "_updateCountNote": "📂 갱신 후보 하루 상한(A안: 1). 초과분은 slice 로 잘리고 다음날 다시 후보가 된다(score 내림차순 정렬이라 별도 이월 로직 불필요). ⚠️ briefing.mjs:103 이 Math.min(2, updateCount) 라 2 가 코드상 하드 상한이다 — 3 이상으로 올려도 2 로 잘린다.",
   "calendarCount": 1,
@@ -18,9 +27,10 @@
   "parkingSlots": {
     "enabled": true,
     "version": "v2.8",
-    "count": 4,
+    "count": 2,
     "lowStockThreshold": 10,
-    "_note": "🅿️ v2.8 상시 운영(until 제거). count=최대 4(A안, 재고 있는 만큼 — 억지 채움 금지, 부족분은 기타 계급 백필). ⚠️ lowStockThreshold 는 parkingStock()=pending 수를 보는데 pickForBrief 는 30일 제안 쿨다운으로 한 번 더 걸러낸다 — pending 33 인데 제안가능 0 인 상태(2026-07-25 실측, 8/18 해소)에서도 알림이 울리지 않는다. 주차가 0개로 나오면 이 차이를 먼저 의심할 것. version:v2.8=모디파이어 매트릭스(시설당 M1요금·M4경기일·M3근처). 되돌리기: version을 v2.7로 → base '○○ 주차' 3개 모드 복원(모디파이어 미적용). 폐기: enabled=false. lowStockThreshold=미발행 주차 주제 재고가 이 값 미만이면 텔레그램 알림."
+    "_countNote": "🔴 4→2 (2026-08-11). count=4 는 30일 주차 총량을 못 늘린다 — 재고 42개에 30일 제안 쿨다운이 걸려 지속가능 상한이 ≈1.4/일이고, v2.8 모디파이어 확장은 소진(신규 주입 0개)이라 신규 공급은 curator 주 1회 ≤5개(전 계급 합산·사람 승인)뿐이다. 읽기전용 시뮬 실측: 30일 주차 총량은 count 4 든 2 든 똑같이 34개인데, 4 는 8/18~8/24 에 몰아 쓰고 이후 3주 공백을 만들어 '키워드카드 0장인 날'이 60일 중 4일(count=2 는 2일)이었다. 즉 4 는 총량이 아니라 분포만 나쁘게 한다. 🔴 주차를 늘리려면 이 값이 아니라 parking.mjs PARKING_TOPICS 에 시설을 추가해야 한다.",
+    "_note": "🅿️ v2.8 상시 운영(until 제거). count=최대 2(재고 있는 만큼 — 억지 채움 금지, 부족분은 기타 계급 백필). ⚠️ lowStockThreshold 는 parkingStock()=pending 수를 보는데 pickForBrief 는 30일 제안 쿨다운으로 한 번 더 걸러낸다 — pending 33 인데 제안가능 0 인 상태(2026-07-25 실측, 8/18 해소)에서도 알림이 울리지 않는다. 주차가 0개로 나오면 이 차이를 먼저 의심할 것. version:v2.8=모디파이어 매트릭스(시설당 M1요금·M4경기일·M3근처). 되돌리기: version을 v2.7로 → base '○○ 주차' 3개 모드 복원(모디파이어 미적용). 폐기: enabled=false. lowStockThreshold=미발행 주차 주제 재고가 이 값 미만이면 텔레그램 알림."
   },
   "briefingSchedule": [ { "h": 10, "m": 0 } ],
   "_briefingScheduleNote": "하루 1회 오전 10시경(setup.sh의 launchd StartCalendarInterval이 실제 트리거). 이 값은 문서용.",
