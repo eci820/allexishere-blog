@@ -1,6 +1,7 @@
 ---
 title: "올리브유 음식 궁합, 올리브오일에 어울리는 음식 정리"
 pubDate: 2025-07-17T15:28:35+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "올리브유 음식 궁합, 올리브오일에 어울리는 음식 정리"

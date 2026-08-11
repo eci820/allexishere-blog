@@ -2,6 +2,7 @@
 title: "SK텔레콤 요금제 개편 2026년 7월 가격 비교 가이드"
 description: "SK텔레콤이 2026년 7월 2일부터 시행하는 5G·LTE 통합요금제 '베스트·라이트'의 가격 구성과 안심데이터, 결합상품 개편 내용을 정리했습니다."
 pubDate: 2026-07-05T22:38:20+09:00
+noindex: true
 category: info
 tags: ["SK텔레콤", "SK텔레콤 요금제", "5G LTE 통합요금제", "SK텔레콤 가격", "T월드"]
 draft: false

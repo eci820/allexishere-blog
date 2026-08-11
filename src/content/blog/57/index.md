@@ -1,6 +1,7 @@
 ---
 title: "단통법 폐지 후 달라진 자급제 활용하는 방법"
 pubDate: 2025-07-26T17:45:04+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "단통법 폐지 후 달라진 자급제 활용하는 방법"

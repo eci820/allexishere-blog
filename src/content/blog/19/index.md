@@ -1,6 +1,7 @@
 ---
 title: "확률의 정의, 놀라운 의미"
 pubDate: 2025-07-11T09:20:03+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "확률의 정의, 놀라운 의미"

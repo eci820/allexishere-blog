@@ -1,6 +1,7 @@
 ---
 title: "지하철 에어콘·난방·냉방 온도 민원 전화번호 정리"
 pubDate: 2025-07-12T11:01:21+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "지하철 에어콘·난방·냉방 온도 민원 전화번호 정리"

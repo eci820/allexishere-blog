@@ -1,6 +1,7 @@
 ---
 title: "최고급 올리브유 한병이 15만원"
 pubDate: 2025-07-11T00:33:59+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "최고급 올리브유 한병이 15만원"

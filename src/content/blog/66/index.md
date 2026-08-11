@@ -1,6 +1,7 @@
 ---
 title: "옥수수전, 옥수수튀김, 옥수수스프까지! 초간단 옥수수 요리 모음"
 pubDate: 2025-08-11T23:53:50+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "옥수수전, 옥수수튀김, 옥수수스프까지! 초간단 옥수수 요리 모음"

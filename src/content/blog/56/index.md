@@ -1,6 +1,7 @@
 ---
 title: "단통법 폐지 후 휴대폰, 알뜰폰 구매 방법 정리"
 pubDate: 2025-07-26T17:16:57+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "단통법 폐지 후 휴대폰, 알뜰폰 구매 방법 정리"

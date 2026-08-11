@@ -1,6 +1,7 @@
 ---
 title: "행복과 마음건강, 감사일기 쓰기"
 pubDate: 2025-07-22T23:54:46+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "행복과 마음건강, 감사일기 쓰기"

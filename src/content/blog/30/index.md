@@ -1,6 +1,7 @@
 ---
 title: "가성비 엑스트라버진 올리브유 Top 10"
 pubDate: 2025-07-14T15:32:16+09:00
+noindex: true
 category: info
 cover: "./img.jpg"
 coverAlt: "가성비 엑스트라버진 올리브유 Top 10"

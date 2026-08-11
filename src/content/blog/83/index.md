@@ -1,6 +1,7 @@
 ---
 title: "임영웅 콘서트 일정표•예매 일정•가격•좌석 배치"
 pubDate: 2025-08-17T22:50:20+09:00
+noindex: true
 category: info
 cover: "./img.png"
 coverAlt: "임영웅 콘서트 일정표•예매 일정•가격•좌석 배치"
