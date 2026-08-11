@@ -11,11 +11,18 @@
 //  · 성과 분석가(daily)  — 지금 성과가 어떤가
 //  · SEO 감시자(weekly)  — 기존 글이 괜찮은가 (유지)
 //  · 큐레이터(여기)      — 무엇을 새로 쓸까 (생성)
-//  · replenish.mjs       — 이미 자동으로 science/health/evergreen 재고를 채운다.
+//  · replenish.mjs       — 이미 자동으로 evergreen/tax·evergreen/parking·science/life 를 채운다.
 //    ⚠️ 큐레이터는 이걸 중복하지 않는다. 그 계급은 '자동 보충 중'이라고 알리기만 한다.
 //    큐레이터가 실제로 메우는 건 replenish 가 손대지 않는 곳이다:
 //      ① 🅿️ 주차 — parking.mjs 의 고정 시설 목록(36개)에서만 나온다. 소진되면 보충 없음.
 //      ② GSC 검색어 갭 — 노출은 나는데 우리 글이 약한 검색어.
+//
+// ── 🔴 니치(2026-08-11 축소) ──────────────────────────────────────────
+// 주차 + 전기요금 + 세금·환급. 💪건강(영양제·운동·식단·검진)·통신비는 폐지된 주제다.
+// 판정은 config.niche.allow 한 곳만 보는 nicheAllows() 로 한다 — 프롬프트에 적은 규칙과
+// 코드가 갈라지면 카드에 보이는 판정과 실제 반영이 어긋난다(계약 §2·§3).
+// 🔴 니치 필터는 반드시 '저장 전'에 건다. 승인 콜백(bot.mjs curate:)은 저장된 proposals 를
+//    그대로 addVetted 로 넣으므로, 승인 단계에서 거르면 미리보기와 어긋난다.
 //
 // ── 🔴 데이터 성숙도 ──────────────────────────────────────────────────
 // 성과 이력이 얕으면 성과 기반 제안을 억지로 하지 않는다. 1일치 데이터로 "이 주제가
@@ -34,8 +41,8 @@ import { loadEnv, loadConfig, ROOT, AUTO_DIR } from './lib/env.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
 import { runClaude, unwrapClaudeJSON } from './lib/claudeCli.mjs';
 import * as gsc from './lib/gsc.mjs';
-import { loadPool, liveIndex } from './lib/topicsPool.mjs';
-import { PARKING_TOPICS, EXCLUDED_FACILITIES } from './lib/parking.mjs';
+import { loadPool, liveIndex, nicheAllows } from './lib/topicsPool.mjs';
+import { PARKING_TOPICS, EXCLUDED_FACILITIES, expandParkingTopics } from './lib/parking.mjs';
 import { MODIFIER, canonToken } from './lib/titleRules.mjs';
 
 loadEnv();
@@ -49,8 +56,10 @@ const PROPOSALS = path.join(AUTO_DIR, 'state', 'curator-proposals.json');
 const PERF_MATURE_DAYS = 7;
 // 주간 제안 상한 — 브리핑 12개 구성을 흔들지 않도록 소량만.
 const WEEKLY_CAP = 5;
-// replenish.mjs 가 자동으로 채우는 계급(큐레이터는 손대지 않는다)
-const AUTO_REPLENISHED = new Set(['science', 'health', 'evergreen']);
+// replenish.mjs 가 자동으로 채우는 계급(큐레이터는 손대지 않는다).
+// 💪health 는 2026-08-11 폐지 — 이제 아무도 채우지 않으므로 여기서도 뺀다.
+// 🅿️parking 은 여기 없다: 자동 보충이 없어서 큐레이터가 유일한 공급원이다.
+const AUTO_REPLENISHED = new Set(['science', 'evergreen']);
 
 const perfDays = () => {
   try { return Object.keys(JSON.parse(fs.readFileSync(PERF, 'utf8')).days || {}).length; }
@@ -85,7 +94,12 @@ export function parkingFacilityState(pool) {
   const known = new Set(PARKING_TOPICS.map((t) => t.keyword.replace(/ 주차$/, '')));
   const pendingParking = pool.topics.filter((t) => t.tier === 'parking' && t.status === 'pending').length;
   const publishedParking = pool.topics.filter((t) => t.tier === 'parking' && t.status === 'published').length;
-  return { known: [...known], knownCount: known.size, pendingParking, publishedParking };
+  // 🔴 v2.8 모디파이어 확장으로 아직 재고에 안 들어간 게 몇 개 남았나(읽기 전용).
+  //    이게 0 이면 '고정 목록에서 더 뽑아낼 게 없다' = 새 시설이 들어오지 않는 한
+  //    주차 공급은 순감한다는 뜻이다. 프롬프트에 숫자로 넘겨 모델이 추측하지 않게 한다.
+  const have = new Set(pool.topics.map((t) => t.keyword));
+  const expandable = expandParkingTopics().filter((e) => !have.has(e.keyword)).length;
+  return { known: [...known], knownCount: known.size, pendingParking, publishedParking, expandable };
 }
 
 // ── GSC 검색어 갭 ─────────────────────────────────────────────────────
@@ -109,11 +123,38 @@ export async function queryGaps(site, { minImpressions = 5, limit = 15 } = {}) {
 }
 
 // ── 제안 생성(LLM 1회) ────────────────────────────────────────────────
-function buildPrompt({ mature, forecast, parking, gaps, winners, existing }) {
+// export 이유: LLM 을 호출하지 않고 프롬프트를 그대로 렌더링해 검증할 수 있게.
+// (--dry-run 은 runClaude 를 태우므로 프롬프트만 보고 싶을 때 쓸 수 없다)
+export function buildPrompt({ mature, forecast, parking, gaps, winners, existing }) {
   const tight = forecast.filter((f) => !f.autoReplenished && f.daysLeft <= 21);
   return `당신은 한국어 정보 블로그의 '주제 기획자'입니다. 아래 근거만 보고 새 주제를 제안하세요.
 
+[🔴 니치 — 이 밖의 주제는 단 하나도 내지 마세요]
+이 블로그의 니치는 **주차 + 전기요금 + 세금·환급** 셋뿐입니다(2026-08-11 축소).
+건강·영양제·운동·식단·검진·의료제도·보험·통신비는 **폐지된 주제**입니다. 절대 제안하지 마세요.
+니치 밖 제안은 카드에 오르지도 못하고 전량 폐기됩니다(코드가 한 번 더 거릅니다).
+
+tier/series 는 **아래 4가지 조합만** 허용합니다. 다른 조합을 쓰면 그 제안은 버려집니다:
+ · tier=parking,   series=facility — 개별 시설 주차 (예: '전주월드컵경기장 주차')  ← 최우선
+ · tier=evergreen, series=tax      — 세금·환급·공제·지원금 (예: '의료비세액공제 한도')
+ · tier=evergreen, series=parking  — 주차 제도·과태료·요금 일반 (예: '전기차 충전방해 과태료')
+ · tier=science,   series=life     — 가전·설비 전기요금 (예: '보일러 외출모드 전기요금')
+
 [제안 상한] 최대 ${WEEKLY_CAP}개. 억지로 채우지 말고 근거가 분명한 것만 내세요.
+
+[🔴 배분 — 주차 시설 발굴이 최우선]
+가능하면 ${WEEKLY_CAP}개 중 **3개 이상을 tier=parking(새 시설)** 으로 내세요.
+이유는 추측이 아니라 실측입니다:
+ · 🅿️ 주차는 **자동 보충이 없습니다.** parking.mjs 의 고정 시설 목록에서만 나오고,
+   그 목록을 늘리는 경로는 **당신의 제안 하나뿐**입니다.
+ · v2.8 모디파이어 확장(요금/경기일/근처)으로 더 뽑아낼 수 있는 조합이 현재 **${parking.expandable}개** 남았습니다.
+   ${parking.expandable === 0
+      ? '즉 고정 목록에서 짜낼 것이 하나도 없습니다 — 새 시설이 들어오지 않으면 주차 재고는 발행할수록 순감합니다.'
+      : '이것마저 소진되면 새 시설 없이는 주차 재고가 순감합니다.'}
+ · 현재 주차 재고 ${parking.pendingParking}개 · 이미 발행 ${parking.publishedParking}개.
+세금·전기요금은 replenish 가 매일 자동으로 채우므로, 당신이 굳이 채울 필요가 적습니다.
+다만 주차 시설이 4대 기준(아래)을 만족하는 게 3개가 안 되면 **억지로 채우지 말고** 그만큼
+세금·전기요금으로 내세요 — 기준 미달 시설을 넣는 것이 재고가 비는 것보다 나쁩니다.
 
 [근거 1 — 재고 소진 예보]
 ${forecast.map((f) => `- ${f.tier}: 재고 ${f.pending}개, 하루 ${f.perDay}개 소비 → 약 ${f.daysLeft}일치${f.autoReplenished ? ' (자동 보충 대상 — 제안하지 마세요)' : ' ⚠️ 자동 보충 없음'}`).join('\n')}
@@ -153,8 +194,8 @@ ${mature
 [이미 재고·발행에 있는 것 — 중복 금지]
 ${existing.slice(0, 120).join(', ')}
 
-[출력 형식] JSON 배열 하나만(코드펜스·설명 금지):
-[{"keyword":"검색어 형태 6~16자","tier":"parking|science|health|evergreen","series":"","angle":"어떤 각도로 쓸지 한 줄","why":"이 제안의 근거를 위 [근거 N] 중 무엇에 기대는지 한 줄"}]`;
+[출력 형식] JSON 배열 하나만(코드펜스·설명 금지). series 는 반드시 채우세요(빈 값이면 폐기됩니다):
+[{"keyword":"검색어 형태 6~16자","tier":"parking|evergreen|science","series":"facility|tax|parking|life","angle":"어떤 각도로 쓸지 한 줄","why":"이 제안의 근거를 위 [근거 N] 중 무엇에 기대는지 한 줄"}]`;
 }
 
 function parseProposals(text) {
@@ -168,11 +209,26 @@ function parseProposals(text) {
     .slice(0, WEEKLY_CAP)
     .map((x) => ({
       keyword: x.keyword.trim(),
-      tier: ['parking', 'science', 'health', 'evergreen'].includes(x.tier) ? x.tier : 'evergreen',
-      series: String(x.series || ''),
+      // 💪health 폐지(2026-08-11) — 화이트리스트에서 뺐다. 모르는 tier 는 evergreen 으로
+      // 떨어지는데, 그러면 series 가 니치를 결정하므로 아래 nicheAllows 가 최종 판정한다.
+      tier: ['parking', 'science', 'evergreen'].includes(x.tier) ? x.tier : 'evergreen',
+      // 🅿️ 주차는 series 를 안 적어도 facility 로 본다(고정 목록·확장분이 모두 facility 다).
+      // 그 밖의 계급은 비워두면 니치 판정이 불가능하므로 채워 넣지 않는다 — 임의로
+      // 'tax' 같은 걸 넣으면 잡다한 주제가 세금 재고로 위장해 하한 카운트를 오염시킨다.
+      series: String(x.series || (x.tier === 'parking' ? 'facility' : '')),
       angle: String(x.angle || '').slice(0, 80),
       why: String(x.why || '').slice(0, 80),
     }));
+}
+
+// 🔴 프롬프트만 믿지 않는다(§7 — 하한·금지는 '요청'이지 '보장'이 아니다).
+//    니치 판정은 config.niche.allow 를 보는 nicheAllows() 한 곳만 쓴다 — 프롬프트에 적은
+//    4가지 조합을 여기 또 하드코딩하면 두 곳이 갈라진다(SKILL.md §3).
+//    반환: { kept, offNiche } — offNiche 는 조용히 버리지 않고 리포트에 수를 드러낸다.
+export function splitByNiche(proposals) {
+  const kept = [], offNiche = [];
+  for (const p of proposals) (nicheAllows({ tier: p.tier, series: p.series }) ? kept : offNiche).push(p);
+  return { kept, offNiche };
 }
 
 // 🔴 프롬프트만 믿지 않는다. 모델은 근거 데이터에 이끌려 '이미 글이 있는 대상'을
@@ -306,6 +362,11 @@ export async function runCurator({ dry = false } = {}) {
     console.error('[curator] 제안 생성 실패:', e.kind || 'error', e.message);
   }
 
+  // 🔴 니치 밖 폐기를 '저장 전·중복판정 전'에 한다. 승인 콜백은 저장된 목록을 그대로
+  //    addVetted 로 넣으므로, 여기서 거른 결과가 곧 사람이 카드에서 본 것이 된다(계약 §2).
+  const { kept, offNiche } = splitByNiche(proposals);
+  proposals = kept;
+
   // 중복 의심 표시 — 승인 전에 사람이 알아볼 수 있게.
   const publishedTitles = liveIndex().map((p) => p.title).filter(Boolean);
   proposals = flagOverlaps(proposals, publishedTitles);
@@ -333,7 +394,8 @@ export async function runCurator({ dry = false } = {}) {
     const tag = f.autoReplenished ? '자동 보충됨' : (f.daysLeft <= 21 ? '⚠️ 자동 보충 없음' : '자동 보충 없음');
     L.push(`  ${f.tier.padEnd(9)} ${String(f.pending).padStart(3)}개 · 하루 ${f.perDay} → 약 ${f.daysLeft}일치 (${tag})`);
   }
-  L.push(`  ※ science·health·evergreen 은 replenish 가 매일 자동 보충합니다(큐레이터 대상 아님).`);
+  L.push(`  ※ science·evergreen 은 replenish 가 매일 자동 보충합니다(큐레이터 대상 아님).`);
+  L.push(`  ※ 🅿️parking 은 자동 보충이 없습니다 — 고정 목록 확장 여지 ${parking.expandable}개 · 큐레이터가 유일한 공급원입니다.`);
 
   if (gaps.length) {
     L.push('');
@@ -342,7 +404,9 @@ export async function runCurator({ dry = false } = {}) {
   }
 
   L.push('');
-  L.push(`【승인 시 반영될 내용】 추가 예정 ${clean.length}개` + (flagged.length ? ` · 자동 제외 ${flagged.length}개` : ''));
+  L.push(`【승인 시 반영될 내용】 추가 예정 ${clean.length}개`
+    + (flagged.length ? ` · 자동 제외 ${flagged.length}개` : '')
+    + (offNiche.length ? ` · 니치 밖 폐기 ${offNiche.length}개` : ''));
   L.push('');
   if (clean.length) {
     L.push(`💡 추가 예정 ${clean.length}개 (상한 ${WEEKLY_CAP})`);
@@ -365,10 +429,17 @@ export async function runCurator({ dry = false } = {}) {
     }
     L.push('  새로 쓰면 자기잠식입니다. 기존 글 개선은 SEO 감시 쪽에서 다룹니다.');
   }
+  // 니치 밖이 계속 돌아오면 프롬프트가 안 먹히고 있다는 뜻 — 조용히 버리지 않고 수를 드러낸다.
+  if (offNiche.length) {
+    L.push('');
+    L.push(`🚫 니치 밖 폐기 ${offNiche.length}개 — 주차·전기요금·세금 외 주제`);
+    for (const p of offNiche) L.push(`  · ${p.keyword} [${p.tier}/${p.series || '-'}]`);
+    L.push('  반복되면 프롬프트를 손보세요(config.niche.allow 가 판정 기준입니다).');
+  }
   // 🔴 '없다'는 말은 정말 아무것도 없을 때만 한다. 예전에는 이 문장이 flagged 의 else 에
   //    붙어 있어서, 추가 예정 3개를 나열해 놓고 바로 아래에 "제안할 것이 없습니다"를
   //    같이 찍었다. 카드가 자기 말과 어긋나면 사람은 카드 전체를 믿지 않게 된다(계약 §2).
-  if (!clean.length && !flagged.length) {
+  if (!clean.length && !flagged.length && !offNiche.length) {
     L.push(llmError ? `❌ 제안 생성 실패: ${llmError}` : '제안할 것이 없습니다(근거가 분명한 주제 없음).');
   }
 
@@ -386,7 +457,7 @@ export async function runCurator({ dry = false } = {}) {
       ]]) : undefined
     );
   }
-  return { ok: true, message, proposals: clean, flagged, id, mature, days };
+  return { ok: true, message, proposals: clean, flagged, offNiche, id, mature, days };
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
