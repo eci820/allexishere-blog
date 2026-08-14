@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-08T02:04:21.407Z",
+  "updatedAt": "2026-08-14T01:02:20.070Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -8,11 +8,12 @@
       "tier": "science",
       "series": "life",
       "angle": "제습 vs 냉방 요금 비교",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "에어컨-전기요금-계산법-총정리-24시간-켜두기-진실2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": null,
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tgov1uf",
@@ -44,11 +45,12 @@
       "tier": "science",
       "series": "life",
       "angle": "24시간 가동 요금",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "공기청정기-필터-교체-주기-헤파프리필터-교체-기준-2026",
       "addedAt": "2026-07-12T06:12:17.989Z",
       "lastProposedAt": "2026-07-12T07:23:54.202Z",
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t6mb4wn",
@@ -59,7 +61,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": "2026-07-12T07:23:54.202Z",
+      "lastProposedAt": "2026-08-13T01:00:05.116Z",
       "metrics": null
     },
     {
@@ -3503,7 +3505,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T01:01:49.932Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-10T01:00:03.552Z",
       "metrics": {
         "vol": 10,
         "doc": 106714,
@@ -3593,7 +3595,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T04:16:19.945Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-10T01:00:03.552Z",
       "metrics": {
         "vol": 30,
         "doc": 23643,
@@ -3629,7 +3631,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T04:16:19.945Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-10T01:00:03.552Z",
       "metrics": {
         "vol": 10,
         "doc": 181465,
@@ -3647,7 +3649,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T04:16:19.945Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-11T01:02:09.103Z",
       "metrics": {
         "vol": 10,
         "doc": 24374,
@@ -3791,7 +3793,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T23:47:54.749Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-11T01:02:09.103Z",
       "metrics": {
         "vol": 10,
         "doc": 41728,
@@ -4782,6 +4784,600 @@
         "ratio": 0,
         "stars": 3,
         "ts": 1786150960664
+      }
+    },
+    {
+      "id": "too2o7j",
+      "keyword": "국민연금 반환일시금",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "수급조건 확인으로 신청 여부·시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 24064,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "t5igym3",
+      "keyword": "상가 권리금 회수요건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "회수 요건 확인으로 계약·이전 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": "2026-08-09T01:07:01.653Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 27233,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "tp9bgxl",
+      "keyword": "계약갱신청구권 거절사유",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "거절 사유 확인으로 이사 시기·비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": "2026-08-09T01:07:01.653Z",
+      "metrics": {
+        "vol": 110,
+        "doc": 49494,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "tczkqlo",
+      "keyword": "부부공동명의 종부세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "감면 조건 확인으로 명의 방식 선택 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": "2026-08-09T01:07:01.653Z",
+      "metrics": {
+        "vol": 3330,
+        "doc": 27150,
+        "ratio": 0.123,
+        "stars": 5,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "tnjn1vp",
+      "keyword": "부가세 예정고지 기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "고지 기준 확인으로 자금 준비 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": "2026-08-09T01:07:01.653Z",
+      "metrics": {
+        "vol": 720,
+        "doc": 13071,
+        "ratio": 0.055,
+        "stars": 5,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "to2ugur",
+      "keyword": "이직확인서 발급기한",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "발급기한 확인으로 실업급여 신청 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-09T01:02:37.323Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 13029,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786237357321
+      }
+    },
+    {
+      "id": "trbrsik",
+      "keyword": "판토텐산 효과 부작용",
+      "tier": "health",
+      "series": "B",
+      "angle": "함량 기준 제품 선택과 과다복용 위험 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-11T01:02:07.487Z",
+      "lastProposedAt": "2026-08-11T01:02:09.101Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 36677,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786410127485
+      }
+    },
+    {
+      "id": "tkvygu3",
+      "keyword": "육아기 근로시간단축 급여",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "단축 시간별 급여 감소액 계산해 신청 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-11T01:02:07.487Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 1860,
+        "doc": 29995,
+        "ratio": 0.062,
+        "stars": 4,
+        "ts": 1786410127485
+      }
+    },
+    {
+      "id": "tdqtiko",
+      "keyword": "종부세 1주택 특례",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "고령자·장기보유 공제율로 실제 납부액 절감 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-11T01:02:07.487Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 49420,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786410127485
+      }
+    },
+    {
+      "id": "tr2z52f",
+      "keyword": "실업크레딧 신청조건",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "지원비율과 신청 시기별 연금 가입기간 이득 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-11T01:02:07.487Z",
+      "lastProposedAt": "2026-08-11T01:02:09.103Z",
+      "metrics": {
+        "vol": 15,
+        "doc": 6126,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786410127485
+      }
+    },
+    {
+      "id": "t2a286s",
+      "keyword": "월세세액공제 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "월세 낸 만큼 돌려받는 공제 한도와 초과분 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 190,
+        "doc": 68021,
+        "ratio": 0.003,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tyyxgm8",
+      "keyword": "기부금세액공제 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "기부금액 구간별 세액공제 한도 초과 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 390,
+        "doc": 63367,
+        "ratio": 0.006,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "ta2262g",
+      "keyword": "카드소득공제 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "체크카드 신용카드 비중별 소득공제 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 183276,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tqcxzx4",
+      "keyword": "미환급국세 조회",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "놓친 환급금 찾아 신청할지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-12T01:01:59.426Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 6622,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tkkaa7g",
+      "keyword": "국세환급금 소멸시효",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "환급금 소멸시효 전 신청 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-12T01:01:59.426Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 7270,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "t4kwu5e",
+      "keyword": "생활비 증여세 기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "부모 용돈 계좌이체가 증여세 신고 대상인지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-12T01:01:59.426Z",
+      "metrics": {
+        "vol": 45,
+        "doc": 47789,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tpw6oxt",
+      "keyword": "IRP 이체 세금유예",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "퇴직금 수령 방식별 세금유예 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-13T01:00:05.119Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 953,
+        "ratio": 0.01,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tn05slb",
+      "keyword": "해외직구 관세 면제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "직구 금액 구간별 관세 면제 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15,
+        "doc": 28613,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tdxov9u",
+      "keyword": "계약전력 초과요금",
+      "tier": "science",
+      "series": "life",
+      "angle": "계약전력 초과 시 위약금 발생 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-12T01:01:59.425Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 26468,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "thglbip",
+      "keyword": "부설주차장 설치기준",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "건물 규모별 의무 주차대수 기준 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-13T01:00:05.119Z",
+      "metrics": {
+        "vol": 70,
+        "doc": 15892,
+        "ratio": 0.004,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "th4qm38",
+      "keyword": "이중주차 손해배상",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "이중주차 사고 시 배상책임 범위 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 35,
+        "doc": 6226,
+        "ratio": 0.006,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tnprv6p",
+      "keyword": "노상주차장 정기권",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "노상주차 정기권과 시간권 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": "2026-08-13T01:00:05.119Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 3357,
+        "ratio": 0.003,
+        "stars": 5,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "t19e9b3",
+      "keyword": "장애인주차 위반과태료",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "장애인전용구역 위반 과태료 기준 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-12T01:01:57.935Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 180,
+        "doc": 14915,
+        "ratio": 0.012,
+        "stars": 4,
+        "ts": 1786496517933
+      }
+    },
+    {
+      "id": "tu8aldy",
+      "keyword": "경정청구 환급기한",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "놓친 공제를 5년 내 경정청구로 환급받을지, 신고 전 챙길 항목 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": "2026-08-14T01:02:20.070Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 32793,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tjdqotz",
+      "keyword": "수정신고 가산세감면",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "기한 내 수정신고 시 가산세 최대 90%까지 감면되는 시기별 손익 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": "2026-08-14T01:02:20.070Z",
+      "metrics": {
+        "vol": 310,
+        "doc": 23710,
+        "ratio": 0.013,
+        "stars": 5,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tmwp0kt",
+      "keyword": "증여 이월과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "증여받은 자산을 5년 내 매도할 때 양도세 폭탄 피하는 매도 시점 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 90,
+        "doc": 39918,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "t16mfpc",
+      "keyword": "상속세 신고기한",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "6개월 내 미신고 시 가산세 부담 규모와 신고 우선순위 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": "2026-08-14T01:02:20.070Z",
+      "metrics": {
+        "vol": 1740,
+        "doc": 89754,
+        "ratio": 0.019,
+        "stars": 5,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tohtke3",
+      "keyword": "채권 매매차익 비과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "표면금리 낮은 채권 선택으로 이자소득세 줄이는 투자 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 40,
+        "doc": 29997,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tr185qt",
+      "keyword": "가상자산 양도소득세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "과세 시행 시점 전후 매도 타이밍에 따른 세부담 차이 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 23455,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "t8y2y5n",
+      "keyword": "연금수령 저율과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "연 1500만원 기준 저율과세와 종합과세 중 유리한 인출방식 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 23219,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tx10ef",
+      "keyword": "부가세 매입세액공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "사업 관련 지출 중 환급 가능한 항목 구분해 세부담 줄이는 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 120,
+        "doc": 119116,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tn375q9",
+      "keyword": "대기전력 절전효과",
+      "tier": "science",
+      "series": "life",
+      "angle": "절전 멀티탭 구매비용 대비 연간 절감액 회수기간 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": "2026-08-14T01:02:20.069Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 15351,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786669338366
+      }
+    },
+    {
+      "id": "tt41nu0",
+      "keyword": "스마트플러그 절전",
+      "tier": "science",
+      "series": "life",
+      "angle": "구매비용 대비 대기전력 차단 절감액 회수기간 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-14T01:02:18.369Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 9314,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786669338366
       }
     }
   ]
