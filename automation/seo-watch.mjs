@@ -93,6 +93,9 @@ export function scanPosts() {
       description: pick(/^description:\s*"?(.*?)"?\s*$/m),
       pubDate: pick(/^pubDate:\s*(.*?)\s*$/m).slice(0, 10),
       draft: /^draft:\s*true/m.test(raw),
+      // 🔴 사이트맵·RSS 에서 의도적으로 뺀 글(src/content.config.ts 의 noindex).
+      //    이걸 안 읽으면 '사이트맵 누락' 경보가 우리가 직접 뺀 글을 사고로 신고한다.
+      noindex: /^noindex:\s*true/m.test(raw),
       originalPath: orig,
       broken,
     });
@@ -279,8 +282,18 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   const all = scanPosts();
   await attachSitemapUrls(all);
   const published = all.filter((p) => !p.draft);
-  // 사이트맵에 없는 발행글 — 이제 이게 '진짜 누락'이다(대소문자 오탐이 아니라).
-  const notInSitemap = published.filter((p) => !p.inSitemap);
+  // ── 사이트맵 밖 발행글을 '의도'와 '사고'로 가른다 ────────────────────
+  // 🔴 2026-08-15 실측: noindex 46편을 사이트맵에서 뺀 뒤로 '사이트맵 누락 46편'이
+  //    매주 최상위 🚨 로 떴다. 우리가 직접 뺀 글이다. 이런 오탐이 쌓이면 사람이
+  //    경보 자체를 무시하게 되고, 그때 진짜 누락을 놓친다(계약 §4·§6).
+  //    그래서 경보를 없애는 게 아니라 둘로 가른다 — 의도된 건 정보, 사고는 경보.
+  const noindexOut = published.filter((p) => p.noindex && !p.inSitemap);
+  // 색인 대상인데 사이트맵에 없는 글 — 이게 '진짜 누락'이다(검색에 노출될 수 없음).
+  const notInSitemap = published.filter((p) => !p.inSitemap && !p.noindex);
+  // 반대 방향의 사고: noindex 인데 사이트맵에 남은 글. 'noindex' 와 '사이트맵 포함'은
+  // 상충 신호라 구글에 혼선을 준다. 실제로 폴더명 대소문자 불일치로 1편이 이 상태였다
+  // (2026-08-11, 커밋 53da9ae). 그때는 잡아주는 경보가 없어 손으로 찾아야 했다.
+  const noindexInSitemap = published.filter((p) => p.noindex && p.inSitemap);
   const drafts = all.filter((p) => p.draft);
   const brokenImages = published.filter((p) => p.broken.length);
   const noDescription = published.filter((p) => !p.description.trim());
@@ -424,9 +437,12 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
     //    사이트맵에서 URL 을 못 찾은 글은 애초에 검사 대상에서 빠지므로(url=null),
     //    'unknown' 버킷에 나타날 수 없다. 그 경우는 아래 【글 상태】의
     //    '사이트맵에 없는 발행글' 경보가 이미 잡고 있다. 여기서 중복해 세지 않는다.
-    if (notInSitemap.length) {
-      L.push(`     ※ 사이트맵에 없는 발행글 ${notInSitemap.length}편은 검사 대상에서 빠집니다`);
-      L.push(`        → 그건 아래 【글 상태】의 사이트맵 경보가 담당합니다(여기서 중복 계상 안 함).`);
+    if (notInSitemap.length || noindexOut.length) {
+      const parts = [];
+      if (noindexOut.length) parts.push(`noindex ${noindexOut.length}편(의도)`);
+      if (notInSitemap.length) parts.push(`누락 ${notInSitemap.length}편`);
+      L.push(`     ※ 사이트맵 밖 발행글 ${parts.join(' · ')}은 검사 대상에서 빠집니다`);
+      L.push(`        → 그건 아래 【글 상태】가 담당합니다(여기서 중복 계상 안 함).`);
     }
   }
 
@@ -439,19 +455,48 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
   }
   if (mapErrors) { const l = `🚨 사이트맵 오류 ${mapErrors}건`; L.push('  ' + l); problems.push(l); }
   if (staleMaps.length) { const l = `⚠️ 7일 넘게 재처리 안 된 사이트맵 ${staleMaps.length}개`; L.push('  ' + l); problems.push(l); }
+  // 사이트맵 URL 감소 — noindex 로 설명되면 경보가 아니라 정보다.
+  // 🔴 우리가 글을 noindex 처리하면 사이트맵이 그만큼 줄어드는 게 정상이다.
+  //    그걸 매번 ⚠️ 로 올리면 '의도한 작업의 정상 결과'를 경보로 보게 된다.
+  //    설명되지 않는 감소분만 경보로 남긴다.
   if (prev?.submitted && submitted < prev.submitted) {
-    const l = `⚠️ 사이트맵 제출 URL 감소 ${prev.submitted}→${submitted}`;
-    L.push('  ' + l); problems.push(l);
+    const drop = prev.submitted - submitted;
+    // 직전 회차 대비 noindex 로 새로 빠진 편수 = 설명되는 감소분.
+    const prevOut = Number.isFinite(prev.noindexOut) ? prev.noindexOut : null;
+    const explained = prevOut === null ? null : Math.max(0, noindexOut.length - prevOut);
+    if (explained === null) {
+      // 이 필드가 없던 회차와 비교 중 — 정확히 대조할 수 없다. 지어내지 않는다(계약 §6).
+      L.push(`  ℹ️ 사이트맵 제출 URL ${prev.submitted}→${submitted} (감소 ${drop})`);
+      L.push(`     직전 회차에 noindex 기록이 없어 자동 대조 불가 — 다음 회차부터 정확히 가릅니다.`);
+      L.push(`     현재 noindex 로 뺀 글 ${noindexOut.length}편 · 설명 안 되는 누락 ${notInSitemap.length}편`);
+    } else if (explained >= drop) {
+      L.push(`  ℹ️ 사이트맵 제출 URL ${prev.submitted}→${submitted} — noindex ${explained}편 반영(의도된 감소)`);
+    } else {
+      const l = `⚠️ 사이트맵 URL 감소 ${prev.submitted}→${submitted} 중 ${drop - explained}개 설명 안 됨` +
+        (explained ? ` (noindex ${explained}편 반영분 제외)` : '');
+      L.push('  ' + l); problems.push(l);
+    }
   }
 
   L.push('');
   L.push('【글 상태】');
   L.push(`  발행 ${published.length}편 · 초안 ${drafts.length}편`);
+  if (noindexOut.length) {
+    // 의도된 상태 — 경보가 아니라 정보. problems 에 넣지 않는다.
+    L.push(`  ℹ️ noindex 로 사이트맵·RSS 에서 뺀 발행글 ${noindexOut.length}편 (의도된 상태)`);
+  }
   if (notInSitemap.length) {
-    const l = `사이트맵에 없는 발행글 ${notInSitemap.length}편 (검색에 노출될 수 없음)`;
+    const l = `사이트맵에 없는 발행글 ${notInSitemap.length}편 (noindex 아님 — 검색에 노출될 수 없음)`;
     problems.push(l);
     L.push(`  🚨 ${l}`);
     for (const p of notInSitemap.slice(0, 5)) L.push(`     • ${p.dir.slice(0, 44)}`);
+  }
+  if (noindexInSitemap.length) {
+    const l = `noindex 인데 사이트맵에 남은 글 ${noindexInSitemap.length}편 (상충 신호)`;
+    problems.push(l);
+    L.push(`  🚨 ${l}`);
+    for (const p of noindexInSitemap.slice(0, 5)) L.push(`     • ${p.dir.slice(0, 44)}`);
+    L.push(`     → astro.config.mjs 의 noindexPaths() 매칭 실패를 의심하세요(폴더명 대소문자).`);
   }
   if (dupUrls.length) {
     const l = `🚨 같은 주소를 쓰는 글 ${dupUrls.length}쌍 (빌드 충돌·중복 색인)`;
@@ -519,6 +564,10 @@ export async function runSeoWatch({ dry = false, quick = false } = {}) {
       date: today,
       indexedCount, publishedCount: published.length,
       submitted, mapErrors, mapWarnings,
+      // 🔴 다음 회차가 '사이트맵 감소가 noindex 로 설명되는가'를 판정하는 기준선.
+      //    이 값이 없으면 감소분을 가를 수 없어 대조 불가로 표시된다.
+      noindexOut: noindexOut.length,
+      notInSitemap: notInSitemap.length,
       brokenImages: brokenImages.length, dupUrls: dupUrls.length,
       cannibal: cannibal.length, notIndexed: notIndexed.length,
       // 상태별 내역 — 다음 실행이 '무엇이 늘었나'를 상태 단위로 비교할 수 있게.
