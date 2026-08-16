@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-14T01:02:20.070Z",
+  "updatedAt": "2026-08-16T01:03:22.400Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -73,7 +73,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": "2026-07-13T01:00:03.583Z",
+      "lastProposedAt": "2026-08-16T01:03:22.398Z",
       "metrics": null
     },
     {
@@ -3829,7 +3829,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-26T23:47:54.749Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-15T01:01:55.404Z",
       "metrics": {
         "vol": 50,
         "doc": 23769,
@@ -5371,13 +5371,355 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-14T01:02:18.369Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-15T01:01:55.402Z",
       "metrics": {
         "vol": 10,
         "doc": 9314,
         "ratio": 0.001,
         "stars": 4,
         "ts": 1786669338366
+      }
+    },
+    {
+      "id": "ti7ul59",
+      "keyword": "2주택 양도세 중과",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "중과 대상 여부에 따라 지금 팔지 비과세 요건 채울 때까지 버틸지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 60,
+        "doc": 211360,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "t824ohl",
+      "keyword": "원천징수세율 구간",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "연봉 인상·이직 시 원천징수 구간 이동으로 실수령액이 얼마나 줄어드는지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 29638,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "t8zzg7m",
+      "keyword": "부양가족 인적공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "소득·나이 요건을 확인해 부모·형제를 인적공제에 올릴지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 47419,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "tbxdxj4",
+      "keyword": "소득세 누진공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "세율 구간을 넘겨도 전체 소득이 아닌 초과분만 과세된다는 걸 계산해 실제 추가세액 오해 바로잡기",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 98455,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "tlzjh03",
+      "keyword": "사업소득 필요경비",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "인정되는 경비 항목을 파악해 장부 신고로 세부담을 줄일지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 80,
+        "doc": 290488,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "tv6fayk",
+      "keyword": "매매사업자 양도세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "부동산 매매사업자 등록 시 양도세 대신 종합소득세로 과세되는 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 220,
+        "doc": 149428,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "top6y8g",
+      "keyword": "노상주차장 요금차이",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "노외주차장과 노상주차장의 요금·단속 기준 차이를 알고 주차 위치를 선택할지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": "2026-08-15T01:01:55.404Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 5170,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "t4s9y9k",
+      "keyword": "방문차량 주차등록",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "공동주택 방문차량 사전등록 절차를 확인해 과태료를 피할지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 616118,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "t3hgl8j",
+      "keyword": "전통시장 주차환급",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "영수증 지참 시 무료주차 받는 조건을 확인해 이용 여부를 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-15T01:01:53.614Z",
+      "lastProposedAt": "2026-08-15T01:01:55.404Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 8406,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1786755713611
+      }
+    },
+    {
+      "id": "ta8i46k",
+      "keyword": "주택연금 세제혜택",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "재산세·종부세 감면 효과로 주택연금 가입 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": "2026-08-16T01:03:22.400Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 45677,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "ttbuhzo",
+      "keyword": "법인차 비용처리 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "고가차량 법인 구매 시 비용인정 한도로 구매 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": "2026-08-16T01:03:22.400Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 113466,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tczbxkz",
+      "keyword": "다주택자 취득세 중과",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "2주택째 취득 시 중과세율 적용 여부로 매수 시점 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 820,
+        "doc": 106671,
+        "ratio": 0.008,
+        "stars": 4,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tww8u66",
+      "keyword": "농지 자경감면 요건",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "8년 자경 요건 충족 여부로 양도세 감면 신청 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": "2026-08-16T01:03:22.400Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 12858,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tw60ipt",
+      "keyword": "이혼 재산분할 증여세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "위자료냐 재산분할이냐에 따른 증여세 부과 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 140,
+        "doc": 21856,
+        "ratio": 0.006,
+        "stars": 3,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "ttjmn8a",
+      "keyword": "공동사업자 소득분산 절세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "부부 공동사업자 등록 시 세부담 절감 실익 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 8409,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tw5e4fn",
+      "keyword": "기계식주차장 안전수칙",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "기계식 주차 이용 시 사고 위험과 대응 비용 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 4241,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tbyr4e5",
+      "keyword": "아파트 세대당 주차대수",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "구축 아파트 매수 전 주차난 여부로 매수 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15,
+        "doc": 491839,
+        "ratio": 0,
+        "stars": 3,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tkkyusp",
+      "keyword": "주차단속 계도시간",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "몇 분까지 단속 유예되는지로 정차 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 6433,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1786842200516
+      }
+    },
+    {
+      "id": "thjm8k6",
+      "keyword": "지하주차장 층고제한",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "차량 구매 시 지하주차장 진입 가능 여부로 차종 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-16T01:03:20.519Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 26149,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1786842200516
       }
     }
   ]
