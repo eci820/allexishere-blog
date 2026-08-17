@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-16T01:03:22.400Z",
+  "updatedAt": "2026-08-17T01:02:40.687Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -109,7 +109,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T06:12:17.989Z",
-      "lastProposedAt": "2026-07-14T01:00:02.792Z",
+      "lastProposedAt": "2026-08-17T01:02:40.686Z",
       "metrics": null
     },
     {
@@ -5659,7 +5659,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-16T01:03:20.519Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-17T01:02:40.687Z",
       "metrics": {
         "vol": 10,
         "doc": 4241,
@@ -5720,6 +5720,114 @@
         "ratio": 0,
         "stars": 4,
         "ts": 1786842200516
+      }
+    },
+    {
+      "id": "tudkrhq",
+      "keyword": "혼인증여재산공제 한도",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "결혼자금 증여세 비과세 한도와 신청 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 18802,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1786928558742
+      }
+    },
+    {
+      "id": "th5455v",
+      "keyword": "퇴직금 중간정산 세금",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "중간정산 시 세금 부담과 실수령액 비교 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 740,
+        "doc": 24132,
+        "ratio": 0.031,
+        "stars": 4,
+        "ts": 1786928558742
+      }
+    },
+    {
+      "id": "tev9734",
+      "keyword": "벤처투자 소득공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "엔젤투자 소득공제 한도와 절세효과 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 480,
+        "doc": 36944,
+        "ratio": 0.013,
+        "stars": 4,
+        "ts": 1786928558742
+      }
+    },
+    {
+      "id": "tq6bxf",
+      "keyword": "상속세 연부연납",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "연부연납 이자율과 신청조건에 따른 부담 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": "2026-08-17T01:02:40.687Z",
+      "metrics": {
+        "vol": 660,
+        "doc": 16184,
+        "ratio": 0.041,
+        "stars": 5,
+        "ts": 1786928558742
+      }
+    },
+    {
+      "id": "trqmz2o",
+      "keyword": "사설주차장 요금분쟁",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "초과요금·바가지 요금 낼 때 환불 요청 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": "2026-08-17T01:02:40.687Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 3727,
+        "ratio": 0.003,
+        "stars": 5,
+        "ts": 1786928558742
+      }
+    },
+    {
+      "id": "t27koec",
+      "keyword": "임산부 주차우선구역 인정기준",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "대상 확인과 스티커 발급 신청 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:02:38.744Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 834,
+        "ratio": 0.012,
+        "stars": 5,
+        "ts": 1786928558742
       }
     }
   ]
