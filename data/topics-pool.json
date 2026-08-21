@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-08-17T01:02:40.687Z",
+  "updatedAt": "2026-08-21T01:16:38.269Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -926,7 +926,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-12T16:33:08.987Z",
-      "lastProposedAt": "2026-07-18T08:21:58.794Z",
+      "lastProposedAt": "2026-08-21T01:02:11.995Z",
       "metrics": null
     },
     {
@@ -1090,7 +1090,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": "2026-07-18T01:01:14.487Z",
+      "lastProposedAt": "2026-08-18T01:02:16.647Z",
       "metrics": {
         "vol": 10,
         "doc": 4218,
@@ -1108,7 +1108,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": "2026-07-18T01:01:14.487Z",
+      "lastProposedAt": "2026-08-20T01:02:09.800Z",
       "metrics": {
         "vol": 10,
         "doc": 49863,
@@ -1126,7 +1126,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T01:01:13.300Z",
-      "lastProposedAt": "2026-07-18T01:01:14.487Z",
+      "lastProposedAt": "2026-08-19T01:02:32.171Z",
       "metrics": {
         "vol": 10,
         "doc": 686,
@@ -1846,7 +1846,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T01:00:04.111Z",
+      "lastProposedAt": "2026-08-19T01:02:32.119Z",
       "metrics": null
     },
     {
@@ -1858,7 +1858,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T01:00:04.111Z",
+      "lastProposedAt": "2026-08-19T01:02:32.119Z",
       "metrics": null
     },
     {
@@ -1867,11 +1867,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금 상세·계산·감면 조건",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "서울월드컵경기장-근처-주차장-요금위치혼잡-대비-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": "2026-07-19T01:00:04.111Z",
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "t4b5afs",
@@ -1879,11 +1880,12 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금 상세·계산·감면 조건",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "잠실실내체육관-근처-주차장-요금입구-위치혼잡-대비-안내-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
       "lastProposedAt": "2026-07-19T01:00:04.111Z",
-      "metrics": null
+      "metrics": null,
+      "publishedNote": "live-match"
     },
     {
       "id": "tdslmdd",
@@ -1954,7 +1956,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T13:24:40.724Z",
+      "lastProposedAt": "2026-08-20T01:02:09.751Z",
       "metrics": null
     },
     {
@@ -1966,7 +1968,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T13:24:40.724Z",
+      "lastProposedAt": "2026-08-20T01:02:09.751Z",
       "metrics": null
     },
     {
@@ -1978,7 +1980,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T13:24:40.724Z",
+      "lastProposedAt": "2026-08-21T01:02:11.946Z",
       "metrics": null
     },
     {
@@ -1987,10 +1989,10 @@
       "tier": "parking",
       "series": "facility",
       "angle": "요금 상세·계산·감면 조건",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "수원컨벤션센터-주차-요금위치할인-대상-정리-2026",
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-07-19T13:24:40.724Z",
+      "lastProposedAt": "2026-08-21T01:02:11.946Z",
       "metrics": null
     },
     {
@@ -5821,13 +5823,404 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-17T01:02:38.744Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-08-18T01:02:16.649Z",
       "metrics": {
         "vol": 10,
         "doc": 834,
         "ratio": 0.012,
         "stars": 5,
         "ts": 1786928558742
+      }
+    },
+    {
+      "id": "t10ez7n",
+      "keyword": "대전월드컵경기장 주차",
+      "tier": "parking",
+      "series": "facility",
+      "angle": "대전하나시티즌 K리그 홈경기 기준 주차 요금, 입구별 주차장 위치, 경기 종료 후 혼잡 대비, 근처 대체 주차 공간 안내",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-17T01:35:59.200Z",
+      "lastProposedAt": "2026-08-18T01:00:04.437Z",
+      "metrics": null,
+      "source": "agent"
+    },
+    {
+      "id": "t99qlo8",
+      "keyword": "자녀장려금 신청조건",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "근로장려금과 중복수급 가능 여부로 신청 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": "2026-08-19T01:02:32.173Z",
+      "metrics": {
+        "vol": 50,
+        "doc": 91279,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "t55d6pu",
+      "keyword": "상속세 증여합산기간",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "10년 내 증여 합산 여부로 사전증여 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": "2026-08-20T01:02:09.802Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 30436,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "tiu2cxo",
+      "keyword": "국외전출세 대상기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "해외이주 전 주식 매도 시기에 따른 세부담 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": "2026-08-21T01:02:11.997Z",
+      "metrics": {
+        "vol": 10,
+        "doc": 675,
+        "ratio": 0.015,
+        "stars": 5,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "t13rsx4",
+      "keyword": "가족간 차용증 증여세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "차용증 작성 여부로 증여세 추징 리스크 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15,
+        "doc": 19567,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "tpbok4t",
+      "keyword": "종부세 임대주택 합산배제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "임대주택 등록으로 종부세 합산배제 신청 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 32295,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "tz3zysc",
+      "keyword": "동거봉양 양도세 비과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "부모 합가 시점에 따른 1주택 비과세 유지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-19T01:02:31.008Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 8949,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1787101351005
+      }
+    },
+    {
+      "id": "tqn8jpe",
+      "keyword": "연금저축 중도해지세금",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "중도해지 시 기타소득세로 환급액이 줄어드는지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 40,
+        "doc": 57838,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "t9jn8rx",
+      "keyword": "ISA 손익통산 과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "만기 전 인출 vs 만기까지 유지 시 과세 유불리 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 31033,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "tto8h2p",
+      "keyword": "미성년자 증여공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "10년 주기 공제한도 활용해 자녀 계좌 증여 시점 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 40,
+        "doc": 56572,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "tb00hi0",
+      "keyword": "상가 부가세환급",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "임대사업자 등록 전후 부가세 환급 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 33776,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "t6qu4ab",
+      "keyword": "세대분리 취득세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "취득세 중과 피하려는 세대분리 시점과 요건 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 42932,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "t4cpsa6",
+      "keyword": "종교인소득 과세기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "과세대상 소득 범위와 신고 방법 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 18378,
+        "ratio": 0.001,
+        "stars": 5,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "tbs3muz",
+      "keyword": "중소기업 소득세감면",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "취업 시기별 감면 신청 기한과 환급액 비교",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 19950,
+        "doc": 118136,
+        "ratio": 0.169,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "ttrzuax",
+      "keyword": "임대소득 분리과세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "종합과세 대비 분리과세 선택 유불리 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 130,
+        "doc": 75274,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "tmca68x",
+      "keyword": "오피스텔 부가세추징",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "주거용 전환 시 환급받은 부가세 반환 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 4552,
+        "ratio": 0.002,
+        "stars": 5,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "tdp4hir",
+      "keyword": "스쿨존 주정차과태료",
+      "tier": "evergreen",
+      "series": "parking",
+      "angle": "시간대·요일별 단속 강도 차이로 주차 여부 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-20T01:02:08.610Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 40,
+        "doc": 5140,
+        "ratio": 0.008,
+        "stars": 4,
+        "ts": 1787187728607
+      }
+    },
+    {
+      "id": "txp69ex",
+      "keyword": "해외금융계좌 신고기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "해외 계좌 잔액 기준선 넘었을 때 신고 안 하면 과태료 얼마인지 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-21T01:02:10.812Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 69106,
+        "ratio": 0,
+        "stars": 5,
+        "ts": 1787274130809
+      }
+    },
+    {
+      "id": "tiei521",
+      "keyword": "부동산 매매 인지세",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "매매가액 구간별 인지세 부담과 계약서 작성 시기 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-21T01:02:10.812Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 50,
+        "doc": 24518,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1787274130809
+      }
+    },
+    {
+      "id": "tio1oek",
+      "keyword": "근로소득 간이세액표",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "간이세액표 선택 비율(80/100/120%)에 따른 월급 실수령액과 연말정산 환급액 차이 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-21T01:02:10.812Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 5040,
+        "doc": 20221,
+        "ratio": 0.249,
+        "stars": 5,
+        "ts": 1787274130809
+      }
+    },
+    {
+      "id": "t2y9k6m",
+      "keyword": "기타소득 필요경비율",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "강의료·원고료 등 기타소득 신고 시 필요경비율 적용해 실제 세부담 계산",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-21T01:02:10.812Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 160,
+        "doc": 57665,
+        "ratio": 0.003,
+        "stars": 4,
+        "ts": 1787274130809
+      }
+    },
+    {
+      "id": "tvuiwxt",
+      "keyword": "주택임차차입금 공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "전세자금대출 원리금 상환액 공제 한도로 세액 환급 규모 판단",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-08-21T01:02:10.812Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 30,
+        "doc": 22321,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1787274130809
       }
     }
   ]
