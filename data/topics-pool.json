@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-25T15:13:51.603Z",
+  "updatedAt": "2026-11-25T23:03:59.040Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15468,8 +15468,8 @@
       "tier": "evergreen",
       "series": "tax",
       "angle": "어떤 학원·과목이 공제 대상인지, 간소화 자료에 자동 반영되는지 확인법 | 화제: 미취학 아동만 가능했던 공제가 초1~2학년까지 확대돼 학부모 사이 적용 대상 문의 확산 | 출처: 국세청 연말정산 간소화 서비스, 소득세법 시행령",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "예체능학원비-세액공제-대상-학년공제율신청-방법-정리-2026",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
