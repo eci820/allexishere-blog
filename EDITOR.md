@@ -13,7 +13,7 @@
 터미널에서 한 줄:
 
 ```bash
-cd ~/Projects/allexishere-blog
+cd ~/Projects/allexishere/allexishere-blog
 npm run write
 ```
 

@@ -395,6 +395,8 @@ export function addTopics(pool, items) {
       id: topicId(it.keyword), keyword: it.keyword, tier: it.tier || 'evergreen',
       series: it.series || '', angle: it.angle || '', status: it.status || 'pending',
       slug: null, addedAt: now, lastProposedAt: null, metrics: it.metrics || null,
+      // origin: 어디서 온 주제인가(scout=화제 발굴). autopilot 이 신선한 화제 주제를 먼저 고르는 데 쓴다.
+      ...(it.origin ? { origin: it.origin } : {}),
     });
     have.add(it.keyword); added++;
   }

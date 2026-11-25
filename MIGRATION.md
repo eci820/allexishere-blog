@@ -5,11 +5,11 @@
 ## 0. 준비물 (새 맥)
 - Node (현재 맥과 같은 계열 권장; `node -v` 로 확인)
 - git, Xcode Command Line Tools (`xcode-select --install`)
-- 이 저장소 클론: `git clone <repo> ~/Projects/allexishere-blog`
+- 이 저장소 클론: `git clone <repo> ~/Projects/allexishere/allexishere-blog`
 
 ## 1. 저장소 + 의존성
 ```bash
-cd ~/Projects/allexishere-blog
+cd ~/Projects/allexishere/allexishere-blog
 npm install
 ```
 

@@ -471,6 +471,7 @@ async function handleCommand(text) {
           '/draft <주제> — 자유 주제로 1편(여러 단어·문장형 가능)',
           '/draft — 모드 기본동작(briefing=브리핑 / batch=일괄)',
           '/status — 상태 확인',
+          '/autostatus · /autopause · /autoresume — 🤖 자동 발행 상태·멈춤·재개',
           '/delete <슬러그> — 초안 삭제(발행글은 거부됨)',
           '/unpublish <슬러그> — 발행글을 사이트에서 내림 (확인 카드 → [⚠️ 내리기])',
           '   · 주소가 사라지고 검색 유입도 끊깁니다. 내용이 틀린 거라면 갱신을 권합니다.',
@@ -503,6 +504,25 @@ async function handleCommand(text) {
     case '/status':
       await sendMessage(ME, statusText());
       break;
+    // 🤖 autopilot(자동 작성·검증·발행) 스위치 — 2026-11-25. 상태는 state/autopilot.json 한 곳.
+    case '/autopause':
+    case '/autoresume':
+    case '/autostatus': {
+      const ap = await import('./autopilot.mjs');
+      const s = ap.loadState();
+      if (cmd === '/autopause') { s.paused = true; ap.saveState(s); }
+      if (cmd === '/autoresume') { s.paused = false; ap.saveState(s); }
+      const cfgAp = loadConfig().autopilot || {};
+      const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+      const runs = (s.runs || []).filter((r) => r.day === today);
+      const cnt = (k) => runs.filter((r) => r.result === k).length;
+      await sendMessage(ME,
+        `🤖 자동 발행: ${!cfgAp.enabled ? '꺼짐(config)' : s.paused ? '⏸ 일시정지' : '▶️ 동작 중'}\n` +
+        `오늘 목표 ${ap.perDayFor(cfgAp, today)}편 · 발행 ${cnt('published')} · 보류(사람 검수) ${cnt('held')} · 실패 ${cnt('failed') + cnt('publish-failed')}\n` +
+        `시각: ${(cfgAp.slots || []).join(', ')} (+0~${cfgAp.jitterMinutes ?? 25}분)\n` +
+        (s.paused ? '재개: /autoresume' : '멈춤: /autopause'));
+      break;
+    }
     case '/brief':
       await sendMessage(ME, '🗞 브리핑 준비 중…');
       try {

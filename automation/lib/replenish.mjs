@@ -3,14 +3,9 @@
 //  · 🔴 니치(주차+전기요금+세금·환급) 밖은 프롬프트로 막고 코드로 한 번 더 버린다(2026-08-11).
 //    트리거도 니치 안만 센다 — 니치 밖 사재기가 총합을 부풀리면 임계에 안 걸려 조용히 마른다.
 //  · 보충분은 네이버 지표로 별점 산정 → ★2 미만은 자동 skipped. "N개 보충됨" 1줄 알림.
-import os from 'node:os';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { loadPool, savePool, addTopics, pendingCount, eligibleCount, liveIndex, matchLive, nicheAllows } from './topicsPool.mjs';
 import { scoreKeyword } from './suitability.mjs';
-import { subscriptionEnv } from './claudeCli.mjs';
-
-const execFileP = promisify(execFile);
+import { claudeText } from './harness.mjs';
 
 const REPLENISH_PROMPT = (existing, taxFloor, powerFloor) =>
   `당신은 한국어 정보 블로그의 '주제 재고 기획자'입니다. 아래 조건으로 새 블로그 주제 20개를 제안하세요.
@@ -78,14 +73,9 @@ export async function replenishIfLow(config, { threshold = 30, want = 20, taxFlo
 
   let raw;
   try {
-    const args = ['-p', REPLENISH_PROMPT(existing, taxFloor, powerFloor), '--output-format', 'json'];
-    if (config.cliModel) args.push('--model', config.cliModel);
-    const { stdout } = await execFileP('claude', args, {
-      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv(),
-    });
-    const j = JSON.parse(stdout);
-    if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
-    raw = j.result;
+    // 공용 실행기(stdin·구독) — 예전엔 프롬프트를 명령행 인자로 넘겼다(SKILL.md §6 위반).
+    const r = await claudeText(REPLENISH_PROMPT(existing, taxFloor, powerFloor), { model: config.cliModel, timeoutSec: config.cliTimeoutSeconds || 240, tools: [] });
+    raw = r.result;
   } catch (e) {
     return { added: 0, skipped: 0, note: `⚠️ 재고 보충 실패: ${(e.message || '').slice(0, 80)}` };
   }

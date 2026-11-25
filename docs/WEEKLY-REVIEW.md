@@ -22,7 +22,7 @@
 
 > 빠른 집계(로컬): 아래를 터미널에 붙여넣으면 ①의 생성·수정·발행 수가 나옵니다.
 > ```bash
-> cd ~/Projects/allexishere-blog
+> cd ~/Projects/allexishere/allexishere-blog
 > echo "생성: $(grep -c '"ts"' automation/state/cost-log.jsonl) (누적) / 수정: $(grep -c '\"action\":\"edit\"' automation/state/cost-log.jsonl)"
 > git log --since="7 days ago" --oneline | grep -c "content: 발행" | sed 's/^/발행(승인) 수(최근 7일): /'
 > ```

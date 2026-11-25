@@ -2,20 +2,19 @@
 // 엔진: engine=claude-cli(기본, 구독 헤드리스) | anthropic-api(폴백/직접).
 // 게시는 절대 여기서 안 함 — 초안(draft:true)만 만들고 텔레그램 승인으로 넘김.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import Anthropic from '@anthropic-ai/sdk';
 import { ROOT, AUTO_DIR, loadConfig, requireSecrets } from './lib/env.mjs';
 import { selectKeywords } from './keywords.mjs';
 import { existingMatch, hasExistingPost } from './lib/topics.mjs';
 import { sendMessage, inlineButtons } from './lib/telegram.mjs';
-import { subscriptionEnv } from './lib/claudeCli.mjs';
 import { titleGuideFor, titleIsGeneric, titleBodyMismatch, parkingDedupOk, distinctive, facilityDataMissing } from './lib/titleRules.mjs';
 import { facilityFromTitle, insertMapLink } from './lib/mapLink.mjs';
+// 🧪 하네스(작성→검사→검증→수정)와 공용 CLI 실행기. 2026-11-25 — 이전에는 이 파일 안에
+//    execFile('claude', ['-p', 프롬프트 …]) 가 4곳에 복붙돼 있었다(프롬프트를 인자로 넘김 = §6 위반).
+import { claudeText, stripFence, runHarness, passesGate, harnessCardLine, harnessComment, logHarness } from './lib/harness.mjs';
+import { lintAiTone, toneSummary } from './lib/aiTone.mjs';
 
-const execFileP = promisify(execFile);
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
 const STATE = path.join(AUTO_DIR, 'state');
 
@@ -86,6 +85,24 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 
 [자기검증 — 출력 전 1회]
 - h2들이 이 검색어의 '하위 질문'을 빠짐없이 답하는지 스스로 점검하고, 빠진 게 있으면 h2를 보강해 분량 하한을 채우세요. 단, 불필요한 반복(물 타기)으로 늘리지 말 것.
+
+[검색 노출 — 구글·네이버 공통(가장 중요)]
+- 사람들이 실제로 치는 검색어 형태 그대로 제목 앞쪽(12자 안)에 두고, 첫 문단 첫 문장과 소제목 1곳에 자연스럽게 넣으세요. 같은 키워드를 기계적으로 반복하면 네이버 어뷰징 필터에 걸립니다.
+- 첫 문단 1~2문장 안에 검색어의 직접 답(결론·숫자·조건)을 주세요. 답 없는 서론은 구글이 '사람을 위한 글'로 보지 않습니다.
+- 정보 이득: 검색 상위 글을 요약하지 말고, 이 글에만 있는 구체 정보를 최소 1개 넣으세요(공식 고시·운영처 안내 원문 기준 수치, 조건별 차이, 실제 계산 예시, 자주 틀리는 지점).
+- 공식 출처(기관명·기준 연월)를 본문에 밝히세요. 2차 블로그만으로 확인된 수치는 쓰지 말거나 "공식 확인 필요"로 표시하세요.
+- 제목 45자 이내. 낚시성 과장("충격", "역대급", "무조건") 금지 — 혹하게 만들되 본문이 약속을 지켜야 합니다.
+
+[사람이 쓴 글처럼 — 문체(AI 양산 티가 나면 저품질로 분류됩니다)]
+- 확인한 사람의 시점으로 쓰되, 직접 방문·체험을 지어내지 마세요("가보니", "써보니" 금지). 확인 과정은 "○○ 안내 기준으로는"처럼 출처로 드러냅니다.
+- 출처 없는 다수 경험담 금지: "많은 이용자들의 공통된 경험", "대부분 ~라고 합니다" 류는 지어낸 것입니다.
+- 문장 길이를 섞으세요. 짧은 문장도 쓰고, 같은 어미로 3문장 연속 끝내지 마세요. -습니다체를 기본으로 -요체를 가끔 섞어도 됩니다.
+- 쉼표는 한 문장에 1개 이하. "A, B, 그리고 C" 식 3박자 나열을 반복하지 마세요.
+- 금지 표현: 이 글에서는 / 알아보겠습니다 / 살펴보겠습니다 / 결론적으로 / 요약하면 / 도움이 되셨길 / 마무리하며 / 되어지다 / 시사하는 바 / 주목할 만하다.
+- 줄일 표현(각 2회 이내): ~에 대해 / ~을 통해 / ~에 있어서 / 가지고 있다 / 다양한 / 효과적인 / 중요합니다 / ~할 수 있습니다 / 확인하는 것이 좋습니다 / 달라질 수 있습니다 / 다만.
+- 모든 섹션을 같은 틀(설명→표→요약)로 맞추지 마세요. 섹션 길이가 달라도 됩니다. 굵게(**)는 글 전체 5곳 이내.
+- 어느 대상에나 붙는 일반론 문장("미리 확인하는 것이 좋습니다")으로 분량을 채우지 마세요. 그 대상 고유 정보가 없으면 그 문단을 쓰지 않습니다.
+- 마지막 문단은 요약 반복 대신 독자가 바로 할 행동 1~2개로 끝냅니다.
 
 [품질/문체]
 - 여러 출처 종합한 '독자적 정리물'. 특정 기사 복붙·요약 금지. 존댓말, 담백·정확, 이모지 남발 금지.
@@ -169,8 +186,35 @@ function tierGuide(opts) {
   return '';
 }
 
+// ── 글 형식 순환(2026-11-25) ─────────────────────────────────────
+// 왜: 계급 규격(①현상→②원리→③표→④FAQ)이 모든 글을 같은 뼈대로 찍어냈다. 같은 틀의 글이
+//     대량으로 쌓이는 것 자체가 '대량 생성 콘텐츠' 신호다. 최근 쓴 형식을 피해서 고른다.
+//     형식은 뼈대만 바꾼다 — 제목 약속=h2 이행·출처 규칙은 그대로다.
+export const FORMATS = [
+  { id: 'qa', name: '질문-답 형', guide: '검색자가 실제로 묻는 질문 4~6개를 h2 로 세우고, 각 h2 첫 문장에서 바로 답한다.' },
+  { id: 'compare', name: '비교 판단형', guide: '선택지 2~4개를 비교하는 표 1개를 중심에 두고, 어떤 조건이면 무엇을 고르는지 정리한다.' },
+  { id: 'steps', name: '절차형', guide: '신청·이용 순서를 번호 목록으로. 단계마다 준비물·기한·흔한 실수를 붙인다.' },
+  { id: 'myth', name: '오해와 사실형', guide: '널리 퍼진 통념 2~4개를 h2 로 세우고, 공식 근거로 맞는 점과 틀린 점을 가른다.' },
+  { id: 'calc', name: '계산 예시형', guide: '확인된 요율·기준으로 실제 상황 2~3개를 계산해 보여주고, 계산 기준과 출처를 밝힌다.' },
+  { id: 'situation', name: '상황별 정리형', guide: '독자 상황(처음/급할 때/아낄 때 등)별로 나눠, 그 상황에서 할 일만 짧게 정리한다.' },
+];
+const FORMAT_LOG = path.join(STATE, 'format-history.json');
+function pickFormat() {
+  let hist = [];
+  try { hist = JSON.parse(fs.readFileSync(FORMAT_LOG, 'utf8')); } catch {}
+  const recent = new Set(hist.slice(-4));
+  const pool = FORMATS.filter((f) => !recent.has(f.id));
+  return (pool.length ? pool : FORMATS)[Math.floor(Math.random() * (pool.length || FORMATS.length))];
+}
+function recordFormat(id) {
+  let hist = [];
+  try { hist = JSON.parse(fs.readFileSync(FORMAT_LOG, 'utf8')); } catch {}
+  hist.push(id);
+  fs.writeFileSync(FORMAT_LOG, JSON.stringify(hist.slice(-50)));
+}
+
 function task(keyword, opts, ctx) {
-  const { related, hints, recent } = ctx || {};
+  const { related, hints, recent, format } = ctx || {};
   const hintTxt =
     hints && hints.length
       ? `\n검색량 높은 조합(제목 앞부분에 활용): ${hints.map((h) => `${h.k}(${h.vol.toLocaleString('en-US')})`).join(', ')}`
@@ -187,7 +231,12 @@ function task(keyword, opts, ctx) {
     (opts.gossip ? `주의: 연예/가십성일 수 있음 — 정보성으로 우회하고 안전규칙 특히 엄수.\n` : '') +
     // 계급별 pain point 축 — 축 목록은 lib/titleRules.mjs 한 곳에만 있다(검증과 공유).
     titleGuideFor(opts && opts.source) +
-    tierGuide(opts)
+    tierGuide(opts) +
+    (format
+      ? `\n\n[이번 글 형식 — ${format.name}]\n- ${format.guide}\n` +
+        `- 위 계급 규격의 구성 순서(①②③④)는 '담아야 할 요소'로만 지키고, 뼈대는 이 형식을 따르세요(최근 글들과 같은 틀 반복 방지).\n` +
+        `- 이 주제에 이 형식이 정말 맞지 않으면 가장 가까운 형식으로 바꿔도 됩니다.`
+      : '')
   );
 }
 
@@ -265,42 +314,21 @@ function validateTables(body) {
   return [...new Set(issues)];
 }
 
-// ── 엔진 1: Claude Code 헤드리스(구독) — 구분형 오류(kind) ──
-function classifyCli(s) {
-  s = (s || '').toLowerCase();
-  if (/limit|quota|too many|rate.?limit|usage|reset|429|5.?hour|exceed|cap reached/.test(s)) return 'limit';
-  if (/auth|unauthor|401|403|\blogin\b|credential|keychain|oauth|token|not.?allowed|expired|forbidden/.test(s)) return 'auth';
-  return 'error';
-}
+// ── 엔진 1: Claude Code 헤드리스(구독) — 프롬프트는 stdin(lib/claudeCli.runClaude) ──
 async function viaCLI(keyword, opts, ctx, config) {
   const prompt =
     RULES + '\n\n' + task(keyword, opts, ctx) +
     '\n\n반드시 아래 형태의 JSON 객체 하나만 출력하세요(코드펜스·다른 설명 금지):\n' + CLI_JSON_TEMPLATE;
-  const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
-  if (config.cliModel) args.push('--model', config.cliModel);
-  let stdout;
+  let r;
   try {
-    ({ stdout } = await execFileP('claude', args, {
-      cwd: os.tmpdir(),
-      maxBuffer: 20 * 1024 * 1024,
-      timeout: (config.cliTimeoutSeconds || 240) * 1000,
-      env: subscriptionEnv(),
-    }));
+    r = await claudeText(prompt, { model: config.cliModel, timeoutSec: config.cliTimeoutSeconds || 240 });
   } catch (e) {
-    const detail = ((e.stderr || '') + ' ' + (e.message || '')).trim();
-    const kind = classifyCli(detail);
-    console.error(`[claude-cli] 실패(${kind}):`, detail.slice(0, 400)); // stderr 로깅(사후 진단용)
-    throw Object.assign(new Error('claude 실행 실패: ' + detail.slice(0, 120)), { kind });
+    console.error(`[claude-cli] 실패(${e.kind || 'error'}):`, String(e.message).slice(0, 300)); // 사후 진단용
+    throw e; // e.kind: timeout|limit|auth|notfound|error — sendFailure 가 구분해 알린다
   }
-  let j;
-  try { j = JSON.parse(stdout); } catch { throw Object.assign(new Error('claude 출력 파싱 실패'), { kind: 'error' }); }
-  if (j.is_error || !j.result) {
-    const detail = (j.subtype || '') + ' ' + (j.result || '');
-    const kind = classifyCli(detail);
-    console.error(`[claude-cli] is_error(${kind}):`, detail.slice(0, 300));
-    throw Object.assign(new Error('claude 실패: ' + (j.subtype || 'unknown')), { kind });
-  }
-  return { draft: parseDraftJSON(j.result), costUsd: j.total_cost_usd || 0, engine: 'claude-cli', subscription: true };
+  let draft;
+  try { draft = parseDraftJSON(r.result); } catch (e) { throw Object.assign(new Error('초안 JSON 해석 실패: ' + e.message), { kind: 'error' }); }
+  return { draft, costUsd: r.costUsd, engine: 'claude-cli', subscription: true };
 }
 
 // ── 엔진 2: Anthropic API(폴백/직접) ───────────────────────
@@ -363,7 +391,8 @@ export async function generateOne(keyword, opts, config, chatId) {
   config = config || loadConfig();
   opts = opts || {};
   fs.mkdirSync(STATE, { recursive: true });
-  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword), recent: recentContext() };
+  const format = pickFormat();
+  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword), recent: recentContext(), format };
 
   let res;
   try {
@@ -385,23 +414,27 @@ export async function generateOne(keyword, opts, config, chatId) {
     return { ok: false, reason: e.refusal ? 'refusal' : e.kind || 'error', message: e.message };
   }
 
-  const d = res.draft;
-  // D-5 얇음 방지: 계급별 분량 하한의 90% 미만이면 claude-cli 로 1회 보강
+  let d = res.draft;
   const tierMin = (config.charMinByTier && config.charMinByTier[opts.source]) || config.charTarget?.min || 1800;
-  if (res.engine === 'claude-cli' && d.body.length < tierMin * 0.9) {
+  let harness = null;
+  if (config.harness?.enabled !== false) {
+    // 🧪 하네스: 검사(0회) → 검증(1회) → 수정(0~1회). 분량 보강도 수정 단계가 함께 맡는다
+    //    (예전엔 보강용 CLI 호출이 따로 있었다 — 호출 1회 절약). 실패해도 생성은 계속하고
+    //    report.errors 에 남긴다 → 자동 발행 관문이 자동으로 '불통과'가 된다.
+    const h = await runHarness(d, { keyword, opts, config, minChars: tierMin, tableIssues: validateTables });
+    d = h.draft;
+    harness = h.report;
+    res.costUsd = (res.costUsd || 0) + (harness.costUsd || 0);
+  } else if (res.engine === 'claude-cli' && d.body.length < tierMin * 0.9) {
+    // 하네스를 끈 경우의 예전 동작: 계급별 분량 하한의 90% 미만이면 1회 보강
     try {
       const bp =
         `아래 블로그 본문이 짧습니다(현재 약 ${d.body.length}자, 목표 공백포함 ${tierMin}자 이상). ` +
         `h2별 '하위 질문'을 빠짐없이 답하도록 실질 정보를 보강·확장하세요. 기존 내용·구조·표·링크·문체는 유지하고 ` +
         `불필요한 반복(물 타기) 없이. frontmatter·코드펜스·설명 없이 수정된 전체 본문 마크다운만 출력.\n\n[현재 본문]\n${d.body}`;
-      const ba = ['-p', bp, '--output-format', 'json', '--allowedTools', 'WebSearch'];
-      if (config.cliModel) ba.push('--model', config.cliModel);
-      const { stdout } = await execFileP('claude', ba, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
-      const bj = JSON.parse(stdout);
-      if (!bj.is_error && bj.result) {
-        const nb = bj.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
-        if (nb.length > d.body.length) { d.body = nb; res.costUsd = (res.costUsd || 0) + (bj.total_cost_usd || 0); }
-      }
+      const r = await claudeText(bp, { model: config.cliModel, timeoutSec: config.cliTimeoutSeconds || 240 });
+      const nb = stripFence(r.result);
+      if (nb.length > d.body.length) { d.body = nb; res.costUsd = (res.costUsd || 0) + r.costUsd; }
     } catch { /* 보강 실패 시 원본 유지 */ }
   }
 
@@ -486,8 +519,12 @@ export async function generateOne(keyword, opts, config, chatId) {
     (tags.length ? `tags: [${tags.map(dq).join(', ')}]\n` : '') +
     parkingCalcLine +
     `draft: true\n---\n\n`;
-  const riskComment = `\n\n<!-- ⚠️ [사람 검수 필요] 발행 전 확인\n엔진: ${res.engine}\n${(d.riskNotes || '특이사항 없음').trim()}\n-->\n`;
+  const riskComment =
+    `\n\n<!-- ⚠️ [사람 검수 필요] 발행 전 확인\n엔진: ${res.engine} · 형식: ${format.name}\n${(d.riskNotes || '특이사항 없음').trim().replace(/-->/g, '—>')}\n` +
+    (harness ? harnessComment(harness) + '\n' : '') +
+    `-->\n`;
   fs.writeFileSync(path.join(dir, 'index.md'), fm + d.body.trim() + riskComment);
+  try { recordFormat(format.id); } catch {}
 
   // 비용 로그
   const costLine = res.subscription
@@ -504,16 +541,45 @@ export async function generateOne(keyword, opts, config, chatId) {
   );
   console.log(`[cost] ${slug} (${res.engine}): ${costLine}`);
 
-  // 텔레그램 초안 카드
-  if (chatId) {
+  // ── 자동 발행 관문 판정(사람 카드와 같은 경고 목록을 쓴다 — 승인=반영 일치) ──
+  const cardOpts = { context: d.context, keyword, riskNotes: d.riskNotes, costLine, source: opts && opts.source, harnessLine: harnessCardLine(harness) };
+  let gate = null;
+  if (harness) {
+    const warnings = draftWarnings(slug, d.title, cardOpts).map((w) => w.split('\n')[0].replace(/^⚠️\s*/, ''));
+    // YMYL(건강·금융·부동산)은 자동 발행 대상에서 뺀다 — 폴더 9 색인 거절 사고(§4)의 재발 방지.
+    if (['health', 'finance', 'realestate'].includes(opts.source)) warnings.push(`YMYL 계급(${opts.source})은 사람 검수 전용`);
+    gate = passesGate(harness, { warnings }, config.harness || {});
+    logHarness(STATE, slug, harness, gate);
+  }
+
+  // 텔레그램 초안 카드 — autopilot 이 부를 때(opts.auto)는 카드 대신 autopilot 이 결과를 알린다.
+  if (chatId && !opts.auto) {
     // source(계급)를 넘겨야 카드가 그 계급의 pain point 축으로 제목을 점검한다.
-    await sendDraftCard(chatId, slug, d.title, { context: d.context, keyword, riskNotes: d.riskNotes, costLine, source: opts && opts.source });
+    await sendDraftCard(chatId, slug, d.title, cardOpts);
   }
   fs.writeFileSync(path.join(STATE, 'last-run.json'), JSON.stringify({ ts: Date.now() }));
-  return { ok: true, slug };
+  return { ok: true, slug, title: d.title, harness, gate, cardOpts };
 }
 
 // 초안 카드 전송(생성·수정 공용). 본문은 파일에서 읽어 목차·표·배지 계산.
+// 초안 경고 목록 — 카드 표시와 autopilot 자동 발행 관문이 '같은 판정'을 쓰게 한 곳에 둔다
+// (계약 §2 승인=반영 일치: 사람이 카드에서 보는 경고와 자동 관문이 거르는 경고가 같아야 한다).
+export function draftWarnings(slug, title, opts = {}) {
+  const raw = fs.readFileSync(path.join(BLOG, slug, 'index.md'), 'utf8');
+  const body = raw.split(/^---\s*$/m).slice(2).join('---').split('<!--')[0];
+  const toc = extractToc(body);
+  const feats = bodyFeatures(body);
+  const tissues = feats.hasTable ? validateTables(body) : [];
+  const badge = hasExistingPost(opts.keyword || title);
+  const rn = opts.riskNotes;
+  const W = [];
+  if (badge) W.push(`⚠️ 유사 발행글 보유: "${badge.title}"\n   → 새로 만들지 말고 그 글 '갱신'을 지시하세요`);
+  if (tissues.length) W.push(`⚠️ 표 문법 점검: ${tissues.join(', ')}`);
+  W.push(...cardTitleWarnings(title, toc, body, opts));
+  if (rn && !/없음|없습니다/.test(rn)) W.push(`⚠️ 검수: ${rn.slice(0, 180)}`);
+  return W;
+}
+
 export async function sendDraftCard(chatId, slug, title, opts = {}) {
   if (!chatId) return;
   const f = path.join(BLOG, slug, 'index.md');
@@ -522,10 +588,33 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   const id = saveDraft(slug, title, opts.keyword);
   const toc = extractToc(body);
   const feats = bodyFeatures(body);
-  const tissues = feats.hasTable ? validateTables(body) : [];
-  const badge = hasExistingPost(opts.keyword || title);
   const richLine = [feats.hasTable ? '표 포함' : '', feats.hasList ? '목록 포함' : ''].filter(Boolean).join(' · ');
-  const rn = opts.riskNotes;
+  // 🗣 AI 문체 등급 — LLM 0회라 모든 경로(브리핑·수동·캡처·수정)의 카드에 붙인다.
+  const tone = lintAiTone(body);
+  const warns = draftWarnings(slug, title, opts);
+  const msg =
+    `📝 ${title}\n` +
+    (opts.context ? `🧭 ${opts.context}\n` : '') +
+    (opts.keyword ? `🔑 ${opts.keyword}\n` : '') +
+    (toc.length ? `📑 목차: ${toc.join(' · ')}\n` : '') +
+    (richLine ? `🧩 ${richLine}\n` : '') +
+    `🗣 문체 ${toneSummary(tone, 3)}\n` +
+    (opts.harnessLine ? `${opts.harnessLine}\n` : '') +
+    (warns.length ? warns.join('\n') + '\n' : '') +
+    (opts.note ? `${opts.note}\n` : '') +
+    (opts.costLine ? `💰 ${opts.costLine}\n` : '') +
+    `\n승인하면 게시됩니다. (수정은 발행 전에만)`;
+  await sendMessage(chatId, msg, inlineButtons([[
+    { text: '📖 전문', callback_data: 'view:' + id },
+    { text: '✏️ 수정', callback_data: 'edit:' + id },
+    { text: '✅ 승인', callback_data: 'ok:' + id },
+    { text: '❌ 반려', callback_data: 'no:' + id },
+  ]]));
+}
+
+// 제목 점검(경고만 — 차단하지 않는다). 예전엔 sendDraftCard 안에 인라인으로 있었다.
+function cardTitleWarnings(title, toc, body, opts) {
+  const W = [];
 
   // ── 제목 점검(경고만 — 차단하지 않는다) ──
   // 🔴 여기가 모든 초안 경로의 관문이다(브리핑·수동·캡처 전부 이 카드를 쓴다).
@@ -549,47 +638,20 @@ export async function sendDraftCard(chatId, slug, title, opts = {}) {
   //    🔴 경고 전용이다 — 생성을 막지 않는다. 데이터가 없는 게 사실이면 그 사실을
   //       사람이 알고 제목을 줄이거나 반려하면 된다. 막아 버리면 우회로만 생긴다.
   const dataGap = isParking ? facilityDataMissing(body, title) : null;
-  const msg =
-    `📝 ${title}\n` +
-    (opts.context ? `🧭 ${opts.context}\n` : '') +
-    (opts.keyword ? `🔑 ${opts.keyword}\n` : '') +
-    (badge ? `📂 유사 발행글 보유: "${badge.title}"\n   → 새로 만들지 말고 그 글 '갱신'을 지시하세요\n` : '') +
-    (toc.length ? `📑 목차: ${toc.join(' · ')}\n` : '') +
-    (richLine ? `🧩 ${richLine}\n` : '') +
-    (tissues.length ? `⚠️ 표 문법 점검: ${tissues.join(', ')}\n` : '') +
-    (generic
-      ? `⚠️ 제목이 일반적입니다 — ${generic.reason}\n` +
-        `   → pain point 2~3개를 구체적으로 나열하세요. [✏️수정]으로 "제목: ..." 입력\n` +
-        `   예) "○○ 주차 총정리" → "○○ 주차요금·주차장 위치·혼잡 대비 가이드"\n`
-      : '') +
-    (promised.length
-      ? `⚠️ 제목이 약속한 '${promised.join('·')}'가 본문 섹션에 없습니다 (낚시가 됩니다)\n`
-      : '') +
-    (parkingDedupBad
-      ? `⚠️ 제목에 '주차'가 독립 단어로 없습니다 — 발행해도 브리핑이 같은 시설을 또 제안합니다\n` +
-        `   → '주차요금'처럼 붙이지 말고 띄우세요. [✏️수정]으로 "제목: ..." 입력\n` +
-        `   예) "○○ 주차요금·위치·만차 가이드" → "○○ 주차 요금·위치·만차 가이드"\n`
-      : '') +
-    (noSubject
-      ? `⚠️ 제목에 '구별 토큰'이 없습니다 — 중복 방어(subject 판정)가 이 글엔 작동하지 않습니다\n` +
-        `   → 2자 지명이면 lib/titleRules.mjs 의 REGION 에 추가하세요(광역지명 금지)\n`
-      : '') +
-    (dataGap
-      ? `⚠️ 시설 고유 데이터가 하나도 없습니다 (${dataGap.missing.join('·')} 전부 없음)\n` +
-        `   → 지금 이 글은 어느 시설에나 쓸 수 있는 일반론입니다. 검색한 사람이 원한 답이 없습니다\n` +
-        `   → 🔴 없는 숫자를 지어내지 마세요. 데이터를 못 구했으면 **제목에서 그 축을 빼세요**\n` +
-        `      (제목에 "요금"을 넣고 본문에 요금이 없으면 낚시입니다. [✏️수정]으로 "제목: ..." 입력)\n`
-      : '') +
-    (rn && !/없음|없습니다/.test(rn) ? `⚠️ 검수: ${rn.slice(0, 180)}\n` : '') +
-    (opts.note ? `${opts.note}\n` : '') +
-    (opts.costLine ? `💰 ${opts.costLine}\n` : '') +
-    `\n승인하면 게시됩니다. (수정은 발행 전에만)`;
-  await sendMessage(chatId, msg, inlineButtons([[
-    { text: '📖 전문', callback_data: 'view:' + id },
-    { text: '✏️ 수정', callback_data: 'edit:' + id },
-    { text: '✅ 승인', callback_data: 'ok:' + id },
-    { text: '❌ 반려', callback_data: 'no:' + id },
-  ]]));
+  if (generic)
+    W.push(`⚠️ 제목이 일반적입니다 — ${generic.reason}\n` +
+      `   → pain point 2~3개를 구체적으로 나열하세요. [✏️수정]으로 "제목: ..." 입력`);
+  if (promised.length) W.push(`⚠️ 제목이 약속한 '${promised.join('·')}'가 본문 섹션에 없습니다 (낚시가 됩니다)`);
+  if (parkingDedupBad)
+    W.push(`⚠️ 제목에 '주차'가 독립 단어로 없습니다 — 발행해도 브리핑이 같은 시설을 또 제안합니다\n` +
+      `   → '주차요금'처럼 붙이지 말고 띄우세요. 예) "○○ 주차 요금·위치·만차 가이드"`);
+  if (noSubject)
+    W.push(`⚠️ 제목에 '구별 토큰'이 없습니다 — 중복 방어(subject 판정)가 이 글엔 작동하지 않습니다\n` +
+      `   → 2자 지명이면 lib/titleRules.mjs 의 REGION 에 추가하세요(광역지명 금지)`);
+  if (dataGap)
+    W.push(`⚠️ 시설 고유 데이터가 하나도 없습니다 (${dataGap.missing.join('·')} 전부 없음)\n` +
+      `   → 어느 시설에나 쓸 수 있는 일반론입니다. 🔴 없는 숫자를 지어내지 말고, 못 구했으면 제목에서 그 축을 빼세요`);
+  return W;
 }
 
 // 초안 수정(발행 전만). instruction '제목:'→제목·슬러그 교체 / 그 외→claude-cli 부분수정.
@@ -635,19 +697,13 @@ export async function editDraft(slug, instruction, config, chatId) {
     `나머지 본문은 한 글자도 바꾸지 마세요. GFM 표·목록 구조는 그대로 유지하세요. ` +
     `frontmatter·코드펜스·설명 없이 '수정된 전체 본문 마크다운'만 출력하세요.\n\n` +
     `[수정 지시]\n${instruction}\n\n[현재 본문]\n${body}`;
-  const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
-  if (config.cliModel) args.push('--model', config.cliModel);
   let newBody, costUsd = 0;
   try {
-    const { stdout } = await execFileP('claude', args, {
-      cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv(),
-    });
-    const j = JSON.parse(stdout);
-    if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
-    newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
-    costUsd = j.total_cost_usd || 0;
+    const r = await claudeText(prompt, { model: config.cliModel, timeoutSec: config.cliTimeoutSeconds || 240 });
+    newBody = stripFence(r.result);
+    costUsd = r.costUsd;
   } catch (e) {
-    return { ok: false, error: 'AI 수정 실패: ' + ((e.stderr || e.message || '') + '').slice(0, 120) };
+    return { ok: false, error: 'AI 수정 실패: ' + String(e.message || '').slice(0, 120) };
   }
   if (!newBody || newBody.length < 50) return { ok: false, error: 'AI 수정 결과가 비었습니다(원본 유지).' };
 
@@ -711,17 +767,13 @@ export async function refreshPublished(slug, config, chatId, opts = {}) {
     `- YMYL(건강·세금) 단정어 금지("무조건/100%/반드시 ~됩니다" → 완화).\n` +
     (opts.brief ? `\n[이 갱신에만 적용할 지시 — 위 표준보다 우선]\n${opts.brief}\n` : '') +
     `frontmatter·코드펜스·설명 없이 '갱신된 전체 본문 마크다운'만 출력.\n\n[현재 본문]\n${body}`;
-  const args = ['-p', prompt, '--output-format', 'json', '--allowedTools', 'WebSearch'];
-  if (config.cliModel) args.push('--model', config.cliModel);
   let newBody, costUsd = 0;
   try {
-    const { stdout } = await execFileP('claude', args, { cwd: os.tmpdir(), maxBuffer: 20 * 1024 * 1024, timeout: (opts.timeoutSeconds || config.cliTimeoutSeconds || 240) * 1000, env: subscriptionEnv() });
-    const j = JSON.parse(stdout);
-    if (j.is_error || !j.result) throw new Error(j.subtype || 'claude 실패');
-    newBody = j.result.trim().replace(/^```(?:markdown)?\s*/i, '').replace(/```\s*$/, '').trim();
-    costUsd = j.total_cost_usd || 0;
+    const r = await claudeText(prompt, { model: config.cliModel, timeoutSec: opts.timeoutSeconds || config.cliTimeoutSeconds || 240 });
+    newBody = stripFence(r.result);
+    costUsd = r.costUsd;
   } catch (e) {
-    return { ok: false, error: '갱신 생성 실패: ' + ((e.stderr || e.message || '') + '').slice(0, 120), backup };
+    return { ok: false, error: '갱신 생성 실패: ' + String(e.message || '').slice(0, 120), backup };
   }
   if (!newBody || newBody.length < 100) return { ok: false, error: '갱신 결과가 비었습니다(원본 유지).', backup };
 

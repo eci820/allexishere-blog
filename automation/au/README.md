@@ -2,7 +2,7 @@
 
 이 디렉토리는 **호주 사이트(`allexishere-au`) 자동화**를 기존 한국 텔레그램 봇에 얹는
 코드다. 봇 프로세스는 한국 저장소(`allexishere-blog/automation/bot.mjs`)에서 돌지만,
-**AU 글은 `~/Projects/allexishere-au` 에 쓴다.** 두 저장소·두 사이트는 완전히 독립이다.
+**AU 글은 `~/Projects/allexishere/allexishere-au` 에 쓴다.** 두 저장소·두 사이트는 완전히 독립이다.
 
 ## 🔴 절대 규칙
 
