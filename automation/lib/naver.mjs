@@ -59,6 +59,33 @@ async function fetchVolumes(keywords) {
 }
 
 // ── 오픈API: 블로그 문서수 ──
+// 연관 검색어 + 월간 검색량(PC+모바일). keywordstool 은 힌트 하나에 연관어 수백 개를 주는데,
+// fetchVolumes 는 요청한 단어만 쓰고 나머지를 버린다. 주제 스카우트가 '사람들이 실제로 치는 표현'을
+// 고르는 데 쓴다(2026-11-26 — 스카우트 후보 대부분이 검색량 10 미만의 기획자 표현이었다).
+// hints: 문자열 또는 배열(최대 5개). 🔴 너무 구체적인 힌트(예: '보일러외출모드난방비')는 연관어를
+//    자기 자신 1개만 돌려준다(실측) → 호출부는 핵심어 단위 힌트('월세세액공제')를 넘길 것.
+export async function relatedQueries(hints) {
+  const list = (Array.isArray(hints) ? hints : [hints]).map((h) => h.replace(/\s+/g, '')).filter(Boolean).slice(0, 5);
+  const cache = loadCache();
+  const key = 'rel:' + norm(list.join(','));
+  if (cache[key] && Date.now() - cache[key].ts < 7 * DAY) return cache[key].rows;
+  if (!process.env.NAVER_AD_API_KEY || !list.length) return [];
+  const uriPath = '/keywordstool';
+  const qs = new URLSearchParams({ hintKeywords: list.join(','), showDetail: '1' });
+  try {
+    const res = await fetch(`https://api.naver.com${uriPath}?${qs}`, { headers: adHeaders('GET', uriPath) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rows = (data.keywordList || []).map((r) => ({ kw: r.relKeyword, vol: parseQc(r.monthlyPcQcCnt).n + parseQc(r.monthlyMobileQcCnt).n }));
+    cache[key] = { ts: Date.now(), rows: rows.slice(0, 300) };
+    saveCache(cache);
+    return cache[key].rows;
+  } catch (e) {
+    console.error('[naver-rel]', e.message);
+    return [];
+  }
+}
+
 async function fetchDocCount(keyword) {
   if (!process.env.NAVER_OPENAPI_CLIENT_ID) return null;
   try {

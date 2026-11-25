@@ -113,6 +113,12 @@ export async function runAutopilot() {
       await new Promise((r) => setTimeout(r, wait * 60 * 1000));
       fs.utimesSync(LOCK, new Date(), new Date()); // 잠금 갱신
     }
+    // 한 슬롯에서 관문 불통과·생성 실패면 다른 주제로 한 번 더(기본 2회). 품질 기준을 낮추는 대신
+    // 시도 횟수로 하루 목표를 채운다 — 1회 시도는 생성+검증+수정+재채점으로 약 10분.
+    const tries = Math.max(1, ap.attemptsPerSlot ?? 2);
+    for (let attempt = 1; attempt <= tries; attempt++) {
+    if (attempt > 1) { Object.assign(state, loadState()); fs.utimesSync(LOCK, new Date(), new Date()); console.log(`[autopilot] 재시도 ${attempt}/${tries}`); }
+    if (state.paused) return console.log('[autopilot] /autopause 상태 — 재시도 중단');
     const today = kstToday();
     const perDay = perDayFor(ap, today);
     const done = state.runs.filter((r) => r.day === today && r.result === 'published').length;
@@ -150,7 +156,8 @@ export async function runAutopilot() {
       Object.assign(rec, { result: 'failed', why: r.message || r.reason });
       saveState(st);
       if (ME) await sendFailure(ME, { keyword: topic.keyword, source: topic.tier }, r);
-      return;
+      if (r.reason === 'limit' || r.reason === 'auth') return; // 한도·인증 문제는 재시도해도 같다
+      continue;
     }
     rec.slug = r.slug;
     if (st.paused) {
@@ -164,7 +171,7 @@ export async function runAutopilot() {
       Object.assign(rec, { result: 'held', why });
       saveState(st);
       if (ME) await sendDraftCard(ME, r.slug, r.title, { ...r.cardOpts, note: `🤖 자동 발행 보류(사람 검수 필요)\n   ↳ ${why.join('\n   ↳ ')}` });
-      return;
+      continue; // 다른 주제로 재시도
     }
     const { publish } = await import('./publish.mjs');
     const p = await publish({ slug: r.slug, title: r.title, keyword: topic.keyword });
@@ -181,6 +188,8 @@ export async function runAutopilot() {
       await sendMessage(ME,
         `🤖 자동 발행 (오늘 ${n}/${perDay})\n📝 ${r.title}\n🔑 ${topic.keyword}\n🔗 ${p.url}\n` +
         `${r.cardOpts.harnessLine || ''}\n\n내리려면: /unpublish ${r.slug}\n멈추려면: /autopause`);
+    return; // 이 슬롯 몫(1편) 완료
+    } // for attempt
   } catch (e) {
     console.error('[autopilot] 오류:', e);
     if (ME) await sendMessage(ME, `🤖 자동 발행 오류: ${String(e.message).slice(0, 150)}`).catch(() => {});

@@ -276,7 +276,10 @@ export function passesGate(report, extra = {}, cfg = {}) {
   if (!judged) why.push(report.revised ? '수정본 재채점을 거치지 않음' : '검증 단계를 거치지 않음');
   else {
     if (judged.humanScore < g.minHumanScore) why.push(`사람다움 ${judged.humanScore}/10 < ${g.minHumanScore}`);
-    if (judged.verdict === 'revise') why.push(report.revised ? '수정 후에도 검증자가 수정 요구' : '검증자가 수정 요구했으나 수정본이 채택되지 않음');
+    // 수정본 재채점의 'revise'는 대개 공식 자료가 없어 채울 수 없는 의도 누락이다(실측 2026-11-26:
+    // 문학경기장 — 운영시간·결제수단 등). 그건 지어내지 말라는 원칙대로 '확인 필요'로 둔 결과라 막지 않는다.
+    // 사실 문제는 openFacts 로, 품질은 humanScore 로 따로 거른다.
+    if (!report.revised && judged.verdict === 'revise') why.push('검증자가 수정 요구했으나 수정본이 채택되지 않음');
   }
   if (report.openFacts && report.openFacts.length) why.push(`사실 지적 ${report.openFacts.length}건이 본문에 남음`);
   if (gradeRank(report.after.tone) > gradeRank(g.maxTone)) why.push(`AI 문체 등급 ${report.after.tone}`);

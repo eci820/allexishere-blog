@@ -94,10 +94,44 @@ export async function runScout(config, { want = 15, dry = false } = {}) {
     kept.push({ kw, it, cat });
   }
 
+  // 🔎 검색어 다듬기 — 화제를 '사람들이 실제로 치는 말'로 바꾼다(검색 노출이 최우선이라는 사용자 지시).
+  //    네이버 연관어 중 이 주제의 핵심어를 포함하고 더 구체적인(롱테일) 표현 가운데 검색량이 가장 큰 것.
+  //    빅키워드(월 3만 초과)는 정면승부라 피한다. 못 찾으면 원래 표현 유지.
+  let naver = null;
+  try { naver = await import('./naver.mjs'); } catch {}
+  if (naver?.relatedQueries) {
+    for (const k of kept) {
+      const toks = k.kw.split(/\s+/).filter((w) => w.length >= 2);
+      const subject = (toks[0] || '').replace(/\s+/g, '');
+      if (!subject) continue;
+      // 핵심어 단위 힌트 — 전체 문구를 넣으면 연관어가 자기 자신 1개만 온다(실측).
+      const rows = await naver.relatedQueries([subject, toks.slice(0, 2).join('')].filter((v, i, a) => a.indexOf(v) === i));
+      const ns = (s) => s.replace(/\s+/g, '').toUpperCase();
+      const base = rows.find((r) => ns(r.kw) === ns(k.kw))?.vol || 0;
+      // 🔴 화제 각도(나머지 토큰 앞 2글자)를 공유하는 표현만 쓴다. 공유 안 해도 받으면 의도가 바뀐다
+      //    (실측: '구독 자동결제 환불기준'→'삼성구독서비스', '알뜰폰 번호이동 위약금'→'알뜰폰요금제비교').
+      const shares = (r) => toks.length === 1 || toks.slice(1).some((t) => ns(r.kw).includes(ns(t).slice(0, 2)));
+      const best = rows
+        .filter((r) => ns(r.kw).includes(ns(subject)) && ns(r.kw).length > ns(subject).length + 1 && shares(r))
+        .filter((r) => r.vol >= 100 && r.vol <= 30000 && r.vol > base * 2)
+        .sort((a, b) => b.vol - a.vol)[0];
+      await new Promise((r) => setTimeout(r, 700)); // 네이버 광고 API 429 방지(실측)
+      if (best) {
+        // 네이버 연관어는 띄어쓰기가 없다 → 원래 토큰 경계로 다시 띄운다(중복 판정·제목 생성이 토큰을 쓴다).
+        let spaced = best.kw;
+        for (const t of [...toks].sort((a, b) => b.length - a.length)) spaced = spaced.split(t).join(` ${t} `);
+        spaced = spaced.replace(/\s+/g, ' ').trim();
+        if (!pool.topics.some((t) => t.keyword === spaced) && !liveDupe(spaced, k.cat.tier)) {
+          k.it.angle = `${k.it.angle || ''} (원래 화제어: ${k.kw})`;
+          k.kw = spaced;
+        }
+      }
+    }
+  }
+
   let stats = {};
   try {
-    const { enrichKeywords } = await import('./naver.mjs');
-    stats = await enrichKeywords(kept.map((k) => k.kw));
+    stats = naver ? await naver.enrichKeywords(kept.map((k) => k.kw)) : {};
   } catch { /* 지표 없으면 별점 필터 생략 */ }
 
   const now = Date.now();
