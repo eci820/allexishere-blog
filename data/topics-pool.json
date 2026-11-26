@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-26T04:55:18.982Z",
+  "updatedAt": "2026-11-26T08:30:05.412Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15639,8 +15639,8 @@
       "tier": "evergreen",
       "series": "mobility",
       "angle": "블랙박스 주차모드가 방전을 유발하는 원리와 실천 가능한 4가지 관리법 | 화제: 초겨울 한파에 긴급출동 요청이 몰리며 배터리 방전 예방법 기사·영상이 동시에 쏟아짐 | 출처: 한국도로교통공단, 현대모비스·배터리 제조사 관리 수칙",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "겨울-자동차-배터리-방전-원인대처법교체-비용-가이드-2026",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
