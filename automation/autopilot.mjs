@@ -124,7 +124,15 @@ export async function runAutopilot() {
     const done = state.runs.filter((r) => r.day === today && r.result === 'published').length;
     const attempts = state.runs.filter((r) => r.day === today).length;
     if (done >= perDay) return console.log(`[autopilot] 오늘 목표 달성 ${done}/${perDay}`);
-    if (attempts >= perDay * 2) return console.log(`[autopilot] 오늘 시도 상한(${attempts}) — 관문 불통과가 많습니다. 사람 검수 대기`);
+    if (attempts >= (ap.maxAttemptsPerDay || perDay * 3)) return console.log(`[autopilot] 오늘 시도 상한(${attempts}) — 구독 사용량 보호`);
+
+    // 📈 성과 학습 — 교훈이 7일 넘게 묵었으면 다시 만든다(주 1회 CLI 1호출, 계약 §5).
+    if (!DRY && attempt === 1) {
+      try {
+        const { lessonsStale, buildLessons } = await import('./lib/lessons.mjs');
+        if (lessonsStale(7)) { const L = await buildLessons(cfg); console.log('[autopilot] 교훈 갱신:', L.note); }
+      } catch (e) { console.error('[autopilot] 교훈 갱신 실패:', e.message); }
+    }
 
     // 화제 재고가 마르면 하루 1회 스카우트
     let { topic, freshLeft } = await pickTopic(cfg, state);
@@ -132,9 +140,9 @@ export async function runAutopilot() {
       const { runScout } = await import('./lib/scout.mjs');
       const s = await runScout(cfg);
       state.lastScout = today;
+      state.lastScoutNote = s.note; // 알림은 밤 요약에 묶는다
       saveState(state);
       console.log('[autopilot]', s.note);
-      if (ME) await sendMessage(ME, s.note);
       ({ topic } = await pickTopic(cfg, state));
     }
     if (!topic) {
@@ -148,37 +156,38 @@ export async function runAutopilot() {
     state.runs.push({ ...run, result: 'started' });
     saveState(state);
 
-    const { generateOne, sendDraftCard, sendFailure } = await import('./generate.mjs');
+    const { generateOne, sendFailure } = await import('./generate.mjs');
     const r = await generateOne(topic.keyword, { source: topic.tier, series: topic.series, angle: topic.angle, auto: true }, cfg, ME);
     const st = loadState(); // 생성 중 /autopause 등이 바뀌었을 수 있다
     const rec = st.runs.findLast((x) => x.ts === run.ts) || run;
+    // 🔴 2026-11-26 사용자 지시: "승인하는 방식으로 쓰고 싶지 않다. 모든 걸 자동화."
+    //    → 사람 카드를 보내지 않는다. 관문(품질)은 그대로 두고, 불통과 초안은 사이트 밖(state/rejected)으로
+    //      옮겨 버린 뒤 다른 주제로 다시 쓴다. 저품질 글이 사람 없이도 나가지 않게 하는 마지막 장치다.
+    //      버린 초안은 lessons(성과 학습)의 '왜 떨어졌나' 근거로 남긴다.
     if (!r.ok) {
       Object.assign(rec, { result: 'failed', why: r.message || r.reason });
       saveState(st);
-      if (ME) await sendFailure(ME, { keyword: topic.keyword, source: topic.tier }, r);
-      if (r.reason === 'limit' || r.reason === 'auth') return; // 한도·인증 문제는 재시도해도 같다
+      if (r.reason === 'limit' || r.reason === 'auth') { // 한도·인증은 사람이 알아야 하고, 재시도해도 같다
+        if (ME) await sendFailure(ME, { keyword: topic.keyword, source: topic.tier }, r);
+        return;
+      }
       continue;
     }
     rec.slug = r.slug;
-    if (st.paused) {
-      Object.assign(rec, { result: 'held', why: ['생성 중 /autopause'] });
+    if (st.paused || !r.gate || !r.gate.pass) {
+      const why = st.paused ? ['생성 중 /autopause'] : r.gate ? r.gate.why : ['하네스 꺼짐 — 자동 발행은 하네스 관문이 필수'];
+      Object.assign(rec, { result: 'discarded', why, archived: archiveDraft(r.slug) });
       saveState(st);
-      if (ME) await sendDraftCard(ME, r.slug, r.title, { ...r.cardOpts, note: '🤖 자동 발행 보류 — 일시정지 중' });
-      return;
-    }
-    if (!r.gate || !r.gate.pass) {
-      const why = r.gate ? r.gate.why : ['하네스 꺼짐 — 자동 발행은 하네스 관문이 필수'];
-      Object.assign(rec, { result: 'held', why });
-      saveState(st);
-      if (ME) await sendDraftCard(ME, r.slug, r.title, { ...r.cardOpts, note: `🤖 자동 발행 보류(사람 검수 필요)\n   ↳ ${why.join('\n   ↳ ')}` });
+      console.log(`[autopilot] 관문 불통과 → 폐기: ${r.title} — ${why.join(' / ')}`);
+      if (st.paused) return;
       continue; // 다른 주제로 재시도
     }
     const { publish } = await import('./publish.mjs');
     const p = await publish({ slug: r.slug, title: r.title, keyword: topic.keyword });
-    if (!p.ok) {
-      Object.assign(rec, { result: 'publish-failed', why: p.error });
+    if (!p.ok) { // git·배포 문제 — 운영 장애라 알린다(글은 초안으로 남아 다음 슬롯에서 다시 쓰지 않는다)
+      Object.assign(rec, { result: 'publish-failed', why: p.error, archived: archiveDraft(r.slug) });
       saveState(st);
-      if (ME) await sendDraftCard(ME, r.slug, r.title, { ...r.cardOpts, note: `🤖 자동 발행 실패: ${p.error}` });
+      if (ME) await sendMessage(ME, `🤖 자동 발행 실패(배포 문제): ${r.title}\n${p.error}`);
       return;
     }
     Object.assign(rec, { result: 'published', url: p.url });
@@ -194,8 +203,43 @@ export async function runAutopilot() {
     console.error('[autopilot] 오류:', e);
     if (ME) await sendMessage(ME, `🤖 자동 발행 오류: ${String(e.message).slice(0, 150)}`).catch(() => {});
   } finally {
+    try { await maybeDailySummary(ap, sendMessage); } catch (e) { console.error('[autopilot] 요약 실패:', e.message); }
     releaseLock();
   }
+}
+
+// 관문 불통과 초안을 사이트 밖으로 옮긴다(삭제 아님 — lessons 가 '왜 떨어졌나'를 본다).
+function archiveDraft(slug) {
+  try {
+    const src = path.join(path.dirname(AUTO_DIR), 'src', 'content', 'blog', slug);
+    if (!fs.existsSync(src)) return null;
+    const dst = path.join(STATE, 'rejected', slug);
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.rmSync(dst, { recursive: true, force: true });
+    fs.renameSync(src, dst);
+    return path.relative(AUTO_DIR, dst);
+  } catch (e) { console.error('[autopilot] 초안 보관 실패:', e.message); return null; }
+}
+
+// 하루 1통 요약 — 목표 달성 시 또는 22시 이후 마지막 슬롯에서. 개별 실패는 알리지 않는다(사용자 지시: 손 떼기).
+async function maybeDailySummary(ap, sendMessage) {
+  const s = loadState();
+  const today = kstToday();
+  const hm = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(11, 16);
+  const runs = s.runs.filter((r) => r.day === today);
+  const pub = runs.filter((r) => r.result === 'published');
+  const perDay = perDayFor(ap, today);
+  if (s.summarySent === today || DRY || !ME) return;
+  if (pub.length < perDay && hm < '22:00') return;
+  const cnt = (k) => runs.filter((r) => r.result === k).length;
+  await sendMessage(ME,
+    `🤖 오늘 자동 발행 요약 (${today})\n✅ 발행 ${pub.length}/${perDay}\n` +
+    pub.map((r, i) => `${i + 1}. ${r.keyword}\n   ${r.url || ''}`).join('\n') +
+    `\n🗑 관문 불통과로 폐기 ${cnt('discarded')} · ❌ 생성 실패 ${cnt('failed')}` +
+    (s.lastScoutNote && s.lastScout === today ? `\n${s.lastScoutNote}` : '') +
+    `\n\n멈추려면 /autopause · 상태 /autostatus`);
+  s.summarySent = today;
+  saveState(s);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

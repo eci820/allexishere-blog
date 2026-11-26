@@ -5,14 +5,17 @@
   <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/autopilot.mjs</string></array>
   <key>WorkingDirectory</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog</string>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/jeonghunoh/.local/bin</string></dict>
-  <!-- 🤖 하루 5개 시각(config.autopilot.slots 와 같게 유지). 실행마다 0~25분 지터를 더 기다린다. -->
+  <!-- 🤖 하루 8개 시각(config.autopilot.slots 와 같게 유지, 5편 채우면 그날 쉰다). 실행마다 0~25분 지터를 더 기다린다. -->
   <key>StartCalendarInterval</key>
   <array>
-    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>40</integer></dict>
-    <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>30</integer></dict>
-    <dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>20</integer></dict>
-    <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>10</integer></dict>
+    <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>40</integer></dict>
+    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>50</integer></dict>
+    <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>10</integer></dict>
+    <dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>20</integer></dict>
     <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>22</integer><key>Minute</key><integer>10</integer></dict>
   </array>
   <key>StandardOutPath</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/logs/autopilot.out.log</string>
   <key>StandardErrorPath</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/logs/autopilot.err.log</string>

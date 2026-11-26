@@ -14,6 +14,7 @@ import { facilityFromTitle, insertMapLink } from './lib/mapLink.mjs';
 //    execFile('claude', ['-p', 프롬프트 …]) 가 4곳에 복붙돼 있었다(프롬프트를 인자로 넘김 = §6 위반).
 import { claudeText, stripFence, runHarness, passesGate, harnessCardLine, harnessComment, logHarness } from './lib/harness.mjs';
 import { lintAiTone, toneSummary } from './lib/aiTone.mjs';
+import { serpForPrompt } from './lib/serp.mjs';
 
 const BLOG = path.join(ROOT, 'src', 'content', 'blog');
 const STATE = path.join(AUTO_DIR, 'state');
@@ -49,8 +50,10 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 1) (WebSearch로) 이 키워드가 '왜 지금 검색되는지 / 사람들이 뭘 궁금해하는지'를 먼저 파악하세요.
    여기서 파악한 '사람들이 뭘 궁금해하는지'가 곧 제목에 나열할 pain point 입니다.
 2) 핵심 키워드를 제목 '앞부분'에 배치.
-3) 🔴 그 뒤에 **독자 pain point 를 2~3개 구체적으로 나열**하고, 끝에 가이드/정리/안내 +
-   시의성(2026, 필요 시 7월). 25~40자.
+3) 🔴 그 뒤에 **독자 pain point 를 2~3개 구체적으로 나열**하세요. 25~40자.
+   🔴 제목 끝 "(2026)"·"가이드/정리/안내" 꼬리를 습관처럼 붙이지 마세요 — 사이트 글 절반이 "…가이드 (2026)"로
+      끝나 같은 틀로 찍어낸 티가 났습니다(2026-11 실측: 슬러그 169개 중 79개가 2026 으로 끝남).
+      연도는 해마다 값이 바뀌는 정보(요금·세율·제도)일 때만 자연스럽게 넣고, 끝맺음은 질문형·결론형·꼬리 없음 등으로 다양하게.
    ❌ "잠실야구장 주차 총정리"      ← 일반적. 사실상 검색어 하나만 잡는다.
    ✅ "잠실야구장 주차 요금·입구 위치·혼잡 대비 가이드 (2026)"  ← 세 검색 의도를 잡는다.
    독자는 "총정리"를 검색하지 않습니다. 구체적 니즈를 각각 검색합니다.
@@ -106,7 +109,8 @@ const RULES = `당신은 한국어 정보성 블로그의 전문 에디터입니
 
 [품질/문체]
 - 여러 출처 종합한 '독자적 정리물'. 특정 기사 복붙·요약 금지. 존댓말, 담백·정확, 이모지 남발 금지.
-- 글 끝에 기준일·고지문: "본 글은 {오늘 날짜} 기준 정보이며, 요금·일정 등은 변동될 수 있으니 공식 출처를 확인하세요."
+- 기준일은 수치·요금이 나오는 자리(표 아래, 출처 옆)에 "○○ 안내, 2026년 11월 기준"처럼 자연스럽게 밝히세요.
+  🔴 모든 글 끝에 같은 고정 고지문("본 글은 … 기준 정보이며 … 공식 출처를 확인하세요")을 붙이지 마세요 — 사이트 전체에 같은 문장이 반복되면 양산 신호입니다.
 - 제공된 '관련 글'이 있으면 본문에 자연스러운 마크다운 링크 1개.`;
 
 // 최근 발행글 컨텍스트(서두·약속어 로테이션용)
@@ -236,7 +240,9 @@ function task(keyword, opts, ctx) {
       ? `\n\n[이번 글 형식 — ${format.name}]\n- ${format.guide}\n` +
         `- 위 계급 규격의 구성 순서(①②③④)는 '담아야 할 요소'로만 지키고, 뼈대는 이 형식을 따르세요(최근 글들과 같은 틀 반복 방지).\n` +
         `- 이 주제에 이 형식이 정말 맞지 않으면 가장 가까운 형식으로 바꿔도 됩니다.`
-      : '')
+      : '') +
+    (ctx && ctx.serp ? serpForPrompt(ctx.serp) : '') +
+    (ctx && ctx.lessons ? ctx.lessons : '')
   );
 }
 
@@ -392,7 +398,18 @@ export async function generateOne(keyword, opts, config, chatId) {
   opts = opts || {};
   fs.mkdirSync(STATE, { recursive: true });
   const format = pickFormat();
-  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword), recent: recentContext(), format };
+  // 🔎 상위 노출 글 분석(사용자 지시 2026-11-26) — 실패해도 생성은 계속한다(분석 없이 쓰는 예전 동작).
+  let serp = null, serpCost = 0;
+  if (config.serp?.enabled !== false) {
+    const { serpBrief } = await import('./lib/serp.mjs');
+    const s = await serpBrief(keyword, config);
+    serp = s.brief; serpCost = s.costUsd || 0;
+    if (!serp) console.error('[generate] 상위 글 분석 실패(분석 없이 진행):', s.error);
+  }
+  // 📈 성과 학습 교훈(lib/lessons.mjs, 주 1회 갱신) — 없거나 데이터가 얕으면 빈 문자열.
+  let lessons = '';
+  try { lessons = (await import('./lib/lessons.mjs')).lessonsForPrompt(); } catch {}
+  const ctx = { related: existingMatch(keyword), hints: await titleHints(keyword), recent: recentContext(), format, serp, lessons };
 
   let res;
   try {
@@ -421,10 +438,12 @@ export async function generateOne(keyword, opts, config, chatId) {
     // 🧪 하네스: 검사(0회) → 검증(1회) → 수정(0~1회). 분량 보강도 수정 단계가 함께 맡는다
     //    (예전엔 보강용 CLI 호출이 따로 있었다 — 호출 1회 절약). 실패해도 생성은 계속하고
     //    report.errors 에 남긴다 → 자동 발행 관문이 자동으로 '불통과'가 된다.
-    const h = await runHarness(d, { keyword, opts, config, minChars: tierMin, tableIssues: validateTables });
+    const h = await runHarness(d, { keyword, opts, config, minChars: tierMin, tableIssues: validateTables, serp });
     d = h.draft;
     harness = h.report;
-    res.costUsd = (res.costUsd || 0) + (harness.costUsd || 0);
+    harness.format = format.id; // lessons(성과 학습)가 형식별 성과를 비교한다
+    harness.serpUsed = !!serp;
+    res.costUsd = (res.costUsd || 0) + (harness.costUsd || 0) + serpCost;
   } else if (res.engine === 'claude-cli' && d.body.length < tierMin * 0.9) {
     // 하네스를 끈 경우의 예전 동작: 계급별 분량 하한의 90% 미만이면 1회 보강
     try {

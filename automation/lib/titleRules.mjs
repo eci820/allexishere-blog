@@ -425,7 +425,7 @@ export function titleGuideFor(source) {
   const a = PAIN_AXES[source];
   const common =
     `\n\n[제목 공식 — 반드시 따르세요]\n` +
-    `  [주제/대상] + [독자 pain point 2~3개 구체 나열] + [가이드/정리/안내]\n` +
+    `  [주제/대상] + [독자 pain point 2~3개 구체 나열] (+ 끝맺음은 선택 — '가이드/정리/(2026)' 꼬리 반복 금지)\n` +
     `- 🔴 "총정리"만 붙인 일반적 제목을 쓰지 마세요. 독자는 "총정리"를 검색하지 않습니다.\n` +
     `  구체적 니즈를 각각 검색합니다. pain point 를 나열해야 한 글이 여러 검색 의도를 잡습니다.\n` +
     `- 제목에 나열한 pain point 는 **본문 h2 섹션으로 그대로 이행**하세요.\n` +

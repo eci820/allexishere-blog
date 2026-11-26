@@ -518,7 +518,7 @@ async function handleCommand(text) {
       const cnt = (k) => runs.filter((r) => r.result === k).length;
       await sendMessage(ME,
         `🤖 자동 발행: ${!cfgAp.enabled ? '꺼짐(config)' : s.paused ? '⏸ 일시정지' : '▶️ 동작 중'}\n` +
-        `오늘 목표 ${ap.perDayFor(cfgAp, today)}편 · 발행 ${cnt('published')} · 보류(사람 검수) ${cnt('held')} · 실패 ${cnt('failed') + cnt('publish-failed')}\n` +
+        `오늘 목표 ${ap.perDayFor(cfgAp, today)}편 · 발행 ${cnt('published')} · 관문 불통과 폐기 ${cnt('discarded')} · 실패 ${cnt('failed') + cnt('publish-failed')}\n` +
         `시각: ${(cfgAp.slots || []).join(', ')} (+0~${cfgAp.jitterMinutes ?? 25}분)\n` +
         (s.paused ? '재개: /autoresume' : '멈춤: /autopause'));
       break;

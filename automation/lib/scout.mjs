@@ -36,7 +36,7 @@ export const CATEGORIES = {
 
 const BANNED = /(열애|결혼|이혼|불륜|사망|별세|구속|기소|논란|폭로|루머|대통령|국회의원|정당|선거|탄핵|살인|사고 현장|아이돌|배우|가수|유튜버 .{0,4}(?:수입|근황)|근황|몇 기|출연자|러브라인)/;
 
-const PROMPT = (existingSample, want) => `당신은 한국어 생활정보 블로그의 '주제 스카우트'입니다.
+const PROMPT = (existingSample, want, hints = []) => `당신은 한국어 생활정보 블로그의 '주제 스카우트'입니다.
 WebSearch 로 최근 2~3주 한국 유튜브(조회수 높은 생활·경제·과학 채널), 커뮤니티(더쿠·클리앙·뽐뿌·네이버 카페 화제글),
 뉴스에서 '많은 사람이 궁금해하거나 오해하고 있는 것'을 찾고, 그것을 블로그 글 주제 ${want}개로 바꾸세요.
 
@@ -50,7 +50,7 @@ WebSearch 로 최근 2~3주 한국 유튜브(조회수 높은 생활·경제·�
 6. 분야를 섞으세요(한 분야 최대 3개): ${Object.entries(CATEGORIES).map(([k, v]) => `${k}=${v.label}`).join(' / ')}
    건강·의료·투자 종목 추천은 내지 마세요.
 
-[이미 다룬 주제 일부 — 겹치지 말 것]
+${hints.length ? `[지난 글 성과 분석에서 나온 주제 선정 힌트 — 반영할 것]\n${hints.map((h) => '- ' + h).join('\n')}\n\n` : ''}[이미 다룬 주제 일부 — 겹치지 말 것]
 ${existingSample.join(', ')}
 
 아래 JSON 배열 하나만 출력(코드펜스·설명 금지):
@@ -70,7 +70,9 @@ export async function runScout(config, { want = 15, dry = false } = {}) {
   const existingSample = pool.topics.slice(-120).map((t) => t.keyword);
   let raw, costUsd = 0;
   try {
-    const r = await claudeText(PROMPT(existingSample, want), { model: config.cliModel, timeoutSec: (config.harness?.timeoutSeconds) || 300 });
+    let hints = [];
+    try { hints = (await import('./lessons.mjs')).topicHintsForScout(); } catch {}
+    const r = await claudeText(PROMPT(existingSample, want, hints), { model: config.cliModel, timeoutSec: (config.harness?.timeoutSeconds) || 300 });
     raw = r.result; costUsd = r.costUsd;
   } catch (e) {
     return { added: 0, skipped: 0, dropped: [], costUsd, note: `⚠️ 주제 스카우트 실패: ${String(e.message).slice(0, 100)}` };

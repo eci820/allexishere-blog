@@ -78,7 +78,7 @@ export function seoChecks({ title, description, body }, keyword) {
 }
 
 // ── ② 검증(LLM 1회) ─────────────────────────────────────────────
-function verifyPrompt(d, keyword, opts, lint, seo, num) {
+function verifyPrompt(d, keyword, opts, lint, seo, num, serp) {
   return `당신은 한국어 정보 블로그의 편집장이자 팩트체커입니다. 아래 초안을 검수합니다.
 🔴 글을 고치지 마세요. 판정만 JSON 으로 출력합니다. 지적은 반드시 본문에 '그대로 있는 문장'을 인용하세요.
 
@@ -99,7 +99,7 @@ function verifyPrompt(d, keyword, opts, lint, seo, num) {
 5. 사람다움 점수 1~10 (10 = 그 분야를 직접 확인한 사람이 쓴 글처럼 읽힘).
 6. verdict — 사실 오류·지어낸 경험담·검색 의도 미충족이 하나라도 있으면 "revise", 사소한 문체만이면 "pass".
 
-[코드 검사 결과(참고)]
+${serp && serp.mustCover && serp.mustCover.length ? `[상위 노출 글들이 공통으로 답하는 질문 — 본문이 답하지 않으면 intentGaps 에 넣을 것]\n${serp.mustCover.map((q) => '- ' + q).join('\n')}\n[상위 글이 놓친 점 — 본문이 하나도 채우지 못했으면 seo 에 '정보 이득 없음'으로]\n${(serp.gaps || []).map((q) => '- ' + q).join('\n')}\n\n` : ''}[코드 검사 결과(참고)]
 - AI 문체 등급: ${toneSummary(lint, 6)}
 - SEO 형태: ${seo.length ? seo.map((x) => x.msg).join(' / ') : '이상 없음'}
 - 출처 표지 없는 수치 문장 ${num.unsourced}개${num.samples.length ? ': ' + num.samples.map((s) => `"${s.slice(0, 50)}"`).join(', ') : ''}
@@ -221,7 +221,7 @@ export async function runHarness(draft, ctx) {
   let v = null;
   if (cfg.verify !== false) {
     try {
-      const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, lint0, seo0, num0), { model, timeoutSec });
+      const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, lint0, seo0, num0, ctx.serp), { model, timeoutSec });
       report.costUsd += r.costUsd;
       v = sanitizeVerdict(parseJSONLoose(r.result), d.body);
       report.verify = { verdict: v.verdict, humanScore: v.humanScore, intent: v.intent, intentGaps: v.intentGaps, facts: v.facts, filler: v.filler.length, aiSentences: v.aiSentences.length, seo: v.seo, droppedQuotes: v.droppedQuotes };
@@ -266,7 +266,7 @@ export async function runHarness(draft, ctx) {
   //    판정해 불통과했다. 원본 점수로 거르면 수정 단계가 있으나 마나다. 재수정은 하지 않는다(1회 상한).
   const rescore = async () => {
     const l = lintAiTone(d.body), s = seoChecks(d, ctx.keyword), n = unsourcedNumbers(d.body);
-    const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, l, s, n), { model, timeoutSec });
+    const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, l, s, n, ctx.serp), { model, timeoutSec });
     report.costUsd += r.costUsd;
     const v2 = sanitizeVerdict(parseJSONLoose(r.result), d.body);
     report.final = { verdict: v2.verdict, humanScore: v2.humanScore, facts: v2.facts, intentGaps: v2.intentGaps, aiSentences: v2.aiSentences.length, filler: v2.filler.length };
