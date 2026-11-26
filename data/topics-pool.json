@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-26T08:37:01.951Z",
+  "updatedAt": "2026-11-26T14:50:30.014Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15506,8 +15506,8 @@
       "tier": "evergreen",
       "series": "life",
       "angle": "분할구매로 관세 아끼는 구체적 방법과 여전히 합산되는 예외 상황 | 화제: 입항일이 같아도 결제일이 다르면 합산과세 제외로 바뀌어 블랙프라이데이 분할구매 질문 급증 | 출처: 관세청 전자통관 고시",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "해외직구-합산과세-기준-날짜판매자-다르면-피하는-법-2026",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
