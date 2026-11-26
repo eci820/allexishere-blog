@@ -139,7 +139,7 @@ async function loadPlaces() {
 }
 
 // ── 프롬프트 ──────────────────────────────────────────────────────────────
-export function buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings = [], todayAu = '') {
+export function buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings = [], todayAu = '', extra = '') {
   const sufficient = sources.filter((s) => s.sufficient);
   const sourceBlock = sufficient.length
     ? sufficient.map((s) => `SOURCE (${s.url}):\n${s.text.slice(0, 6000)}`).join('\n\n')
@@ -185,6 +185,8 @@ export function buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, sib
           ``,
         ]
       : []),
+    // 🤖 au-autopilot(2026-11-26) 가 넘기는 추가 지시: 상위 노출 글 분석 · 성과 교훈 · 사람 문체 규칙.
+    ...(extra ? [extra, ``] : []),
     `OUTPUT FORMAT — output exactly these parts and nothing else:`,
     `DESCRIPTION: <one sentence meta description, Australian English>`,
     `---BODY---`,
@@ -264,7 +266,8 @@ function h2sOf(body) {
 
 function frontmatter(candidate, description) {
   const iso = todayParts().iso;
-  const tags = candidate.cls === 'toll'
+  const tags = candidate.tags ? candidate.tags // 스카우트 주제는 자기 태그를 가져온다(경기장 태그가 붙지 않게)
+    : candidate.cls === 'toll'
     ? [...new Set(['tolls', 'driving', 'australia', geoTagForToll(candidate.subject)].filter(Boolean))]
     : [candidate.facility?.city?.toLowerCase() || 'australia', 'stadium', 'gameday'];
   return [
@@ -283,7 +286,7 @@ function frontmatter(candidate, description) {
 }
 
 // 메인: 후보 하나로 초안 생성. dryRun 이면 fetch·검증·가드까지만(전송·쓰기·CLI 없음).
-export async function generateDraft(candidate, { dryRun = false } = {}) {
+export async function generateDraft(candidate, { dryRun = false, extra = '' } = {}) {
   const places = await loadPlaces();
   const allPlaceIds = Object.keys(places); // 🔴 전체 등재 장소를 프롬프트에 노출(경기장·역·랜드마크 등)
   const validGmapIds = (candidate.gmapIds || []).filter((id) => places[id]);
@@ -312,7 +315,7 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   // 🔴 A-5: 발행 형제 글 주입(내부 링크) + accessed 날짜.
   const siblings = publishedPosts().slice(0, 12);
   const today = todayParts();
-  const prompt = buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings, today.au);
+  const prompt = buildPrompt(candidate, sources, allPlaceIds, requiredGmapId, siblings, today.au, extra);
   const intendedSlug = uniqueSlug(slugify(candidate.title));
   const intendedPath = path.join(AU_BLOG, `${intendedSlug}.md`);
   guardAuRealpath(intendedPath); // 🔴 쓰기 대상이 AU 안·한국 밖인지 (dryRun 이어도 검증)
@@ -347,7 +350,7 @@ export async function generateDraft(candidate, { dryRun = false } = {}) {
   }
 
   // 실제 생성 — CLI 1회(구독). 실패는 fail-loud(throw, 호출부가 카드로 통지).
-  const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 240000 });
+  const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 420000 }); // 240→420s: 추가 지시로 길어짐(한국 쪽 시간 초과 실측과 같은 이유)
   const { result, costUsd } = unwrapClaudeJSON(stdout);
   const { description, body, linkCandidates } = parseOutput(result);
 

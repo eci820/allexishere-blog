@@ -68,6 +68,16 @@
     "excludeTiers": [ "health", "finance", "realestate", "trend" ],
     "_note": "🤖 2026-11-25 사용자 지시: '하루 5편, 사람 선택 없이 발행까지'. 흐름 = 주제 선택(lib/scout·재고) → generateOne(auto) → 하네스 관문(passesGate) 통과 시 publish(), 불통과 시 기존 초안 카드로(사람 검수). 🔴 5편을 한꺼번에 올리지 않는다 — slots 에 나눠 1편씩, jitter 로 시각을 흔든다. 🔴 ramp: 2026-07-18~19 이틀 34편 발행 직후 사이트 전체 노출이 0으로 꺼졌다(GSC 실측, 색인은 유지 = 사이트 단위 강등 의심). 같은 '급증' 신호를 다시 주지 않으려고 2→3→5편/일로 올린다. 바로 5편: ramp 를 [] 로. 멈춤: 텔레그램 /autopause (재개 /autoresume) 또는 enabled:false. YMYL(건강·금융·부동산)은 자동 발행하지 않는다(폴더 9 색인 거절 사고)."
   },
+  "auAutopilot": {
+    "enabled": true,
+    "perDay": 5,
+    "attemptsPerSlot": 2,
+    "maxAttemptsPerDay": 12,
+    "jitterMinutes": 25,
+    "slots": [ "05:10", "06:50", "08:30", "10:10", "12:30", "14:50", "17:00", "18:40" ],
+    "summaryAfter": "19:30",
+    "_note": "🇦🇺 2026-11-26 사용자 지시(호주도 한국과 같이 완전 자동·하루 5편). 시각은 KST — 호주 동부(AEDT=KST+2) 07:10~20:40 낮 시간. 한국 슬롯(07:30·09:40…)과 겹치지 않게 엇갈림. 흐름은 au/au-autopilot.mjs 주석 참고. 끄기: enabled:false 또는 텔레그램 /au autopause."
+  },
   "serp": { "enabled": true, "timeoutSeconds": 360, "_note": "🔎 2026-11-26: 쓰기 전에 상위 노출 글(네이버 공식 검색 API + WebSearch 로 근사한 구글 상위) 3~5개를 읽고 다뤄야 할 질문·공통 구조·출처 있는 사실·빈틈을 뽑아 작성·검증에 넘긴다(lib/serp.mjs). 문장 복제 금지. 글 1편당 CLI +1회. 끄기: enabled:false." },
   "heartbeatSeconds": 60,
   "watchdogStaleSeconds": 300,

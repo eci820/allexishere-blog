@@ -48,10 +48,25 @@ ${naver.map((n, i) => `   ${i + 1}. ${n.title} — ${n.link}`).join('\n') || '  
 {"mustCover":["..."],"structure":"...","typicalLength":2500,"facts":[{"fact":"...","asOf":"2026-11","source":"https://..."}],"gaps":["..."],"titlePatterns":["..."],"sourcesRead":["https://..."]}`;
 
 // return { brief, costUsd } | { brief:null, error }
-export async function serpBrief(keyword, config) {
-  const naver = [...(await naverSearch('webkr', keyword, 5)), ...(await naverSearch('blog', keyword, 3))].slice(0, 7);
+const PROMPT_EN = (keyword) => `Analyse the pages that currently rank at the top for the search query "${keyword}" in Australia. You are drafting the blueprint for our Australian (en-AU) article on this query.
+
+1) Use WebSearch for "${keyword}" (prefer Australian results: .gov.au, .com.au, Australian operators/venues), and WebFetch 3–5 genuine information pages among the top results.
+2) Extract — 🔴 never copy sentences, only structure and information:
+   - mustCover: 3–7 questions most top pages answer (the minimum for search intent)
+   - structure: one line on their common flow (H2 order, tables)
+   - typicalLength: approx body length (characters)
+   - facts: 3–8 key facts confirmed on OFFICIAL pages (gov, operator, venue, manufacturer) with value, as-of date and source URL. Exclude numbers sourced only from blogs/forums.
+   - gaps: 2–5 things the top pages miss or get wrong (our information-gain candidates)
+   - titlePatterns: 3–5 search phrases their titles share (phrases, not whole titles)
+
+Output ONE JSON object only (no code fence):
+{"mustCover":["..."],"structure":"...","typicalLength":2500,"facts":[{"fact":"...","asOf":"2026-11","source":"https://..."}],"gaps":["..."],"titlePatterns":["..."],"sourcesRead":["https://..."]}`;
+
+export async function serpBrief(keyword, config, { lang } = {}) {
+  // 🇦🇺 lang='en': 네이버는 호주 사이트와 무관하므로 건너뛰고 호주 결과 중심으로 읽는다.
+  const naver = lang === 'en' ? [] : [...(await naverSearch('webkr', keyword, 5)), ...(await naverSearch('blog', keyword, 3))].slice(0, 7);
   try {
-    const r = await claudeText(PROMPT(keyword, naver), {
+    const r = await claudeText(lang === 'en' ? PROMPT_EN(keyword) : PROMPT(keyword, naver), {
       model: config.cliModel,
       timeoutSec: (config.serp && config.serp.timeoutSeconds) || 360,
       tools: ['WebSearch', 'WebFetch'],
@@ -68,7 +83,7 @@ export async function serpBrief(keyword, config) {
       facts: arr(o.facts, 8).filter((f) => f && /^https?:\/\//.test(String(f.source || ''))),
       gaps: arr(o.gaps, 5).map(String),
       // '총정리/완벽 가이드' 같은 상투 꼬리는 버린다 — 양산 틀이라 제목에서 없애기로 한 것(2026-11-26).
-      titlePatterns: arr(o.titlePatterns, 5).map(String).filter((t) => !/총정리|완벽|가이드|한눈에|모르면/.test(t)),
+      titlePatterns: arr(o.titlePatterns, 5).map(String).filter((t) => !/총정리|완벽|가이드|한눈에|모르면|ultimate|complete guide|everything you need/i.test(t)),
       sourcesRead: arr(o.sourcesRead, 8).map(String),
       naverTop: naver.map((n) => n.title).slice(0, 5),
     };
@@ -79,8 +94,14 @@ export async function serpBrief(keyword, config) {
 }
 
 // 작성 프롬프트에 붙일 블록.
-export function serpForPrompt(b) {
+export function serpForPrompt(b, lang) {
   if (!b) return '';
+  if (lang === 'en') return `\n\n[TOP-RANKING PAGES ANALYSIS — reference only. 🔴 Never copy sentences; use structure, questions and facts]
+- Questions the top pages all answer (you MUST cover each): ${b.mustCover.join(' / ') || '(none)'}
+- Their common flow: ${b.structure || '-'} · length ~${b.typicalLength || '?'} chars → you may be shorter, but answer every question above
+- Facts confirmed on official pages (cite source + as-of date when used): ${b.facts.map((f) => `${f.fact} (${f.asOf || 'check date'}, ${f.source})`).join(' / ') || '(none — verify yourself)'}
+- What the top pages miss (fill at least one as our differentiator): ${b.gaps.join(' / ') || '(none)'}
+- Search phrases their titles share (use naturally in title/H2s): ${b.titlePatterns.join(', ') || '-'}`;
   return `\n\n[상위 노출 글 분석 — 참고용. 🔴 문장 복제 금지, 구조·질문·사실만 참고]
 - 이 검색어의 상위 글들이 공통으로 답하는 질문(반드시 다룰 것): ${b.mustCover.join(' / ') || '(없음)'}
 - 상위 글 공통 흐름: ${b.structure || '-'} · 분량 약 ${b.typicalLength || '?'}자 → 우리 글은 이보다 짧아도 되지만 위 질문은 빠짐없이 답할 것

@@ -38,3 +38,13 @@ export function bodyOf(raw) {
 
 export const h2List = (body) => [...String(body).matchAll(/^##\s+(.+)$/gm)].map((m) => m[1].trim());
 export const linkCount = (body) => (String(body).match(/\[[^\]]+\]\([^)]+\)/g) || []).length;
+
+// ── English (AU site) — 같은 '출처 없는 수치' 판정의 영어판 ───────────────────
+// AU 글은 "unverified — check the official source" 표기와 인라인 URL 을 쓴다(au-generate 규칙).
+export const SOURCE_MARK_EN = /(https?:\/\/|\.gov\.au|source|according to|as of|last updated|unverified)/i;
+export const NUMERIC_CLAIM_EN = /(?:A?\$\s?\d[\d,.]*|\d[\d,.]*\s*(?:%|per ?cent|km|kms|kilometres|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|metres?|m\b|kg|cents?|AUD))/i;
+export function unsourcedNumbersEn(body) {
+  const claims = proseSentences(body).filter((s) => NUMERIC_CLAIM_EN.test(s));
+  const unsourced = claims.filter((s) => !SOURCE_MARK_EN.test(s));
+  return { claims: claims.length, unsourced: unsourced.length, samples: unsourced.slice(0, 2), all: unsourced };
+}

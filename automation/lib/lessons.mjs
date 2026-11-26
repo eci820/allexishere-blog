@@ -21,61 +21,77 @@ import { claudeText } from './harness.mjs';
 import { lintAiTone } from './aiTone.mjs';
 import { bodyOf, h2List } from './textMetrics.mjs';
 
-const FILE = path.join(AUTO_DIR, 'state', 'lessons.json');
+// 🇦🇺 site='au' 는 호주 사이트(au.allexishere.com) — 파일·GSC 속성·글 목록·프롬프트 언어가 따로다(2026-11-26).
+const fileFor = (site) => path.join(AUTO_DIR, 'state', ...(site === 'au' ? ['au', 'lessons.json'] : ['lessons.json']));
 const DAY = 24 * 3600 * 1000;
-const read = () => { try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return null; } };
+const read = (site) => { try { return JSON.parse(fs.readFileSync(fileFor(site), 'utf8')); } catch { return null; } };
 
-export function lessonsStale(days = 7) {
-  const L = read();
+export function lessonsStale(days = 7, site) {
+  const L = read(site);
   return !L || Date.now() - Date.parse(L.ts) > days * DAY;
 }
 
-export function lessonsForPrompt() {
-  const L = read();
+export function lessonsForPrompt(site) {
+  const L = read(site);
   if (!L || Date.now() - Date.parse(L.ts) > 21 * DAY || !(L.rules || []).length) return '';
-  return `\n\n[지난 글 성과 분석에서 나온 교훈 — ${L.ts.slice(0, 10)} 기준, 반드시 반영]\n` + L.rules.map((r) => `- ${r}`).join('\n');
+  const head = site === 'au' ? `[LESSONS FROM OUR OWN PERFORMANCE DATA — as of ${L.ts.slice(0, 10)}, apply them]` : `[지난 글 성과 분석에서 나온 교훈 — ${L.ts.slice(0, 10)} 기준, 반드시 반영]`;
+  return `\n\n${head}\n` + L.rules.map((r) => `- ${r}`).join('\n');
 }
-export function topicHintsForScout() {
-  const L = read();
+export function topicHintsForScout(site) {
+  const L = read(site);
   if (!L || Date.now() - Date.parse(L.ts) > 21 * DAY) return [];
   return L.topicHints || [];
 }
 
-export async function buildLessons(config, { dry = false } = {}) {
+export async function buildLessons(config, { dry = false, site } = {}) {
+  const AU = site === 'au';
+  const ST = path.join(AUTO_DIR, 'state', ...(AU ? ['au'] : []));
   const gsc = await import('./gsc.mjs');
   const { urlKey } = await import('./sitemap.mjs');
   const sw = await import('../seo-watch.mjs');
-  const site = (await gsc.resolveSiteUrl('allexishere.com')).siteUrl;
+  const gscSite = AU ? 'https://au.allexishere.com/' : (await gsc.resolveSiteUrl('allexishere.com')).siteUrl;
   const end = gsc.kstDaysAgo(3), start = gsc.kstDaysAgo(90);
-  const pages = await gsc.searchAnalytics(site, { startDate: start, endDate: end, dimensions: ['page'], rowLimit: 5000 });
-  const pq = await gsc.searchAnalytics(site, { startDate: start, endDate: end, dimensions: ['page', 'query'], rowLimit: 5000 });
+  const pages = await gsc.searchAnalytics(gscSite, { startDate: start, endDate: end, dimensions: ['page'], rowLimit: 5000 });
+  const pq = await gsc.searchAnalytics(gscSite, { startDate: start, endDate: end, dimensions: ['page', 'query'], rowLimit: 5000 });
   const byPage = new Map(pages.map((r) => [urlKey(r.keys[0]), r]));
   const queries = new Map();
   for (const r of pq) { const k = urlKey(r.keys[0]); if (!queries.has(k)) queries.set(k, []); queries.get(k).push(`${r.keys[1]}(${r.impressions})`); }
 
   const hlog = new Map();
   try {
-    for (const line of fs.readFileSync(path.join(AUTO_DIR, 'state', 'harness-log.jsonl'), 'utf8').trim().split('\n')) {
+    for (const line of fs.readFileSync(path.join(ST, 'harness-log.jsonl'), 'utf8').trim().split('\n')) {
       const x = JSON.parse(line); hlog.set(x.slug, x);
     }
   } catch {}
 
-  const posts = sw.scanPosts().filter((p) => !p.draft && !p.noindex);
-  await sw.attachSitemapUrls(posts);
+  let posts;
+  if (AU) {
+    // AU 글: allexishere-au/src/content/blog/<slug>.md (ASCII 소문자 슬러그 — au-publish 가 /entry/<slug> 로 서빙)
+    const AU_BLOG = path.resolve(ROOT, '..', 'allexishere-au', 'src', 'content', 'blog');
+    posts = fs.readdirSync(AU_BLOG).filter((f) => f.endsWith('.md')).map((f) => {
+      const raw = fs.readFileSync(path.join(AU_BLOG, f), 'utf8');
+      const fm = raw.split(/^---\s*$/m)[1] || '';
+      const g = (k) => (fm.match(new RegExp(`^${k}:\\s*"?(.*?)"?\\s*$`, 'm')) || [])[1] || '';
+      return { slug: f.replace(/\.md$/, ''), title: g('title'), pubDate: g('pubDate'), draft: /^draft:\s*true/m.test(fm), url: 'https://au.allexishere.com/entry/' + f.replace(/\.md$/, ''), file: path.join(AU_BLOG, f) };
+    }).filter((p) => !p.draft);
+  } else {
+    posts = sw.scanPosts().filter((p) => !p.draft && !p.noindex);
+    await sw.attachSitemapUrls(posts);
+  }
   const now = Date.now();
   const rows = [];
   for (const p of posts) {
     const pub = Date.parse(p.pubDate || '');
     if (!p.url || !pub || now - pub < 14 * DAY) continue; // D+14 전은 판정하지 않는다(색인·GSC 지연)
-    const raw = fs.readFileSync(path.join(ROOT, 'src', 'content', 'blog', p.slug || p.dir, 'index.md'), 'utf8');
-    const body = bodyOf(raw);
+    const raw = fs.readFileSync(p.file || path.join(ROOT, 'src', 'content', 'blog', p.slug || p.dir, 'index.md'), 'utf8');
+    const body = AU ? raw.split(/^---\s*$/m).slice(2).join('---') : bodyOf(raw);
     const g = byPage.get(urlKey(p.url));
     const h = hlog.get(p.slug || p.dir);
     const imp = g?.impressions || 0, clk = g?.clicks || 0, pos = g?.position || null;
     const cause = imp === 0 ? '노출0' : clk === 0 && imp >= 30 ? '클릭0' : pos && pos > 20 ? '순위낮음' : clk > 0 ? '성과' : '소량노출';
     rows.push({
       title: p.title, days: Math.round((now - pub) / DAY), imp, clk, pos: pos ? +pos.toFixed(1) : null, cause,
-      chars: body.length, h2: h2List(body).length, table: /^\s*\|.*\|\s*$/m.test(body), tone: lintAiTone(body).grade,
+      chars: body.length, h2: h2List(body).length, table: /^\s*\|.*\|\s*$/m.test(body), tone: (AU ? (await import('./aiToneEn.mjs')).lintAiToneEn(body) : lintAiTone(body)).grade,
       titleLen: [...p.title].length, yearTail: /\(?20\d\d[^)]*\)?\s*$/.test(p.title),
       format: h?.format || null, human: h?.final?.humanScore ?? h?.verify?.humanScore ?? null,
       queries: (queries.get(urlKey(p.url)) || []).slice(0, 3).join(', '),
@@ -84,7 +100,7 @@ export async function buildLessons(config, { dry = false } = {}) {
   // 관문 불통과 폐기 사유(최근 30일)
   let discards = [];
   try {
-    const ap = JSON.parse(fs.readFileSync(path.join(AUTO_DIR, 'state', 'autopilot.json'), 'utf8'));
+    const ap = JSON.parse(fs.readFileSync(path.join(ST, 'autopilot.json'), 'utf8'));
     discards = ap.runs.filter((r) => r.result === 'discarded' && now - Date.parse(r.ts) < 30 * DAY).flatMap((r) => r.why || []);
   } catch {}
   const reasonCount = {};
@@ -112,24 +128,32 @@ ${Object.entries(reasonCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, 
 {"rules":["다음 글 작성 규칙(근거)"],"topicHints":["주제·검색어 고를 때 힌트(근거)"],"diagnosis":"원인 진단 요약 2~3문장","confidence":"low|mid|high"}`;
 
   let out = { rules: [], topicHints: [], diagnosis: '', confidence: 'low' }, costUsd = 0, error = null;
+  const promptFinal = AU ? prompt + '\n\n🇦🇺 This is the Australian English site. Write rules, topicHints and diagnosis in ENGLISH (they are injected into an English writing prompt).' : prompt;
   if (rows.length || discards.length) {
-    try {
-      const r = await claudeText(prompt, { model: config.cliModel, timeoutSec: 300, tools: [] });
-      costUsd = r.costUsd;
-      const t = String(r.result).trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
-      const o = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
-      out = { rules: (o.rules || []).map(String).slice(0, 6), topicHints: (o.topicHints || []).map(String).slice(0, 4), diagnosis: String(o.diagnosis || '').slice(0, 400), confidence: o.confidence || 'low' };
-    } catch (e) { error = String(e.message).slice(0, 120); }
+    // 실측(2026-11-26 드라이런): 규칙 문장 안의 따옴표가 이스케이프되지 않아 JSON 이 깨졌다.
+    // → 한 번 실패하면 '따옴표는 「」로' 지시를 붙여 1회 재시도한다(주 1회라 비용 영향 작음).
+    for (let attempt = 1; attempt <= 2 && !out.rules.length; attempt++) {
+      try {
+        const p = attempt === 1 ? promptFinal : promptFinal + '\n\n🔴 직전 출력이 올바른 JSON 이 아니었습니다. 문자열 안에서는 큰따옴표(")를 쓰지 말고 「」를 쓰세요. JSON 하나만.';
+        const r = await claudeText(p, { model: config.cliModel, timeoutSec: 300, tools: [] });
+        costUsd += r.costUsd;
+        const t = String(r.result).trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').replace(/[“”]/g, '"');
+        const o = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+        out = { rules: (o.rules || []).map(String).slice(0, 6), topicHints: (o.topicHints || []).map(String).slice(0, 4), diagnosis: String(o.diagnosis || '').slice(0, 400), confidence: o.confidence || 'low' };
+        error = null;
+      } catch (e) { error = String(e.message).slice(0, 120); }
+    }
   }
   const L = { ts: new Date().toISOString(), ...out, basis, mature, error, costUsd };
   const note = error ? `⚠️ 교훈 정리 실패: ${error}` : `규칙 ${out.rules.length}개 · 주제 힌트 ${out.topicHints.length}개 (성숙 글 ${rows.length} · 노출 ${withImp} · 폐기 ${discards.length}${mature ? '' : ' · 성과 데이터 부족'})`;
   if (!dry) {
-    fs.writeFileSync(FILE, JSON.stringify(L, null, 1));
+    fs.mkdirSync(path.dirname(fileFor(site)), { recursive: true });
+    fs.writeFileSync(fileFor(site), JSON.stringify(L, null, 1));
     try {
       const { sendMessage } = await import('./telegram.mjs');
       if (process.env.TELEGRAM_CHAT_ID)
         await sendMessage(process.env.TELEGRAM_CHAT_ID,
-          `📈 주간 성과 학습 (${L.ts.slice(0, 10)})\n${note}\n` +
+          `${AU ? '🇦🇺 ' : ''}📈 주간 성과 학습 (${L.ts.slice(0, 10)})\n${note}\n` +
           (out.diagnosis ? `\n🩺 ${out.diagnosis}\n` : '') +
           (out.rules.length ? `\n다음 글에 반영할 규칙:\n${out.rules.map((r) => '· ' + r).join('\n')}` : '') +
           (out.topicHints.length ? `\n\n주제 선정 힌트:\n${out.topicHints.map((r) => '· ' + r).join('\n')}` : ''));
@@ -141,6 +165,6 @@ ${Object.entries(reasonCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { loadEnv, loadConfig } = await import('./env.mjs');
   loadEnv();
-  const r = await buildLessons(loadConfig(), { dry: !process.argv.includes('--write') });
+  const r = await buildLessons(loadConfig(), { dry: !process.argv.includes('--write'), site: process.argv.includes('--au') ? 'au' : undefined });
   console.log(JSON.stringify(r, null, 1));
 }

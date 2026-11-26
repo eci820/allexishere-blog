@@ -23,7 +23,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { runClaude, unwrapClaudeJSON } from './claudeCli.mjs';
 import { lintAiTone, gradeRank, toneSummary } from './aiTone.mjs';
-import { unsourcedNumbers, h2List, linkCount } from './textMetrics.mjs';
+import { lintAiToneEn } from './aiToneEn.mjs';
+import { unsourcedNumbers, unsourcedNumbersEn, h2List, linkCount } from './textMetrics.mjs';
+
+// 🌏 언어 스위치(2026-11-26 AU 확장) — lang 이 'en' 이면 영어 검사기·영어 프롬프트. 없으면 한국어(기존 그대로).
+const LINT = (b, lang) => (lang === 'en' ? lintAiToneEn(b) : lintAiTone(b));
+const NUM = (b, lang) => (lang === 'en' ? unsourcedNumbersEn(b) : unsourcedNumbers(b));
 import { titleBodyMismatch, parkingDedupOk } from './titleRules.mjs';
 
 // ── claude CLI 공용 호출(구독·stdin) ───────────────────────────────
@@ -49,18 +54,20 @@ function parseJSONLoose(text) {
 // 셀 수 있는 것만. "SEO 가 약하다" 같은 주관 판정은 ② 검증 단계의 몫이다.
 const nospace = (s) => String(s || '').replace(/\s+/g, '').toLowerCase();
 const GENERIC_KW = new Set(['방법', '정리', '총정리', '가이드', '2026', '뜻', '이유', '기준', '비교']);
-export function seoChecks({ title, description, body }, keyword) {
+const EN_STOP = new Set(['how', 'to', 'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'for', 'is', 'what', 'when', 'where', 'why', 'do', 'does', 'can', 'you', 'your', 'vs', 'guide', 'australia']);
+export function seoChecks({ title, description, body }, keyword, lang) {
+  const EN = lang === 'en';
   const issues = [];
-  const toks = String(keyword || '').split(/\s+/).filter((w) => w.length >= 2 && !GENERIC_KW.has(w));
+  const toks = String(keyword || '').split(/\s+/).filter((w) => w.length >= 2 && !(EN ? EN_STOP.has(w.toLowerCase()) : GENERIC_KW.has(w)));
   const subject = toks[0] || '';
   const T = nospace(title);
   const missing = toks.filter((w) => !T.includes(nospace(w)));
   if (missing.length) issues.push({ key: 'title-kw', msg: `제목에 검색어 '${missing.join(' ')}' 없음` });
-  if (subject && T.indexOf(nospace(subject)) > 12) issues.push({ key: 'title-front', msg: `핵심어 '${subject}'가 제목 앞쪽에 없음` });
+  if (subject && T.indexOf(nospace(subject)) > (EN ? 30 : 12)) issues.push({ key: 'title-front', msg: `핵심어 '${subject}'가 제목 앞쪽에 없음` });
   const tl = [...String(title || '')].length;
-  if (tl > 45) issues.push({ key: 'title-long', msg: `제목 ${tl}자 — 검색결과에서 잘림(45자 이내 권장)` });
+  if (tl > (EN ? 65 : 45)) issues.push({ key: 'title-long', msg: `제목 ${tl}자 — 검색결과에서 잘림(${EN ? 65 : 45}자 이내 권장)` });
   const dl = [...String(description || '')].length;
-  if (dl < 50 || dl > 155) issues.push({ key: 'desc-len', msg: `설명문 ${dl}자(50~155자 권장)` });
+  if (dl < (EN ? 70 : 50) || dl > (EN ? 160 : 155)) issues.push({ key: 'desc-len', msg: `설명문 ${dl}자(50~155자 권장)` });
   if (subject && !nospace(description).includes(nospace(subject))) issues.push({ key: 'desc-kw', msg: '설명문에 핵심어 없음' });
   const firstPara = (String(body).split(/\n\s*\n/).find((p) => p.trim() && !/^\s*[#|>!]/.test(p)) || '').trim();
   if (subject && !nospace(firstPara).includes(nospace(subject))) issues.push({ key: 'lead-kw', msg: '첫 문단에 핵심어 없음(두괄식 답 필요)' });
@@ -78,7 +85,8 @@ export function seoChecks({ title, description, body }, keyword) {
 }
 
 // ── ② 검증(LLM 1회) ─────────────────────────────────────────────
-function verifyPrompt(d, keyword, opts, lint, seo, num, serp) {
+function verifyPrompt(d, keyword, opts, lint, seo, num, serp, lang) {
+  if (lang === 'en') return verifyPromptEn(d, keyword, lint, seo, num, serp);
   return `당신은 한국어 정보 블로그의 편집장이자 팩트체커입니다. 아래 초안을 검수합니다.
 🔴 글을 고치지 마세요. 판정만 JSON 으로 출력합니다. 지적은 반드시 본문에 '그대로 있는 문장'을 인용하세요.
 
@@ -135,7 +143,8 @@ function sanitizeVerdict(v, body) {
 }
 
 // ── ③ 수정(LLM 1회) ─────────────────────────────────────────────
-function revisePrompt(d, keyword, lint, seo, v, minChars) {
+function revisePrompt(d, keyword, lint, seo, v, minChars, lang) {
+  if (lang === 'en') return revisePromptEn(d, keyword, lint, seo, v, minChars);
   const L = [];
   if (v) {
     for (const f of v.facts) L.push(`- [사실/${f.action}] "${f.quote}" — ${f.problem}` + (f.action === 'correct' ? ` → 확인된 값: ${f.correct} (출처 ${f.source})` : ''));
@@ -172,6 +181,77 @@ ${d.body}
 {"title":"...","description":"...","body":"...","changes":["무엇을 왜 고쳤는지 짧게"]}`;
 }
 
+// ── 🇦🇺 English prompts (AU site) — same JSON contract as the Korean ones ──────────
+function verifyPromptEn(d, keyword, lint, seo, num, serp) {
+  return `You are the editor and fact-checker of an Australian (en-AU) information blog. Review the draft below.
+🔴 Do NOT rewrite it. Output a verdict as JSON only. Every issue must quote a sentence that appears VERBATIM in the body.
+
+[Search query] ${keyword}
+[Title] ${d.title}
+[Meta description] ${d.description}
+
+[Checks]
+1. Facts — verify 3–5 key prices/rules/times/dates with WebSearch (official .gov.au, operator, venue or manufacturer pages first).
+   Wrong → action "correct" with the verified value and source URL. No official confirmation found → "soften" (state it must be
+   checked with the official source) or "delete". 🔴 Never propose a new number without a source URL.
+   Invented crowd testimony ("many locals swear by…", "fans agree…") is fabricated → delete.
+2. Search intent — one line on what someone typing this query wants; list sub-questions the body does not answer.
+   (Google: people-first content and information gain.)
+3. Information gain — sentences that are generic filler and would fit any topic ("it's always best to check ahead").
+4. AI tone — up to 8 sentences that read machine-written (stock openers/closers, "delve/landscape/tapestry", hedging stacks,
+   rule-of-three lists, em-dash chains, heavy bold, uniform rhythm).
+5. humanScore 1–10 (10 = reads like a knowledgeable local who checked the official sources).
+6. verdict — "revise" if any factual error, fabricated testimony or unmet search intent; "pass" if only minor style.
+${serp && serp.mustCover && serp.mustCover.length ? `\n[Questions the top-ranking pages all answer — if the body misses one, add it to intentGaps]\n${serp.mustCover.map((q) => '- ' + q).join('\n')}\n[What the top pages miss — if the body fills none, add "no information gain" to seo]\n${(serp.gaps || []).map((q) => '- ' + q).join('\n')}\n` : ''}
+[Code checks (reference)]
+- AI-tone grade: ${toneSummary(lint, 6)}
+- SEO shape: ${seo.length ? seo.map((x) => x.msg).join(' / ') : 'ok'}
+- Number sentences without a source marker: ${num.unsourced}${num.samples.length ? ': ' + num.samples.map((s) => `"${s.slice(0, 60)}"`).join(', ') : ''}
+
+[Body]
+${d.body}
+
+Output ONE JSON object only (no code fence, no commentary):
+{"verdict":"pass|revise","intent":"...","intentGaps":["..."],"facts":[{"quote":"...","problem":"...","action":"delete|soften|correct","correct":"","source":""}],"filler":["..."],"aiSentences":[{"quote":"...","why":"..."}],"seo":["..."],"humanScore":7}`;
+}
+
+function revisePromptEn(d, keyword, lint, seo, v, minChars) {
+  const L = [];
+  if (v) {
+    for (const f of v.facts) L.push(`- [fact/${f.action}] "${f.quote}" — ${f.problem}` + (f.action === 'correct' ? ` → verified value: ${f.correct} (source ${f.source})` : ''));
+    for (const q of v.filler) L.push(`- [filler] "${q}" — replace with a fact specific to this subject, or delete`);
+    for (const a of v.aiSentences) L.push(`- [AI tone] "${a.quote}" — ${a.why}`);
+    for (const g of v.intentGaps) L.push(`- [intent gap] ${g} — answer only with verifiable information; otherwise say it must be checked with the official source`);
+    for (const s of v.seo) L.push(`- [SEO] ${s}`);
+  }
+  for (const f of lint.findings.filter((x) => x.sev !== 'S3' || x.samples.length)) L.push(`- [style] ${f.label}${f.samples.length ? ' e.g. "' + f.samples[0] + '"' : ''}`);
+  for (const s of seo) L.push(`- [SEO shape] ${s.msg}`);
+  if (minChars && d.body.length < minChars * 0.9) L.push(`- [length] body is ~${d.body.length} chars; expand with real, verified information only (no padding)`);
+  return `Rewrite the Australian (en-AU) blog draft below according to the review notes. Search query: ${keyword}
+
+[Rules]
+- 🔴 Never invent numbers, facts or experiences. Fact notes: delete = remove the sentence; soften = drop the claim and say to check the
+  official source; correct = use only the given value and source.
+- Don't pretend to have visited or tried anything ("when I went…"). Show checking through sources ("per Transport for NSW…").
+- Keep the H2 sections (count, order, meaning), markdown tables, all markdown links and gmap: links, the FAQ and the "Sources & last updated" list.
+- Sound like a knowledgeable local, not a brochure: vary sentence length (some short), avoid three-item lists, no "delve/landscape/tapestry/
+  in conclusion/whether you're…/hope this helps". Em-dashes: at most 3 in the whole piece (use full stops, commas or brackets).
+  Bold: at most 5. Australian spelling (colour, centre, kerb), A$ for money, dd/mm/yyyy dates.
+- Answer the query directly in the first 1–2 sentences. Put the core search phrase early in the title, in the first paragraph and in one H2, naturally.
+- Change the title only if the search phrase is missing or it exceeds 65 characters. No "(2026)" tail habit.
+
+[Review notes]
+${L.join('\n') || '- (no notes — light style polish only)'}
+
+[Current title] ${d.title}
+[Current description] ${d.description}
+[Current body]
+${d.body}
+
+Output ONE JSON object only (no code fence). "body" is the full markdown body without frontmatter:
+{"title":"...","description":"...","body":"...","changes":["what changed and why, briefly"]}`;
+}
+
 // ── ④ 안전장치 — 수정본을 받아들일지 ───────────────────────────────
 function acceptRevision(before, after, ctx) {
   const why = [];
@@ -184,8 +264,8 @@ function acceptRevision(before, after, ctx) {
   if ((/주차/.test(before.title) || ctx.source === 'parking') && parkingDedupOk(before.title) && !parkingDedupOk(after.title)) why.push("제목의 '주차' 독립 단어가 사라졌다(자기잠식 방어)");
   // 2개까지는 허용 — 수정 단계가 검색 의도 누락을 메우며 수치 문장이 늘 수 있고, 지어낸 수치는
   // 뒤의 재채점(사실 검증)이 다시 잡는다. 실측 2026-11-26: 1개 증가로 수정본을 버려 관문 불통과.
-  if (unsourcedNumbers(after.body || '').unsourced > unsourcedNumbers(before.body).unsourced + 2) why.push('출처 없는 수치 문장이 2개 넘게 늘었다');
-  if (gradeRank(lintAiTone(after.body || '').grade) > gradeRank(lintAiTone(before.body).grade)) why.push('AI 문체 등급이 나빠졌다');
+  if (NUM(after.body || '', ctx.lang).unsourced > NUM(before.body, ctx.lang).unsourced + 2) why.push('출처 없는 수치 문장이 2개 넘게 늘었다');
+  if (gradeRank(LINT(after.body || '', ctx.lang).grade) > gradeRank(LINT(before.body, ctx.lang).grade)) why.push('AI 문체 등급이 나빠졌다');
   return why;
 }
 
@@ -214,14 +294,14 @@ export async function runHarness(draft, ctx) {
   const report = { version: 1, keyword: ctx.keyword, source: ctx.opts?.source || 'manual', errors: [], costUsd: 0, revised: false };
 
   let d = { ...draft };
-  const lint0 = lintAiTone(d.body), seo0 = seoChecks(d, ctx.keyword), num0 = unsourcedNumbers(d.body);
+  const lint0 = LINT(d.body, ctx.lang), seo0 = seoChecks(d, ctx.keyword, ctx.lang), num0 = NUM(d.body, ctx.lang);
   report.before = { tone: lint0.grade, toneLine: toneSummary(lint0), seo: seo0.map((x) => x.msg), unsourced: num0.unsourced, chars: d.body.length };
 
   // ② 검증
   let v = null;
   if (cfg.verify !== false) {
     try {
-      const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, lint0, seo0, num0, ctx.serp), { model, timeoutSec });
+      const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, lint0, seo0, num0, ctx.serp, ctx.lang), { model, timeoutSec });
       report.costUsd += r.costUsd;
       v = sanitizeVerdict(parseJSONLoose(r.result), d.body);
       report.verify = { verdict: v.verdict, humanScore: v.humanScore, intent: v.intent, intentGaps: v.intentGaps, facts: v.facts, filler: v.filler.length, aiSentences: v.aiSentences.length, seo: v.seo, droppedQuotes: v.droppedQuotes };
@@ -237,12 +317,12 @@ export async function runHarness(draft, ctx) {
   const maxRev = cfg.maxRevisions ?? 1;
   if (needRevise && maxRev > 0) {
     try {
-      const r = await claudeText(revisePrompt(d, ctx.keyword, lint0, seo0, v, ctx.minChars), { model, timeoutSec });
+      const r = await claudeText(revisePrompt(d, ctx.keyword, lint0, seo0, v, ctx.minChars, ctx.lang), { model, timeoutSec });
       report.costUsd += r.costUsd;
       const o = parseJSONLoose(r.result);
       const cand = { ...d, title: String(o.title || d.title).trim(), description: String(o.description || d.description).trim(), body: stripFence(o.body || '') };
       cand.body = restoreLinks(d.body, cand.body);
-      const reject = acceptRevision(d, cand, { source: ctx.opts?.source, tableIssues: ctx.tableIssues });
+      const reject = acceptRevision(d, cand, { source: ctx.opts?.source, tableIssues: ctx.tableIssues, lang: ctx.lang });
       if (reject.length) {
         report.rejected = reject;
       } else {
@@ -256,7 +336,7 @@ export async function runHarness(draft, ctx) {
   }
 
   // ④ 재검사(LLM 0회)
-  const lint1 = lintAiTone(d.body), seo1 = seoChecks(d, ctx.keyword), num1 = unsourcedNumbers(d.body);
+  const lint1 = LINT(d.body, ctx.lang), seo1 = seoChecks(d, ctx.keyword, ctx.lang), num1 = NUM(d.body, ctx.lang);
   report.after = { tone: lint1.grade, toneLine: toneSummary(lint1), seo: seo1.map((x) => x.msg), unsourced: num1.unsourced, chars: d.body.length };
   // 검증자가 지적한 사실 문제 중 수정본에 여전히 남은 인용 — 관문 판정에 쓴다.
   report.openFacts = v ? v.facts.filter((f) => d.body.includes(f.quote.slice(0, 25))).map((f) => f.quote.slice(0, 60)) : [];
@@ -265,8 +345,8 @@ export async function runHarness(draft, ctx) {
   //    실측(2026-11-26 문학경기장 초안): 원본 사람다움 4/10 → 수정 후 문체 B→A 인데, 관문이 원본 점수로
   //    판정해 불통과했다. 원본 점수로 거르면 수정 단계가 있으나 마나다. 재수정은 하지 않는다(1회 상한).
   const rescore = async () => {
-    const l = lintAiTone(d.body), s = seoChecks(d, ctx.keyword), n = unsourcedNumbers(d.body);
-    const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, l, s, n, ctx.serp), { model, timeoutSec });
+    const l = LINT(d.body, ctx.lang), s = seoChecks(d, ctx.keyword, ctx.lang), n = NUM(d.body, ctx.lang);
+    const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, l, s, n, ctx.serp, ctx.lang), { model, timeoutSec });
     report.costUsd += r.costUsd;
     const v2 = sanitizeVerdict(parseJSONLoose(r.result), d.body);
     report.final = { verdict: v2.verdict, humanScore: v2.humanScore, facts: v2.facts, intentGaps: v2.intentGaps, aiSentences: v2.aiSentences.length, filler: v2.filler.length };
@@ -281,11 +361,11 @@ export async function runHarness(draft, ctx) {
       // 🛟 2차 수정 — 아깝게 떨어진 글(재채점 5~6점 또는 사실 지적 남음)만 재채점 지적으로 한 번 더 고친다.
       const min = (cfg.gate && cfg.gate.minHumanScore) || 6;
       if ((maxRev >= 2) && (v2.humanScore < min + 1 || v2.facts.length) && v2.humanScore >= 5) {
-        const r2 = await claudeText(revisePrompt(d, ctx.keyword, lintAiTone(d.body), seoChecks(d, ctx.keyword), v2, ctx.minChars), { model, timeoutSec });
+        const r2 = await claudeText(revisePrompt(d, ctx.keyword, LINT(d.body, ctx.lang), seoChecks(d, ctx.keyword, ctx.lang), v2, ctx.minChars, ctx.lang), { model, timeoutSec });
         report.costUsd += r2.costUsd;
         const o2 = parseJSONLoose(r2.result);
         const cand2 = { ...d, title: String(o2.title || d.title).trim(), description: String(o2.description || d.description).trim(), body: restoreLinks(d.body, stripFence(o2.body || '')) };
-        const reject2 = acceptRevision(d, cand2, { source: ctx.opts?.source, tableIssues: ctx.tableIssues });
+        const reject2 = acceptRevision(d, cand2, { source: ctx.opts?.source, tableIssues: ctx.tableIssues, lang: ctx.lang });
         if (reject2.length) report.rejected2 = reject2;
         else {
           const prevFinal = report.final;
@@ -299,7 +379,7 @@ export async function runHarness(draft, ctx) {
     } catch (e) {
       report.errors.push(`재채점 실패(${e.kind || 'error'}): ${String(e.message).slice(0, 120)}`);
     }
-    const lint2 = lintAiTone(d.body), seo2 = seoChecks(d, ctx.keyword), num2 = unsourcedNumbers(d.body);
+    const lint2 = LINT(d.body, ctx.lang), seo2 = seoChecks(d, ctx.keyword, ctx.lang), num2 = NUM(d.body, ctx.lang);
     report.after = { tone: lint2.grade, toneLine: toneSummary(lint2), seo: seo2.map((x) => x.msg), unsourced: num2.unsourced, chars: d.body.length };
   }
   report.ms = Date.now() - t0;

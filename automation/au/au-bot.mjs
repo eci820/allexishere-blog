@@ -172,6 +172,17 @@ async function sendDraftCard(chatId, cardId, r) {
 // ── /au <query> : 수동 생성 ───────────────────────────────────────────────
 export async function handleCommand(arg, chatId) {
   const q = String(arg || '').trim().toLowerCase();
+  // 🇦🇺🤖 AU autopilot 스위치(2026-11-26) — /au autopause · /au autoresume · /au autostatus
+  if (['autopause', 'autoresume', 'autostatus'].includes(q)) {
+    const ap = await import('./au-autopilot.mjs');
+    const s = ap.loadState();
+    if (q === 'autopause') { s.paused = true; ap.saveState(s); }
+    if (q === 'autoresume') { s.paused = false; ap.saveState(s); }
+    const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    const runs = (s.runs || []).filter((r) => r.day === today);
+    const c = (k) => runs.filter((r) => r.result === k).length;
+    return sendMessage(chatId, `🇦🇺🤖 AU 자동 발행: ${s.paused ? '⏸ 일시정지' : '▶️ 동작 중'}\n오늘 발행 ${c('published')} · 관문 폐기 ${c('discarded')} · 출처 부족 ${c('held')} · 실패 ${c('failed')}\n${s.paused ? '재개: /au autoresume' : '멈춤: /au autopause'}`);
+  }
   if (!q) {
     // 🔴 주 사용 흐름 = 클릭. 인자 없으면 브리핑 카드(주제 제안 + [✍️ Generate] 버튼)를 보낸다.
     //    (수동 조회는 /au <query> 로 특정 주제를 바로 생성.)
