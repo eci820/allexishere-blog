@@ -51,7 +51,16 @@ const summary = { reindexed: [], keptNoindex: [], reverted: [], failed: [] };
 let consecutiveCliFail = 0;
 await say(`📂🧪 noindex 글 하네스 보강 시작 — ${plan.length}편(한 편 약 10~15분). 통과한 글만 noindex 해제합니다.`);
 
+// --until HH:MM (KST) — 이 시각이 지나면 다음 편을 시작하지 않는다. autopilot 첫 슬롯(07:40) 전에
+// 구독 사용량을 남겨 두기 위해(편당 claude 호출 최대 6회 — 2026-11-26 한도 소진 실측).
+const UNTIL = arg('--until');
+const kstHM = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(11, 16);
 for (const [i, item] of plan.entries()) {
+  if (UNTIL && kstHM() >= UNTIL && kstHM() < '20:00') {
+    await say(`⏰ ${UNTIL} 이후라 보강 배치를 멈춥니다(${i}/${plan.length} 처리) — 자동 발행 슬롯 사용량 보호. 남은 ${plan.length - i}편은 다음 실행에서.`);
+    summary.remaining = plan.slice(i).map((p) => p.slug);
+    break;
+  }
   const f = path.join(BLOG, item.slug, 'index.md');
   if (!fs.existsSync(f)) { summary.failed.push(`${item.slug}(없음)`); continue; }
   const before = fs.readFileSync(f, 'utf8');

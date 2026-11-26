@@ -178,13 +178,28 @@ function acceptRevision(before, after, ctx) {
   if (!after.body || after.body.length < before.body.length * 0.65) why.push(`본문이 ${before.body.length}→${(after.body || '').length}자로 과도하게 줄었다`);
   const h2b = h2List(before.body), h2a = h2List(after.body || '');
   if (h2a.length < h2b.length - 1) why.push(`소제목 ${h2b.length}→${h2a.length}개(구조 훼손)`);
-  if (linkCount(after.body || '') < linkCount(before.body)) why.push('링크가 사라졌다');
+  if (linkCount(after.body || '') < linkCount(before.body)) why.push('링크가 사라졌다'); // restoreLinks 후에도 부족할 때만
   if (ctx.tableIssues && ctx.tableIssues(after.body || '').length > ctx.tableIssues(before.body).length) why.push('표 문법이 깨졌다');
   if (titleBodyMismatch(after.title, h2a, ctx.source).length > titleBodyMismatch(before.title, h2b, ctx.source).length) why.push('제목 약속과 소제목이 어긋났다');
   if ((/주차/.test(before.title) || ctx.source === 'parking') && parkingDedupOk(before.title) && !parkingDedupOk(after.title)) why.push("제목의 '주차' 독립 단어가 사라졌다(자기잠식 방어)");
-  if (unsourcedNumbers(after.body || '').unsourced > unsourcedNumbers(before.body).unsourced) why.push('출처 없는 수치 문장이 늘었다');
+  // 2개까지는 허용 — 수정 단계가 검색 의도 누락을 메우며 수치 문장이 늘 수 있고, 지어낸 수치는
+  // 뒤의 재채점(사실 검증)이 다시 잡는다. 실측 2026-11-26: 1개 증가로 수정본을 버려 관문 불통과.
+  if (unsourcedNumbers(after.body || '').unsourced > unsourcedNumbers(before.body).unsourced + 2) why.push('출처 없는 수치 문장이 2개 넘게 늘었다');
   if (gradeRank(lintAiTone(after.body || '').grade) > gradeRank(lintAiTone(before.body).grade)) why.push('AI 문체 등급이 나빠졌다');
   return why;
+}
+
+// 수정본이 빠뜨린 마크다운 링크(관련 글·지도 등)를 되살린다. 실측 2026-11-26(자동차 배터리):
+// 관련 글 링크 한 줄이 빠져 수정본 전체를 버렸다 — 링크 하나 때문에 개선 전체를 잃는 건 손해다.
+function restoreLinks(beforeBody, afterBody) {
+  const links = (s) => String(s).match(/\[[^\]]+\]\([^)]+\)/g) || [];
+  const have = new Set(links(afterBody).map((l) => l.replace(/^\[[^\]]+\]/, '')));
+  const lost = links(beforeBody).filter((l) => !have.has(l.replace(/^\[[^\]]+\]/, '')));
+  if (!lost.length) return afterBody;
+  // 원본에서 링크가 있던 줄(문장)을 그대로 가져온다 — 링크만 뚝 떼면 맥락 없는 줄이 된다.
+  const lines = String(beforeBody).split('\n');
+  const add = [...new Set(lost.map((l) => lines.find((x) => x.includes(l)) || l))];
+  return String(afterBody).trimEnd() + '\n\n' + add.join('\n\n');
 }
 
 // ── 본체 ─────────────────────────────────────────────────────────
@@ -226,6 +241,7 @@ export async function runHarness(draft, ctx) {
       report.costUsd += r.costUsd;
       const o = parseJSONLoose(r.result);
       const cand = { ...d, title: String(o.title || d.title).trim(), description: String(o.description || d.description).trim(), body: stripFence(o.body || '') };
+      cand.body = restoreLinks(d.body, cand.body);
       const reject = acceptRevision(d, cand, { source: ctx.opts?.source, tableIssues: ctx.tableIssues });
       if (reject.length) {
         report.rejected = reject;
@@ -248,17 +264,43 @@ export async function runHarness(draft, ctx) {
   // ⑤ 수정본 재채점(LLM 1회) — 관문은 '발행될 글'을 봐야 한다.
   //    실측(2026-11-26 문학경기장 초안): 원본 사람다움 4/10 → 수정 후 문체 B→A 인데, 관문이 원본 점수로
   //    판정해 불통과했다. 원본 점수로 거르면 수정 단계가 있으나 마나다. 재수정은 하지 않는다(1회 상한).
+  const rescore = async () => {
+    const l = lintAiTone(d.body), s = seoChecks(d, ctx.keyword), n = unsourcedNumbers(d.body);
+    const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, l, s, n), { model, timeoutSec });
+    report.costUsd += r.costUsd;
+    const v2 = sanitizeVerdict(parseJSONLoose(r.result), d.body);
+    report.final = { verdict: v2.verdict, humanScore: v2.humanScore, facts: v2.facts, intentGaps: v2.intentGaps, aiSentences: v2.aiSentences.length, filler: v2.filler.length };
+    // 🔴 수정본이 있으면 '남은 사실 지적'은 재채점 결과로만 센다. 원본 인용의 앞 25자가 남았는지로
+    //    세면, '완화'로 고친 문장도 앞부분이 같아 남은 것으로 오탐된다(실측 2026-11-26 결로·전기장판).
+    report.openFacts = v2.facts.map((f) => f.quote.slice(0, 60));
+    return v2;
+  };
   if (report.revised && cfg.verify !== false && cfg.reverify !== false) {
     try {
-      const r = await claudeText(verifyPrompt(d, ctx.keyword, ctx.opts || {}, lint1, seo1, num1), { model, timeoutSec });
-      report.costUsd += r.costUsd;
-      const v2 = sanitizeVerdict(parseJSONLoose(r.result), d.body);
-      report.final = { verdict: v2.verdict, humanScore: v2.humanScore, facts: v2.facts, intentGaps: v2.intentGaps, aiSentences: v2.aiSentences.length, filler: v2.filler.length };
-      // 재채점에서 새로 나온 사실 지적도 '남은 지적'으로 친다(삭제·정정이 필요한데 이미 수정 기회를 썼다).
-      report.openFacts = [...new Set([...report.openFacts, ...v2.facts.map((f) => f.quote.slice(0, 60))])];
+      let v2 = await rescore();
+      // 🛟 2차 수정 — 아깝게 떨어진 글(재채점 5~6점 또는 사실 지적 남음)만 재채점 지적으로 한 번 더 고친다.
+      const min = (cfg.gate && cfg.gate.minHumanScore) || 6;
+      if ((maxRev >= 2) && (v2.humanScore < min + 1 || v2.facts.length) && v2.humanScore >= 5) {
+        const r2 = await claudeText(revisePrompt(d, ctx.keyword, lintAiTone(d.body), seoChecks(d, ctx.keyword), v2, ctx.minChars), { model, timeoutSec });
+        report.costUsd += r2.costUsd;
+        const o2 = parseJSONLoose(r2.result);
+        const cand2 = { ...d, title: String(o2.title || d.title).trim(), description: String(o2.description || d.description).trim(), body: restoreLinks(d.body, stripFence(o2.body || '')) };
+        const reject2 = acceptRevision(d, cand2, { source: ctx.opts?.source, tableIssues: ctx.tableIssues });
+        if (reject2.length) report.rejected2 = reject2;
+        else {
+          const prevFinal = report.final;
+          d = cand2;
+          report.revisions = 2;
+          report.changes = [...(report.changes || []), ...(Array.isArray(o2.changes) ? o2.changes.map(String).slice(0, 5) : [])];
+          v2 = await rescore();
+          report.final.prev = { humanScore: prevFinal.humanScore, facts: prevFinal.facts.length };
+        }
+      }
     } catch (e) {
       report.errors.push(`재채점 실패(${e.kind || 'error'}): ${String(e.message).slice(0, 120)}`);
     }
+    const lint2 = lintAiTone(d.body), seo2 = seoChecks(d, ctx.keyword), num2 = unsourcedNumbers(d.body);
+    report.after = { tone: lint2.grade, toneLine: toneSummary(lint2), seo: seo2.map((x) => x.msg), unsourced: num2.unsourced, chars: d.body.length };
   }
   report.ms = Date.now() - t0;
   return { draft: d, report };
