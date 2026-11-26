@@ -67,7 +67,8 @@ export async function serpBrief(keyword, config) {
       // 출처 URL 없는 사실은 버린다 — 확인 근거가 없으면 작성자에게 넘기지 않는다(§4).
       facts: arr(o.facts, 8).filter((f) => f && /^https?:\/\//.test(String(f.source || ''))),
       gaps: arr(o.gaps, 5).map(String),
-      titlePatterns: arr(o.titlePatterns, 5).map(String),
+      // '총정리/완벽 가이드' 같은 상투 꼬리는 버린다 — 양산 틀이라 제목에서 없애기로 한 것(2026-11-26).
+      titlePatterns: arr(o.titlePatterns, 5).map(String).filter((t) => !/총정리|완벽|가이드|한눈에|모르면/.test(t)),
       sourcesRead: arr(o.sourcesRead, 8).map(String),
       naverTop: naver.map((n) => n.title).slice(0, 5),
     };
