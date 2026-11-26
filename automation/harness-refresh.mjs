@@ -48,6 +48,7 @@ const { sendMessage } = await import('./lib/telegram.mjs');
 const say = async (t) => { console.log(t); if (ME && !DRY) await sendMessage(ME, t).catch(() => {}); };
 
 const summary = { reindexed: [], keptNoindex: [], reverted: [], failed: [] };
+let consecutiveCliFail = 0;
 await say(`📂🧪 noindex 글 하네스 보강 시작 — ${plan.length}편(한 편 약 10~15분). 통과한 글만 noindex 해제합니다.`);
 
 for (const [i, item] of plan.entries()) {
@@ -62,9 +63,16 @@ for (const [i, item] of plan.entries()) {
   const r = await refreshPublished(item.slug, cfg, null, { brief: BRIEF(item.keyword) + (item.brief ? '\n- ' + item.brief : ''), timeoutSeconds: 420 });
   if (!r.ok) {
     summary.failed.push(`${oldTitle}: ${r.error}`);
-    if (/한도|limit/i.test(r.error || '')) { await say(`⏳ 구독 한도 — 보강 배치를 여기서 멈춥니다(${i}/${plan.length} 처리). 자동 발행 슬롯 보호.`); break; }
+    // 🔴 한도에 걸린 CLI 가 '한도'라는 말 없이 "종료코드 1"만 남기는 경우가 있다(실측 2026-11-26:
+    //    15편 연속 실패하는 동안 배치가 멈추지 않았다). 그래서 CLI 실패가 2번 연속이면 멈춘다.
+    consecutiveCliFail = /claude|한도|limit|종료코드/i.test(r.error || '') ? consecutiveCliFail + 1 : 0;
+    if (/한도|limit/i.test(r.error || '') || consecutiveCliFail >= 2) {
+      await say(`⏳ claude 호출이 연속 실패 — 구독 한도로 보고 보강 배치를 멈춥니다(${i + 1}/${plan.length}). 자동 발행 슬롯 보호.\n   ↳ ${String(r.error).slice(0, 120)}`);
+      break;
+    }
     continue;
   }
+  consecutiveCliFail = 0;
   const { fm, body, tail } = split(fs.readFileSync(f, 'utf8'));
   const h = await runHarness(
     { title: fmField(fm, 'title'), description: fmField(fm, 'description'), body },
