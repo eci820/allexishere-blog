@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-25T23:03:59.040Z",
+  "updatedAt": "2026-11-26T04:55:18.982Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -2089,7 +2089,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-07-18T08:12:44.986Z",
-      "lastProposedAt": "2026-10-26T01:03:02.190Z",
+      "lastProposedAt": "2026-11-26T01:00:05.748Z",
       "metrics": null
     },
     {
@@ -6673,7 +6673,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-08-24T01:05:05.774Z",
-      "lastProposedAt": "2026-10-26T01:03:02.740Z",
+      "lastProposedAt": "2026-11-26T01:00:06.978Z",
       "metrics": {
         "vol": 10,
         "doc": null,
@@ -13544,7 +13544,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-10-22T01:03:07.688Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-11-26T01:00:06.982Z",
       "metrics": {
         "vol": 10,
         "doc": 742,
@@ -13562,7 +13562,7 @@
       "status": "pending",
       "slug": null,
       "addedAt": "2026-10-22T01:03:07.688Z",
-      "lastProposedAt": null,
+      "lastProposedAt": "2026-11-26T01:00:06.982Z",
       "metrics": {
         "vol": 10,
         "doc": 16,
@@ -15582,8 +15582,8 @@
       "tier": "science",
       "series": "life",
       "angle": "사용 시간대별(단시간 vs 장시간) 전기요금 비교와 안전하게 쓰는 법 (원래 화제어: 전기장판 온수매트 전기요금) | 화제: 겨울 난방비 대안으로 전기장판·온수매트 비교 콘텐츠가 유튜브·블로그에서 동시다발 확산 | 출처: 한국에너지공단, 제품 안전성 관련 KC 인증 사용설명서",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "1인용-전기장판-가격전기요금전자파-기준-비교-2026",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
