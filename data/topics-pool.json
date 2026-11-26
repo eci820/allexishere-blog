@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-26T08:30:05.412Z",
+  "updatedAt": "2026-11-26T08:37:01.951Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15677,8 +15677,8 @@
       "tier": "evergreen",
       "series": "travel",
       "angle": "리조트별로 다른 환불·양도 기한과 위약금 비율 비교 (원래 화제어: 스키장 시즌권 환불규정) | 화제: 개장 시즌을 앞두고 시즌권 양도·환불 기준(개장 후 60일 등)을 묻는 글이 스키 커뮤니티에 급증 | 출처: 각 리조트(하이원·휘닉스·곤지암 등) 시즌권 이용약관",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "스키장-시즌권-가격조기구매-시기환불-양도-주의사항-가이드-2026",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
