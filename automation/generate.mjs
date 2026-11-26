@@ -545,7 +545,12 @@ export async function generateOne(keyword, opts, config, chatId) {
   const cardOpts = { context: d.context, keyword, riskNotes: d.riskNotes, costLine, source: opts && opts.source, harnessLine: harnessCardLine(harness) };
   let gate = null;
   if (harness) {
-    const warnings = draftWarnings(slug, d.title, cardOpts).map((w) => w.split('\n')[0].replace(/^⚠️\s*/, ''));
+    // 🔴 작성 모델의 검수 메모(riskNotes → '⚠️ 검수:' 줄)는 관문에서 뺀다. 모델이 거의 모든 글에
+    //    "2차 자료로 확인" 같은 메모를 남겨, 이게 관문 사유로 섞이면 점수와 무관하게 전부 막힌다
+    //    (실측 2026-11-26: 보류 7건 중 4건에 포함). 사실 검증은 하네스 검증·재채점이 맡는다. 카드엔 그대로 보인다.
+    const warnings = draftWarnings(slug, d.title, cardOpts)
+      .filter((w) => !/^⚠️\s*검수:/.test(w))
+      .map((w) => w.split('\n')[0].replace(/^⚠️\s*/, ''));
     // YMYL(건강·금융·부동산)은 자동 발행 대상에서 뺀다 — 폴더 9 색인 거절 사고(§4)의 재발 방지.
     if (['health', 'finance', 'realestate'].includes(opts.source)) warnings.push(`YMYL 계급(${opts.source})은 사람 검수 전용`);
     gate = passesGate(harness, { warnings }, config.harness || {});
