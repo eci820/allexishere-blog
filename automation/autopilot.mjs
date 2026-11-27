@@ -51,6 +51,9 @@ export function perDayFor(ap, day = kstToday()) {
   return n;
 }
 
+// 구독 한도·CLI 오류로 글을 쓰지도 못한 실패는 시도로 치지 않는다 — 2026-11-27: 몇 초 만에 끝난 한도 실패 6건이
+// 하루 상한(10)을 채워 저녁 슬롯이 아예 돌지 않았고, 그 주제들은 30일간 다시 안 뽑혔다.
+const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패/.test(String(r.why || ''));
 function acquireLock() {
   try {
     const st = fs.statSync(LOCK);
@@ -70,7 +73,7 @@ async function pickTopic(cfg, state) {
   const todays = state.runs.filter((r) => r.day === today && r.result === 'published');
   const parkingToday = todays.some((r) => r.tier === 'parking' || r.series === 'parking');
   const lastSeries = state.runs.filter((r) => r.result === 'published').slice(-2).map((r) => r.series);
-  const tried = new Set(state.runs.filter((r) => Date.now() - Date.parse(r.ts) < 30 * DAY).map((r) => r.keyword));
+  const tried = new Set(state.runs.filter((r) => Date.now() - Date.parse(r.ts) < 30 * DAY && !cliFail(r)).map((r) => r.keyword));
   const now = Date.now();
 
   const cand = pool.topics.filter((t) =>
@@ -124,7 +127,7 @@ export async function runAutopilot() {
     const today = kstToday();
     const perDay = perDayFor(ap, today);
     const done = state.runs.filter((r) => r.day === today && r.result === 'published').length;
-    const attempts = state.runs.filter((r) => r.day === today).length;
+    const attempts = state.runs.filter((r) => r.day === today && !cliFail(r)).length;
     if (done >= perDay) return console.log(`[autopilot] 오늘 목표 달성 ${done}/${perDay}`);
     if (attempts >= (ap.maxAttemptsPerDay || perDay * 3)) return console.log(`[autopilot] 오늘 시도 상한(${attempts}) — 구독 사용량 보호`);
 

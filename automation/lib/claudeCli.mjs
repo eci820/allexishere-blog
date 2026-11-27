@@ -51,11 +51,26 @@ const FRIENDLY = {
   error: (_, detail) => `claude 실행 실패${detail ? ': ' + detail : ''}`,
 };
 
+// 🔴 가벼운 호출(2026-11-28 실측): 아무 옵션 없이 띄우면 이 Mac 의 사용자 설정·플러그인·스킬·MCP 도구
+//    정의를 전부 싣고 시작해 호출 1회에 입력 약 5만 토큰이 들었다("안녕" 한 마디에도). 글 1편에 호출이
+//    6~8번이라 구독 한도를 이 고정비가 먹고 있었다. 아래 옵션으로 9천~1만1천 토큰으로 줄어든다.
+//    · --setting-sources ''  : 사용자 settings.json(플러그인·model:opus[1m])을 읽지 않음 → 모델은 호출부가 --model 로 정한다
+//    · --tools               : --allowedTools 로 허락한 도구만 싣는다(없으면 권한 없이도 되던 읽기 도구만)
+//    CLAUDE_CLI_LEAN=0 이면 예전 방식으로 돌아간다(문제 생길 때 즉시 되돌리기용).
+const READ_ONLY_TOOLS = 'Read,Glob,Grep';
+export function leanArgs(extraArgs = []) {
+  if (process.env.CLAUDE_CLI_LEAN === '0') return [];
+  const i = extraArgs.indexOf('--allowedTools');
+  const allowed = i > -1 ? extraArgs[i + 1] : null;
+  return ['--strict-mcp-config', '--disable-slash-commands', '--setting-sources', '', '--no-chrome',
+    '--no-session-persistence', '--tools', allowed || READ_ONLY_TOOLS];
+}
+
 // 프롬프트를 stdin 으로 넘겨 claude 를 실행하고 stdout 문자열을 돌려준다.
 // 실패 시 { kind, message } 가 붙은 Error 를 던진다(kind: timeout|limit|auth|notfound|error).
 export function runClaude(prompt, { cwd, timeoutMs = 240000, extraArgs = [], env } = {}) {
   return new Promise((resolve, reject) => {
-    const args = ['-p', '--output-format', 'json', ...extraArgs];
+    const args = ['-p', '--output-format', 'json', ...leanArgs(extraArgs), ...extraArgs];
     // 구독으로 돌리기 위해 API 키를 뺀 환경을 넘긴다(위 주석 참고).
     const child = spawn('claude', args, { cwd, env: subscriptionEnv(env || process.env) });
 
@@ -81,7 +96,10 @@ export function runClaude(prompt, { cwd, timeoutMs = 240000, extraArgs = [], env
     child.on('close', (code) => {
       if (settled) return;
       if (code === 0) return finish(resolve, out);
-      const detail = err.trim().slice(0, 200);
+      // CLI 는 한도·오류 사유를 stderr 가 아니라 stdout JSON(result)에 싣는 경우가 있다 —
+      // 2026-11-27 '종료코드 1'만 15건 남은 원인. stderr 가 비면 stdout 의 result 를 사유로 쓴다.
+      let detail = err.trim().slice(0, 200);
+      if (!detail) { try { const j = JSON.parse(out); detail = String(j.result || j.error || j.subtype || '').trim().slice(0, 200); } catch { detail = out.trim().slice(0, 200); } }
       const kind = classifyCliError(detail);
       // 프롬프트는 절대 메시지에 넣지 않는다 — 로그·텔레그램이 오염된다.
       finish(reject, Object.assign(

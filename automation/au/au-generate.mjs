@@ -350,7 +350,7 @@ export async function generateDraft(candidate, { dryRun = false, extra = '' } = 
   }
 
   // 실제 생성 — CLI 1회(구독). 실패는 fail-loud(throw, 호출부가 카드로 통지).
-  const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 420000 }); // 240→420s: 추가 지시로 길어짐(한국 쪽 시간 초과 실측과 같은 이유)
+  const stdout = await runClaude(prompt, { cwd: AU_ROOT, timeoutMs: 420000, extraArgs: ['--model', 'opus'] }); // 예전엔 사용자 설정(opus)을 물려받았다 — 가벼운 호출 전환 뒤에도 같은 모델 유지 // 240→420s: 추가 지시로 길어짐(한국 쪽 시간 초과 실측과 같은 이유)
   const { result, costUsd } = unwrapClaudeJSON(stdout);
   const { description, body, linkCandidates } = parseOutput(result);
 

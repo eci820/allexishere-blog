@@ -27,6 +27,9 @@ const kstToday = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slic
 const kstHM = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(11, 16);
 export function loadState() { try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch { return { paused: false, runs: [] }; } }
 export function saveState(s) { fs.mkdirSync(STATE, { recursive: true }); s.runs = (s.runs || []).slice(-400); fs.writeFileSync(FILE, JSON.stringify(s, null, 1)); }
+// 구독 한도·CLI 오류로 글을 쓰지도 못한 실패는 시도로 치지 않는다 — 2026-11-27: 몇 초 만에 끝난 한도 실패 6건이
+// 하루 상한(10)을 채워 저녁 슬롯이 아예 돌지 않았고, 그 주제들은 30일간 다시 안 뽑혔다.
+const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패/.test(String(r.why || ''));
 function acquireLock() {
   fs.mkdirSync(STATE, { recursive: true });
   try { if (Date.now() - fs.statSync(LOCK).mtimeMs < 50 * 60 * 1000) return false; } catch {}
@@ -44,7 +47,7 @@ const VOICE_EN = `
 - Don't end every title with "(2026)" or "Guide". Don't close with a generic disclaimer paragraph; put "as of" dates next to the facts they belong to.`;
 
 async function pickCandidate(state) {
-  const tried = new Set(state.runs.filter((r) => Date.now() - Date.parse(r.ts) < 30 * DAY).map((r) => r.id));
+  const tried = new Set(state.runs.filter((r) => Date.now() - Date.parse(r.ts) < 30 * DAY && !cliFail(r)).map((r) => r.id));
   const { pickForBriefing } = await import('./au-pool.mjs');
   const curated = pickForBriefing(5, tried)[0];
   // 검색어 = 장소명 + 핵심 구(콜론 뒤 앞 3단어). 제목 전체를 검색어로 쓰면 SEO 검사가 'avoid' 같은 단어까지 요구한다(2026-11-27 실측).
@@ -89,7 +92,7 @@ export async function runAuAutopilot() {
       const today = kstToday();
       const perDay = ap.perDay || 5;
       const done = state.runs.filter((r) => r.day === today && r.result === 'published').length;
-      const attempts = state.runs.filter((r) => r.day === today).length;
+      const attempts = state.runs.filter((r) => r.day === today && !cliFail(r)).length;
       if (done >= perDay) return console.log(`[au-autopilot] target met ${done}/${perDay}`);
       if (attempts >= (ap.maxAttemptsPerDay || perDay * 3)) return console.log('[au-autopilot] daily attempt cap');
 
