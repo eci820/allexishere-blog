@@ -39,7 +39,12 @@ function split(raw) {
 }
 const fmField = (fm, k) => (fm.match(new RegExp(`^${k}:\\s*"?(.*?)"?\\s*$`, 'm')) || [])[1] || '';
 
-const plan = JSON.parse(fs.readFileSync(arg('--plan'), 'utf8'));
+const PLAN_FILE = arg('--plan');
+const plan = JSON.parse(fs.readFileSync(PLAN_FILE, 'utf8'));
+// --consume: 처리(반영·noindex 유지·원본 복원)한 항목을 계획 파일에서 지운다 — 밤마다 남은 것만 이어서 돈다.
+const CONSUME = process.argv.includes('--consume');
+const consume = (slug) => { if (!CONSUME) return; try { const cur = JSON.parse(fs.readFileSync(PLAN_FILE, 'utf8')); fs.writeFileSync(PLAN_FILE, JSON.stringify(cur.filter((p) => p.slug !== slug), null, 1)); } catch {} };
+if (CONSUME && !plan.length) { console.log('[harness-refresh] 대기 목록 비어 있음 — 종료'); process.exit(0); }
 const cfg = loadConfig();
 const { refreshPublished } = await import('./generate.mjs');
 const { runHarness, passesGate, harnessCardLine, logHarness } = await import('./lib/harness.mjs');
@@ -91,6 +96,7 @@ for (const [i, item] of plan.entries()) {
     // 검증 단계를 못 거친 재작성은 반영하지 않는다 — 지어낸 수치가 섞였는지 아무도 안 봤다.
     fs.copyFileSync(r.backup, f);
     summary.reverted.push(oldTitle);
+    consume(item.slug);
     await say(`↩️ 보강 취소(원본 복원): ${oldTitle}\n   ↳ ${h.report.errors.join(' / ')}`);
     if (h.report.errors.some((e) => /limit|한도/i.test(e))) { await say('⏳ 구독 한도 — 배치 중단.'); break; }
     continue;
@@ -109,6 +115,7 @@ for (const [i, item] of plan.entries()) {
   const c = await commitUpdate({ slug: item.slug, title });
   if (!c.ok) { summary.failed.push(`${title}: 커밋 실패 ${c.error}`); await say(`❌ 보강 커밋 실패: ${title}\n${c.error}`); continue; }
   (gate.pass ? summary.reindexed : summary.keptNoindex).push(title);
+  consume(item.slug);
   await say(
     `📂🧪 보강 반영 (${i + 1}/${plan.length})\n📝 ${title}${title !== oldTitle ? `\n   (이전 제목: ${oldTitle})` : ''}\n${harnessCardLine(h.report)}\n` +
     (gate.pass ? '✅ 관문 통과 → noindex 해제(검색 재노출)' : `⏸ 관문 불통과 → 본문만 보강, noindex 유지\n   ↳ ${gate.why.join('\n   ↳ ')}`)

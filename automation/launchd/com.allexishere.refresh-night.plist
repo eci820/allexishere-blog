@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.allexishere.refresh-night</string>
+  <key>ProgramArguments</key><array><string>/opt/homebrew/bin/node</string><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/harness-refresh.mjs</string><string>--plan</string><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/state/refresh-pending.json</string><string>--until</string><string>04:30</string><string>--consume</string></array>
+  <key>WorkingDirectory</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/Users/jeonghunoh/.local/bin</string></dict>
+  <!-- 📂🧪 매일 23:00 남은 noindex 글 보강(state/refresh-pending.json). 04:30 이후엔 새 편 시작 안 함 → 호주 05:10 슬롯 사용량 보호. 목록이 비면 즉시 종료. -->
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>23</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardOutPath</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/logs/harness-refresh.log</string>
+  <key>StandardErrorPath</key><string>/Users/jeonghunoh/Projects/allexishere/allexishere-blog/automation/logs/harness-refresh.log</string>
+</dict></plist>
