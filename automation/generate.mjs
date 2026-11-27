@@ -724,7 +724,9 @@ export async function editDraft(slug, instruction, config, chatId) {
   let newBody, costUsd = 0;
   try {
     const r = await claudeText(prompt, { model: config.cliModel, timeoutSec: config.cliTimeoutSeconds || 240 });
-    newBody = stripFence(r.result);
+    // LLM 머리말("아래는 갱신된 전체 본문입니다." + 구분선)이 본문 첫 줄로 발행된 사고 2건(2026-11-26·27) 방지.
+    newBody = stripFence(r.result).trim()
+      .replace(/^(?:(?:아래는|다음은|이하는)[^\n]{0,40}(?:본문|글|초안)[^\n]{0,10}\n+)(?:-{3,}\s*\n+)?/, '').trim();
     costUsd = r.costUsd;
   } catch (e) {
     return { ok: false, error: 'AI 수정 실패: ' + String(e.message || '').slice(0, 120) };
@@ -794,7 +796,9 @@ export async function refreshPublished(slug, config, chatId, opts = {}) {
   let newBody, costUsd = 0;
   try {
     const r = await claudeText(prompt, { model: config.cliModel, timeoutSec: opts.timeoutSeconds || config.cliTimeoutSeconds || 240 });
-    newBody = stripFence(r.result);
+    // LLM 머리말("아래는 갱신된 전체 본문입니다." + 구분선)이 본문 첫 줄로 발행된 사고 2건(2026-11-26·27) 방지.
+    newBody = stripFence(r.result).trim()
+      .replace(/^(?:(?:아래는|다음은|이하는)[^\n]{0,40}(?:본문|글|초안)[^\n]{0,10}\n+)(?:-{3,}\s*\n+)?/, '').trim();
     costUsd = r.costUsd;
   } catch (e) {
     return { ok: false, error: '갱신 생성 실패: ' + String(e.message || '').slice(0, 120), backup };

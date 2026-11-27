@@ -102,13 +102,29 @@ for (const [i, item] of plan.entries()) {
     continue;
   }
   const gate = passesGate(h.report, {}, cfg.harness || {});
+  // 🔴 불통과인데 하네스 단계가 깨졌거나(수정 실패 등) 확인 안 된 사실이 남았으면 반영하지 않는다.
+  //    2026-11-27 실측: 15번 글이 수정 단계 실패·사실 지적 2건인 채로 반영돼, 본문 첫 줄에
+  //    "아래는 전면 재작성한 본문입니다." 와 확인 안 된 가격 문장이 그대로 사이트에 걸렸다.
+  const openFacts = (h.report.final || h.report.verify)?.facts?.length || 0;
+  if (!gate.pass && (h.report.errors.length || openFacts)) {
+    fs.copyFileSync(r.backup, f);
+    summary.reverted.push(oldTitle);
+    await say(`↩️ 보강 취소(원본 복원): ${oldTitle}\n   ↳ ${[...h.report.errors, openFacts ? `확인 안 된 사실 ${openFacts}건` : ''].filter(Boolean).join(' / ').slice(0, 200)}`);
+    if (h.report.errors.some((e) => /종료코드|limit|한도/i.test(e))) { await say('⏳ claude 호출 실패 — 배치 중단(다음 밤에 이어서).'); break; }
+    consume(item.slug);
+    continue;
+  }
   let nfm = fm;
   if (h.draft.title && h.draft.title !== fmField(fm, 'title')) nfm = nfm.replace(/^title:.*$/m, `title: ${dq(h.draft.title)}`);
   if (h.draft.description && h.draft.description !== fmField(fm, 'description')) {
     nfm = /^description:/m.test(nfm) ? nfm.replace(/^description:.*$/m, `description: ${dq(h.draft.description)}`) : nfm.replace(/^title:.*$/m, (t) => `${t}\ndescription: ${dq(h.draft.description)}`);
   }
   if (gate.pass) nfm = nfm.replace(/^noindex:\s*true\s*\n/m, '');
-  fs.writeFileSync(f, nfm + h.draft.body.trim() + '\n' + (tail ? '\n' + tail : ''));
+  // LLM 이 붙이는 머리말("아래는 … 본문입니다.")과 그 뒤 구분선을 떼어 낸다.
+  const cleanBody = h.draft.body.trim()
+    .replace(/^(?:(?:아래는|다음은|이하는)[^\n]{0,40}(?:본문|글|초안)[^\n]{0,10}\n+)(?:-{3,}\s*\n+)?/, '')
+    .trim();
+  fs.writeFileSync(f, nfm + cleanBody + '\n' + (tail ? '\n' + tail : ''));
   logHarness(STATE, item.slug, h.report, gate);
 
   const title = h.draft.title || oldTitle;
