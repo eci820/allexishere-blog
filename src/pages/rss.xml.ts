@@ -11,7 +11,7 @@ export async function GET(context: APIContext) {
   const site = context.site ?? new URL(SITE.url);
 
   return rss({
-    title: `${SITE.title} - ${SITE.tagline}`,
+    title: SITE.title,
     description: SITE.description,
     site,
     // noindex:true 글은 sitemap 과 동일하게 RSS 에서도 제외(색인·배포 신호 일관성).

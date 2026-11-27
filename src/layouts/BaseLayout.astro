@@ -40,7 +40,7 @@ const {
 
 const pageTitle = title
   ? `${title} · ${SITE.title}`
-  : `${SITE.title} - ${SITE.tagline}`;
+  : SITE.title;
 
 // 현재 페이지의 정식 주소(canonical)와 대표이미지 절대주소를 계산.
 // build.format:'file' 이라 pathname 에 '.html' 이 붙고, 경로 끝 슬래시가 남을 수 있어
@@ -90,7 +90,7 @@ const ogImageURL = new URL(image, SITE.url).href;
     <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:site_name" content={SITE.title} />
     <meta property="og:locale" content={SITE.locale} />
-    <meta property="og:title" content={title ?? `${SITE.title} - ${SITE.tagline}`} />
+    <meta property="og:title" content={title ?? SITE.title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={ogImageURL} />
