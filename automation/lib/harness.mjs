@@ -282,6 +282,30 @@ function restoreLinks(beforeBody, afterBody) {
   return String(afterBody).trimEnd() + '\n\n' + add.join('\n\n');
 }
 
+// 재채점에서 남은 사실 지적 문장을 '코드로' 지운다(LLM 0회). 2026-11-27 실측: AU 10회 중 다수가
+// 사람다움 6~8·문체 A 인데 '확인 안 된 문장 1~3개'만 남아 폐기됐다. 근거 없는 주장을 빼는 방향이라
+// 품질이 나빠질 수 없다. 표·제목 줄 안의 인용은 건드리지 않는다(구조 훼손 방지) → 그런 건 남은 지적으로 둔다.
+function stripFactSentences(body, facts) {
+  let b = String(body);
+  const left = [];
+  for (const f of facts) {
+    const q = String(f.quote || '').trim();
+    const key = q.slice(0, 40);
+    if (!key) continue;
+    const lines = b.split('\n');
+    const i = lines.findIndex((l) => l.includes(key));
+    if (i < 0) continue; // 이미 없다
+    const line = lines[i];
+    if (/^\s*(\||#)/.test(line)) { left.push(q.slice(0, 60)); continue; }
+    const sents = line.split(/(?<=[.!?。])\s+/);
+    const kept = sents.filter((s) => !s.includes(key.slice(0, 25)));
+    if (kept.length === sents.length) { left.push(q.slice(0, 60)); continue; }
+    lines[i] = kept.join(' ');
+    b = lines.filter((l, j) => !(j === i && !l.trim() && lines[j - 1] !== undefined && !lines[j - 1].trim())).join('\n');
+  }
+  return { body: b.replace(/\n{3,}/g, '\n\n'), left };
+}
+
 // ── 본체 ─────────────────────────────────────────────────────────
 // draft: { title, description, body, ... } (generate.mjs 의 파싱 결과, 제자리 수정하지 않음)
 // ctx: { keyword, opts, config, minChars, tableIssues }
@@ -379,6 +403,15 @@ export async function runHarness(draft, ctx) {
     } catch (e) {
       report.errors.push(`재채점 실패(${e.kind || 'error'}): ${String(e.message).slice(0, 120)}`);
     }
+    // 남은 사실 지적은 해당 문장을 지워 해소(LLM 0회). 구조가 깨지면 되돌린다.
+    if (report.final && report.final.facts.length) {
+      const st = stripFactSentences(d.body, report.final.facts);
+      if (st.body !== d.body && !acceptRevision(d, { ...d, body: st.body }, { source: ctx.opts?.source, tableIssues: ctx.tableIssues, lang: ctx.lang }).filter((w) => !/줄었다/.test(w)).length) {
+        report.stripped = report.final.facts.length - st.left.length;
+        d = { ...d, body: st.body };
+        report.openFacts = st.left;
+      }
+    }
     const lint2 = LINT(d.body, ctx.lang), seo2 = seoChecks(d, ctx.keyword, ctx.lang), num2 = NUM(d.body, ctx.lang);
     report.after = { tone: lint2.grade, toneLine: toneSummary(lint2), seo: seo2.map((x) => x.msg), unsourced: num2.unsourced, chars: d.body.length };
   }
@@ -423,6 +456,7 @@ export function harnessCardLine(rep) {
     parts.push(`사람다움 ${v.humanScore}${rep.final ? '→' + rep.final.humanScore : ''}/10`);
   }
   parts.push(rep.revised ? '1회 수정 반영' : rep.rejected ? '수정본 폐기' : '수정 없음');
+  if (rep.stripped) parts.push(`확인 안 된 문장 ${rep.stripped}개 삭제`);
   let s = `🧪 하네스: ${parts.join(' · ')}`;
   if (rep.rejected) s += `\n   ↳ 수정본 폐기 사유: ${rep.rejected.join(', ')}`;
   if (rep.errors.length) s += `\n⚠️ 하네스 오류: ${rep.errors.join(' / ')} — 사람 검수 필수`;
