@@ -58,7 +58,7 @@ const EN_STOP = new Set(['how', 'to', 'the', 'a', 'an', 'and', 'or', 'of', 'in',
 export function seoChecks({ title, description, body }, keyword, lang) {
   const EN = lang === 'en';
   const issues = [];
-  const toks = String(keyword || '').split(/\s+/).filter((w) => w.length >= 2 && !(EN ? EN_STOP.has(w.toLowerCase()) : GENERIC_KW.has(w)));
+  const toks = String(keyword || '').replace(/[:;,.!?()]/g, ' ').split(/\s+/).filter((w) => w.length >= 2 && !(EN ? EN_STOP.has(w.toLowerCase()) : GENERIC_KW.has(w)));
   const subject = toks[0] || '';
   const T = nospace(title);
   const missing = toks.filter((w) => !T.includes(nospace(w)));

@@ -104,6 +104,8 @@ export async function runAutopilot() {
   if (!ap.enabled) return console.log('[autopilot] config.autopilot.enabled=false — 건너뜀');
   const state = loadState();
   if (state.paused) return console.log('[autopilot] /autopause 상태 — 건너뜀');
+  // 🔴 구독 한도 백오프(2026-11-27 실측: 한도에 걸린 CLI 가 '종료코드 1'만 남겨 매 시도가 연쇄 실패)
+  if (state.backoffUntil && Date.now() < Date.parse(state.backoffUntil)) return console.log('[autopilot] 한도 백오프 중 — ' + state.backoffUntil);
   if (!acquireLock()) return console.log('[autopilot] 다른 실행이 진행 중 — 건너뜀');
   const { sendMessage } = await import('./lib/telegram.mjs');
   try {
@@ -167,6 +169,10 @@ export async function runAutopilot() {
     if (!r.ok) {
       Object.assign(rec, { result: 'failed', why: r.message || r.reason });
       saveState(st);
+      if (/종료코드 1|limit|한도/.test(String(r.message || '')) || r.reason === 'limit') {
+        st.backoffUntil = new Date(Date.now() + 90 * 60000).toISOString(); saveState(st);
+        console.log('[autopilot] claude 실패(한도 추정) → 90분 백오프'); return;
+      }
       if (r.reason === 'limit' || r.reason === 'auth') { // 한도·인증은 사람이 알아야 하고, 재시도해도 같다
         if (ME) await sendFailure(ME, { keyword: topic.keyword, source: topic.tier }, r);
         return;
@@ -177,6 +183,7 @@ export async function runAutopilot() {
     if (st.paused || !r.gate || !r.gate.pass) {
       const why = st.paused ? ['생성 중 /autopause'] : r.gate ? r.gate.why : ['하네스 꺼짐 — 자동 발행은 하네스 관문이 필수'];
       Object.assign(rec, { result: 'discarded', why, archived: archiveDraft(r.slug) });
+      if (why.some((w) => /종료코드 1/.test(w))) { st.backoffUntil = new Date(Date.now() + 90 * 60000).toISOString(); saveState(st); console.log('[autopilot] 하네스 중 claude 실패(한도 추정) → 90분 백오프'); return; }
       saveState(st);
       console.log(`[autopilot] 관문 불통과 → 폐기: ${r.title} — ${why.join(' / ')}`);
       if (st.paused) return;

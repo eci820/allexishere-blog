@@ -48,7 +48,8 @@
   "harness": {
     "enabled": true,
     "verify": true,
-    "maxRevisions": 2,
+    "maxRevisions": 1,
+    "_maxRevNote": "2026-11-27 2→1: 구독 사용량이 실제 병목(한국+호주 하루 10편). 2차 수정은 편당 최대 CLI +2회라 끔.",
     "timeoutSeconds": 420,
     "gate": { "minHumanScore": 6, "maxTone": "A" },
     "_gateNote": "2026-11-26 조정(첫날 10회 시도·발행 0): 7→6 으로 낮추는 대신 문체 B→A 만 허용. 남은 사실 지적 0·SEO 필수(제목 검색어·첫 문단 핵심어·반복 과다)는 그대로. 6점 글은 문체 A·사실 문제 없음인 경우가 있었다(해외직구 합산과세). 2차 수정(maxRevisions 2)은 재채점 5~6점 또는 사실 지적이 남은 글에만 돈다. 되돌리기: 7/B.",

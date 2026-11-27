@@ -47,7 +47,12 @@ async function pickCandidate(state) {
   const tried = new Set(state.runs.filter((r) => Date.now() - Date.parse(r.ts) < 30 * DAY).map((r) => r.id));
   const { pickForBriefing } = await import('./au-pool.mjs');
   const curated = pickForBriefing(5, tried)[0];
-  if (curated) return { cand: { ...curated, keyword: curated.keyword || curated.title }, origin: 'curated' };
+  // 검색어 = 장소명 + 핵심 구(콜론 뒤 앞 3단어). 제목 전체를 검색어로 쓰면 SEO 검사가 'avoid' 같은 단어까지 요구한다(2026-11-27 실측).
+  if (curated) {
+    const [head, tail = ''] = String(curated.title).split(':');
+    const kw = (curated.keyword || `${head} ${tail.trim().split(/\s+/).slice(0, 3).join(' ')}`).replace(/[^\w\s'-]/g, ' ').replace(/^\s*the\s+/i, '').replace(/\s+/g, ' ').trim();
+    return { cand: { ...curated, keyword: kw }, origin: 'curated' };
+  }
   const { loadScoutPool } = await import('./au-scout.mjs');
   const s = loadScoutPool().items.find((i) => i.status === 'pending' && !tried.has(i.id));
   return s ? { cand: s, origin: 'scout' } : { cand: null };
@@ -71,6 +76,8 @@ export async function runAuAutopilot() {
   if (!ap.enabled) return console.log('[au-autopilot] disabled');
   const state = loadState();
   if (state.paused) return console.log('[au-autopilot] paused');
+  // 🔴 구독 한도 백오프(2026-11-27 실측: 한도에 걸린 CLI 가 '종료코드 1'만 남겨 매 시도가 연쇄 실패)
+  if (state.backoffUntil && Date.now() < Date.parse(state.backoffUntil)) return console.log('[autopilot] 한도 백오프 중 — ' + state.backoffUntil);
   if (!acquireLock()) return console.log('[au-autopilot] another run in progress');
   const { sendMessage } = await import('../lib/telegram.mjs');
   try {
@@ -121,7 +128,8 @@ export async function runAuAutopilot() {
       let g;
       try { g = await generateDraft(cand, { extra }); } catch (e) {
         const { s, r } = rec(); Object.assign(r, { result: 'failed', why: String(e.message).slice(0, 160) }); saveState(s);
-        if (/limit|한도|auth|login/i.test(e.message)) { if (ME) await sendMessage(ME, `🇦🇺 자동 발행 중단: ${String(e.message).slice(0, 120)}`); return; }
+        if (/종료코드 1|limit|한도/i.test(e.message)) { const s2 = loadState(); s2.backoffUntil = new Date(Date.now() + 90 * 60000).toISOString(); saveState(s2); console.log('[au-autopilot] claude failure (likely quota) → 90m backoff'); return; }
+        if (/auth|login/i.test(e.message)) { if (ME) await sendMessage(ME, `🇦🇺 자동 발행 중단: ${String(e.message).slice(0, 120)}`); return; }
         continue;
       }
       if (!g.wrote) {
@@ -147,7 +155,9 @@ export async function runAuAutopilot() {
       logHarness(STATE, g.slug, h.report, gate);
 
       if (!gate.pass) {
-        const { s, r } = rec(); Object.assign(r, { result: 'discarded', slug: g.slug, why: gate.why, archived: archive(g.slug) }); saveState(s);
+        const { s, r } = rec(); Object.assign(r, { result: 'discarded', slug: g.slug, why: gate.why, archived: archive(g.slug) });
+        if (gate.why.some((w) => /종료코드 1/.test(w))) { s.backoffUntil = new Date(Date.now() + 90 * 60000).toISOString(); saveState(s); console.log('[au-autopilot] claude failure in harness → 90m backoff'); return; }
+        saveState(s);
         console.log(`[au-autopilot] gate failed → discarded: ${cand.title} — ${gate.why.join(' / ')}`);
         if (origin === 'scout') (await import('./au-scout.mjs')).markScout(cand.id, 'discarded');
         continue;
