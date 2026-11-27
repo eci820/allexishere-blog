@@ -78,7 +78,7 @@
     "maxAttemptsPerDay": 8,
     "jitterMinutes": 25,
     "slots": [ "05:10", "06:50", "08:30", "10:10", "12:30", "14:50", "17:00", "18:40" ],
-    "summaryAfter": "19:30",
+    "summaryAfter": "18:30",
     "_note": "🇦🇺 2026-11-26 사용자 지시(호주도 한국과 같이 완전 자동·하루 5편). 시각은 KST — 호주 동부(AEDT=KST+2) 07:10~20:40 낮 시간. 한국 슬롯(07:30·09:40…)과 겹치지 않게 엇갈림. 흐름은 au/au-autopilot.mjs 주석 참고. 끄기: enabled:false 또는 텔레그램 /au autopause."
   },
   "serp": { "enabled": true, "timeoutSeconds": 360, "_note": "🔎 2026-11-26: 쓰기 전에 상위 노출 글(네이버 공식 검색 API + WebSearch 로 근사한 구글 상위) 3~5개를 읽고 다뤄야 할 질문·공통 구조·출처 있는 사실·빈틈을 뽑아 작성·검증에 넘긴다(lib/serp.mjs). 문장 복제 금지. 글 1편당 CLI +1회. 끄기: enabled:false." },
