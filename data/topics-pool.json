@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-27T01:48:16.337Z",
+  "updatedAt": "2026-11-27T07:51:34.802Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -3458,8 +3458,8 @@
       "tier": "evergreen",
       "series": "tax",
       "angle": "등록임대사업자 전환 시 세금 감면과 의무를 비교해 손익 판단",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "임대사업자-세제혜택-받는-조건세목별-감면율등록-의무사항",
       "addedAt": "2026-07-26T01:01:49.932Z",
       "lastProposedAt": "2026-07-26T01:01:51.939Z",
       "metrics": {
