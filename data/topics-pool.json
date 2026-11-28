@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-28T04:23:29.550Z",
+  "updatedAt": "2026-11-28T05:20:44.772Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15715,8 +15715,8 @@
       "tier": "science",
       "series": "life",
       "angle": "점검 대상 품목, 자체점검 방법(앱·점검표), 과태료 면제 조건 정리 | 화제: 12월 1일부터 유예 끝나고 과태료 실제 부과 시작, 아파트 입주민 대상 뉴스 쏟아짐 | 출처: 소방청, 공동주택 화재예방 관련 소방시설법 고시",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "세대-소방점검-과태료-50만원-인하유예-연장-12월-1일-바로-적용되나",
       "addedAt": "2026-11-28T04:09:12.779Z",
       "lastProposedAt": null,
       "metrics": {
