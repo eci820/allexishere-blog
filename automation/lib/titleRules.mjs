@@ -122,8 +122,17 @@ export function titleBodyMismatch(title, toc, source) {
   const sections = (toc || []).map(norm).join(' ');
   if (!sections) return []; // h2 를 못 뽑았으면 판정하지 않는다(오탐 방지)
   const keys = PAIN_AXES[source]?.keys || ALL_KEYS;
-  return keys.filter((k) => t.includes(k) && !sections.includes(k));
+  return keys.filter((k) => t.includes(k) && !(PROMISE_SYNONYMS[k] || [k]).some((s) => sections.includes(s)));
 }
+
+// 제목 약속어 ↔ h2 에서 같은 약속을 지키는 표현. 2026-11-28 오탐: "겨울 미세먼지 심해지는 이유" 글의
+// h2 가 "겨울 미세먼지는 왜 유독 심해질까" 등 '왜' 질문 5개로 이유를 다 답했는데, 글자 '이유'가 없어
+// 폐기됐다(11-27 "배터리 열화 원리"도 같은 꼴). 질문형 h2 는 사람다움 규칙이 권하는 형태라 동의어로 인정한다.
+const PROMISE_SYNONYMS = {
+  '이유': ['이유', '왜', '원인'],
+  '원인': ['원인', '왜', '이유'],
+  '원리': ['원리', '왜', '어떻게', '구조', '작동', '메커니즘'],
+};
 
 // 🅿️ 자기잠식 방지 — 제목에 '주차'가 독립 단어로 있는가.
 //    topicsPool.matchLive 가 제목 단어로 중복을 판정하므로, '주차장'·'주차요금'처럼
