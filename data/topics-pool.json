@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-27T07:51:34.802Z",
+  "updatedAt": "2026-11-28T04:23:26.132Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15620,8 +15620,8 @@
       "tier": "science",
       "series": "knowledge",
       "angle": "역전층·대기 혼합층 원리로 설명하는 겨울철 농도 증가 메커니즘과 외출 시 확인할 지표 | 화제: 초겨울 미세먼지 경보가 잦아지며 \"왜 겨울에 더 심하냐\"는 질문이 뉴스·커뮤니티에 반복 등장 | 출처: 환경부·국립환경과학원 대기정체지수",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "겨울-미세먼지-심해지는-이유-역전층난방중국발-유입-겹치는-구조",
       "addedAt": "2026-11-25T15:13:51.602Z",
       "lastProposedAt": null,
       "metrics": {
@@ -15706,6 +15706,215 @@
         "ratio": 0.073,
         "stars": 4,
         "ts": 1795619631601
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tkni6y6",
+      "keyword": "세대 소방점검 과태료 50만원",
+      "tier": "science",
+      "series": "life",
+      "angle": "점검 대상 품목, 자체점검 방법(앱·점검표), 과태료 면제 조건 정리 | 화제: 12월 1일부터 유예 끝나고 과태료 실제 부과 시작, 아파트 입주민 대상 뉴스 쏟아짐 | 출처: 소방청, 공동주택 화재예방 관련 소방시설법 고시",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 725,
+        "ratio": 0.014,
+        "stars": 5,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "ta03qib",
+      "keyword": "아파트 승강기 유지관리비 인상",
+      "tier": "science",
+      "series": "life",
+      "angle": "6층·8대 이상 할인율 적용 여부로 세대당 관리비 차이 계산법 | 화제: 2026년 승강기 표준유지관리비가 전년 대비 2.4% 올라 관리비 고지서 비교글 화제 | 출처: 한국승강기관리원 표준유지관리비 고시",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 3909,
+        "ratio": 0.003,
+        "stars": 5,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "t778lj9",
+      "keyword": "수도계량기 교체",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "보온조치 유무로 수리비(약 4만1천원) 부담 주체가 바뀌는 기준과 예방법 (원래 화제어: 수도계량기 동파 교체비 부담기준) | 화제: 한파 예보에 올해부터 보온조치 소홀 시 수리비 전액 자부담이라는 내용이 재확산 | 출처: 서울시 상수도사업본부 공지",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 1580,
+        "doc": 371844,
+        "ratio": 0.004,
+        "stars": 3,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tiw8qfn",
+      "keyword": "연말 모임 장소추천",
+      "tier": "evergreen",
+      "series": "life",
+      "angle": "예약 1시간 전 취소 시 전액, 그 이후 위약금 처리되는 조건 정리 (원래 화제어: 연말 모임 예약금 환불 기준) | 화제: 연말 송년회 시즌 식당 노쇼 단속 강화 뉴스로 예약금 환불 기준 궁금증 증가 | 출처: 공정거래위원회 소비자분쟁해결기준(음식점업)",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 3260,
+        "doc": 813729,
+        "ratio": 0.004,
+        "stars": 4,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tik1v4f",
+      "keyword": "스미싱 기프티콘 문자 주의보",
+      "tier": "evergreen",
+      "series": "digital",
+      "angle": "원격제어 악성앱(APK) 설치로 이어지는 수법과 의심 문자 구별법 | 화제: 코리아세일페스타·블랙프라이데이 시즌 택배 사칭 스미싱 급증 경보 발령 | 출처: 경찰청·한국인터넷진흥원(KISA) 사이버사기 주의보",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 42,
+        "ratio": 0.238,
+        "stars": 5,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tmxms5h",
+      "keyword": "연말정산 자녀세액공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "8세·9세 경계 자녀를 둔 가구가 올해 받을 수 있는 공제액 실제 계산 (원래 화제어: 연말정산 자녀세액공제 나이기준) | 화제: 공제금액은 늘었는데 최소 나이가 9세로 바뀌어 8세 자녀 가구 혼란 발생 | 출처: 국세청 홈택스 연말정산 미리보기 안내",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 240,
+        "doc": 129028,
+        "ratio": 0.002,
+        "stars": 4,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "t3cilxw",
+      "keyword": "월세 세액공제",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "기존 미대상자가 올해 처음 공제 받을 수 있는지 소득·한도 두 기준 체크 (원래 화제어: 월세 세액공제 소득기준 상향) | 화제: 공제 대상 총급여 기준이 7천만원에서 8천만원으로 올라 새로 대상 되는 사람 확인 글 화제 | 출처: 국세청 조세특례제한법 월세 세액공제 안내",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 15180,
+        "doc": 186546,
+        "ratio": 0.081,
+        "stars": 4,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "thn80tq",
+      "keyword": "출산 보육수당 비과세 자녀수기준",
+      "tier": "evergreen",
+      "series": "tax",
+      "angle": "자녀 2명 이상 직장인이 실제로 비과세 받는 한도 계산 예시 | 화제: 1인당 기준에서 자녀수 기준으로 바뀌어 다자녀 직장인 비과세 한도 궁금증 증가 | 출처: 국세청 소득세법 비과세 근로소득 고시",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 51,
+        "ratio": 0.196,
+        "stars": 5,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tqv7s8l",
+      "keyword": "실내습도 체감온도 관계",
+      "tier": "science",
+      "series": "knowledge",
+      "angle": "습도가 체감온도를 바꾸는 과학적 원리와 40~60% 유지가 적정한 이유 | 화제: 습도 50%면 체감온도가 1~2도 올라간다는 난방비 절약 콘텐츠가 다수 매체에서 화제 | 출처: 기상청·환경부 실내 적정습도 가이드",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 9644,
+        "ratio": 0.001,
+        "stars": 4,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tenk5su",
+      "keyword": "블랙아이스 교통사고 과실비율",
+      "tier": "evergreen",
+      "series": "mobility",
+      "angle": "도로 결빙 사고 시 보험 접수 절차와 과실비율이 달라지는 요인 | 화제: 한파철 블랙아이스 사고 영상이 반복 공유되며 보험 처리 방법 궁금증 증가 | 출처: 손해보험협회 자동차보험 과실비율 분쟁심의위원회",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 867,
+        "ratio": 0.012,
+        "stars": 5,
+        "ts": 1795838952778
+      },
+      "origin": "scout"
+    },
+    {
+      "id": "tke62gf",
+      "keyword": "자동차관리법 12월 개정 시행",
+      "tier": "evergreen",
+      "series": "mobility",
+      "angle": "일반 운전자가 실제로 체감하는 변화(점검 의무·정보공개)만 정리 | 화제: 전기차 배터리 정보제공, 대형차 정기점검 재도입 등 12월 시행 제도가 운전자 카페에서 화제 | 출처: 국토교통부 자동차관리법 시행규칙 개정안",
+      "status": "pending",
+      "slug": null,
+      "addedAt": "2026-11-28T04:09:12.779Z",
+      "lastProposedAt": null,
+      "metrics": {
+        "vol": 10,
+        "doc": 57015,
+        "ratio": 0,
+        "stars": 4,
+        "ts": 1795838952778
       },
       "origin": "scout"
     }
