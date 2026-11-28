@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-28T05:20:44.772Z",
+  "updatedAt": "2026-11-28T10:06:44.816Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15886,8 +15886,8 @@
       "tier": "evergreen",
       "series": "mobility",
       "angle": "도로 결빙 사고 시 보험 접수 절차와 과실비율이 달라지는 요인 | 화제: 한파철 블랙아이스 사고 영상이 반복 공유되며 보험 처리 방법 궁금증 증가 | 출처: 손해보험협회 자동차보험 과실비율 분쟁심의위원회",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "블랙아이스-교통사고-과실비율-단독사고-100추돌-비율도로관리청-책임까지",
       "addedAt": "2026-11-28T04:09:12.779Z",
       "lastProposedAt": null,
       "metrics": {
