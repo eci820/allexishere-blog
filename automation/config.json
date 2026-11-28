@@ -57,8 +57,8 @@
   },
   "autopilot": {
     "enabled": true,
-    "targetPerDay": 4,
-    "_perDayNote": "2026-11-27 사용자 지시: 하루 총 7편 = 한국 4 + 호주 3 (구독 사용량에 맞춤). 이전 5.",
+    "targetPerDay": 3,
+    "_perDayNote": "2026-11-28 사용자 지시: 하루 총 5편 = 한국 3 + 호주 2 (Pro 구독 한도에 맞춤). 이전 4(11-27), 5(11-26).",
     "ramp": [],
     "_rampNote": "2026-11-26 사용자 지시로 램프 해제 — 첫날부터 하루 5편. 이전 값: [{from:2026-11-26,perDay:2},{from:2026-12-03,perDay:3},{from:2026-12-10,perDay:5}]. 노출이 더 떨어지면 이 값으로 되돌리는 것을 먼저 검토.",
     "slots": [ "07:30", "09:40", "11:50", "14:00", "16:10", "18:20", "20:30", "22:10" ],
@@ -72,8 +72,8 @@
   },
   "auAutopilot": {
     "enabled": true,
-    "perDay": 3,
-    "_perDayNote": "2026-11-27 사용자 지시: 호주 3편(총 7편 중). 이전 5.",
+    "perDay": 2,
+    "_perDayNote": "2026-11-28 사용자 지시: 호주 2편(총 5편 중). 이전 3(11-27), 5.",
     "attemptsPerSlot": 2,
     "maxAttemptsPerDay": 8,
     "jitterMinutes": 25,
