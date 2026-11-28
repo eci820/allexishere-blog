@@ -38,7 +38,7 @@ export function subscriptionEnv(base = process.env) {
 export function classifyCliError(text) {
   const s = String(text || '');
   if (/usage limit|rate limit|too many requests|quota/i.test(s)) return 'limit';
-  if (/not logged in|authentication|unauthorized|invalid api key|login/i.test(s)) return 'auth';
+  if (/not logged in|authenticat|oauth|unauthorized|invalid api key|login/i.test(s)) return 'auth';
   if (/ENOENT/.test(s)) return 'notfound';
   return 'error';
 }

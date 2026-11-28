@@ -29,7 +29,7 @@ export function loadState() { try { return JSON.parse(fs.readFileSync(FILE, 'utf
 export function saveState(s) { fs.mkdirSync(STATE, { recursive: true }); s.runs = (s.runs || []).slice(-400); fs.writeFileSync(FILE, JSON.stringify(s, null, 1)); }
 // 구독 한도·CLI 오류로 글을 쓰지도 못한 실패는 시도로 치지 않는다 — 2026-11-27: 몇 초 만에 끝난 한도 실패 6건이
 // 하루 상한(10)을 채워 저녁 슬롯이 아예 돌지 않았고, 그 주제들은 30일간 다시 안 뽑혔다.
-const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패/.test(String(r.why || ''));
+const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패|claude 실패|인증|로그인/.test(String(r.why || ''));
 function acquireLock() {
   fs.mkdirSync(STATE, { recursive: true });
   try { if (Date.now() - fs.statSync(LOCK).mtimeMs < 50 * 60 * 1000) return false; } catch {}
@@ -132,7 +132,7 @@ export async function runAuAutopilot() {
       try { g = await generateDraft(cand, { extra }); } catch (e) {
         const { s, r } = rec(); Object.assign(r, { result: 'failed', why: String(e.message).slice(0, 160) }); saveState(s);
         if (/종료코드 1|limit|한도/i.test(e.message)) { const s2 = loadState(); s2.backoffUntil = new Date(Date.now() + 90 * 60000).toISOString(); saveState(s2); console.log('[au-autopilot] claude failure (likely quota) → 90m backoff'); return; }
-        if (/auth|login/i.test(e.message)) { if (ME) await sendMessage(ME, `🇦🇺 자동 발행 중단: ${String(e.message).slice(0, 120)}`); return; }
+        if (/auth|login|인증|로그인/i.test(e.message)) { if (ME) await sendMessage(ME, `🇦🇺 자동 발행 중단: ${String(e.message).slice(0, 120)}`); return; }
         continue;
       }
       if (!g.wrote) {

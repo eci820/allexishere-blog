@@ -53,7 +53,7 @@ export function perDayFor(ap, day = kstToday()) {
 
 // 구독 한도·CLI 오류로 글을 쓰지도 못한 실패는 시도로 치지 않는다 — 2026-11-27: 몇 초 만에 끝난 한도 실패 6건이
 // 하루 상한(10)을 채워 저녁 슬롯이 아예 돌지 않았고, 그 주제들은 30일간 다시 안 뽑혔다.
-const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패/.test(String(r.why || ''));
+const cliFail = (r) => r.result === 'failed' && /종료코드|한도|limit|시간 초과|claude 실행 실패|claude 실패|인증|로그인/.test(String(r.why || ''));
 function acquireLock() {
   try {
     const st = fs.statSync(LOCK);
