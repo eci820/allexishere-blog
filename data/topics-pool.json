@@ -1,6 +1,6 @@
 {
   "_note": "주제 재고 DB(축2). status=pending|published|skipped|quarantined. quarantined(💰금융·🏠부동산)는 브리핑 후보·재고 카운트·보충 트리거에서 제외(데이터는 보존). lastProposedAt=제안 쿨다운(30일). metrics=네이버 지표·별점 24h 캐시. 발행 시 publish.mjs가 status=published+slug 기록.",
-  "updatedAt": "2026-11-28T04:23:26.132Z",
+  "updatedAt": "2026-11-28T04:23:29.550Z",
   "topics": [
     {
       "id": "tl3z5n9",
@@ -15791,8 +15791,8 @@
       "tier": "evergreen",
       "series": "digital",
       "angle": "원격제어 악성앱(APK) 설치로 이어지는 수법과 의심 문자 구별법 | 화제: 코리아세일페스타·블랙프라이데이 시즌 택배 사칭 스미싱 급증 경보 발령 | 출처: 경찰청·한국인터넷진흥원(KISA) 사이버사기 주의보",
-      "status": "pending",
-      "slug": null,
+      "status": "published",
+      "slug": "기프티콘-스미싱-문자-주의보-사칭-문구클릭-피해신고-방법",
       "addedAt": "2026-11-28T04:09:12.779Z",
       "lastProposedAt": null,
       "metrics": {
